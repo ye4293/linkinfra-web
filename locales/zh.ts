@@ -1,361 +1,362 @@
 const zh = {
-  // 导航
+  // nav
   nav: {
-    home: '首页',
-    models: '模型列表',
-    docs: '文档',
-    marketplace: '模型广场',
-    signIn: '登录',
-    dashboard: '控制台'
+    home: 'Home',
+    models: 'Models',
+    docs: 'Docs',
+    marketplace: 'Marketplace',
+    signIn: 'Sign in',
+    dashboard: 'Dashboard'
   },
-  // 用户菜单
+  // user menu
   userMenu: {
-    profile: '个人资料',
-    billing: '账单管理',
-    settings: '设置',
-    logout: '退出登录'
+    profile: 'Profile',
+    billing: 'Billing',
+    settings: 'Settings',
+    logout: 'Sign out'
   },
   // Hero
   hero: {
-    titlePrefix: '统一AI模型',
-    titleHighlight: 'API网关平台',
+    titlePrefix: 'Unified AI Model',
+    titleHighlight: 'API Gateway',
     description:
-      '支持 OpenAI、Claude、Gemini、DeepSeek 等主流大模型，一个接口接入所有AI能力。统一认证与计费，轻松切换模型，降低接入成本。',
-    getStarted: '开始使用',
-    viewDocs: '查看文档'
+      'Supports OpenAI, Claude, Gemini, DeepSeek, and all major LLMs. One API for every AI capability — unified auth, unified billing, effortless model switching.',
+    getStarted: 'Get started',
+    viewDocs: 'View docs'
   },
-  // 数据统计
+  // stats
   stats: {
-    models: '支持模型',
+    models: 'Models supported',
     modelsValue: '100+',
-    developers: '开发者',
+    developers: 'Developers',
     developersValue: '10,000+',
-    uptime: '服务可用率',
+    uptime: 'Uptime',
     uptimeValue: '99.9%',
-    apiCalls: '日均调用',
-    apiCallsValue: '1,000万+'
+    apiCalls: 'Daily requests',
+    apiCallsValue: '10M+'
   },
-  // 特性
+  // features
   features: {
-    title: '核心能力',
-    subtitle: '为开发者提供最便捷的AI模型接入体验',
+    title: 'Core capabilities',
+    subtitle: 'The easiest way for developers to integrate AI models',
     multiModel: {
-      title: '多模型聚合',
+      title: 'Multi-model aggregation',
       description:
-        '支持 OpenAI、Claude、Gemini、DeepSeek 等数十种主流AI模型，一个API统一调用。'
+        'Supports OpenAI, Claude, Gemini, DeepSeek, and dozens of leading AI models — all accessible through one unified API.'
     },
     billing: {
-      title: '统一计费管理',
+      title: 'Unified billing',
       description:
-        '一个账户统一管理所有模型的用量和费用，价格更优惠，计费更透明。'
+        'Manage usage and costs across all models from a single account. Better pricing, full transparency.'
     },
     performance: {
-      title: '高可用低延迟',
+      title: 'High availability, low latency',
       description:
-        '全球多节点部署，智能负载均衡，自动故障转移，确保服务高可用。'
+        'Multi-region deployment with intelligent load balancing and automatic failover for maximum uptime.'
     },
     security: {
-      title: '安全合规',
+      title: 'Security & compliance',
       description:
-        '企业级数据加密，完善的权限控制体系，支持 API Key 管理与访问审计。'
+        'Enterprise-grade encryption, granular access controls, API key management, and full audit logging.'
     },
     sdk: {
-      title: '开发者友好',
+      title: 'Developer-friendly',
       description:
-        '兼容 OpenAI SDK，提供完善的接口文档与代码示例，零学习成本快速接入。'
+        'OpenAI SDK-compatible. Comprehensive API docs and code samples — integrate in minutes with zero learning curve.'
     },
     monitoring: {
-      title: '实时监控',
+      title: 'Real-time monitoring',
       description:
-        '可视化用量仪表盘，实时追踪 Token 消耗、请求延迟与调用成功率。'
+        'Visual usage dashboard to track token consumption, request latency, and call success rates in real time.'
     }
   },
   // CTA
   cta: {
-    title: '立即开始使用',
-    description: '注册即可获得免费额度，快速体验所有AI模型的强大能力',
-    button: '免费注册'
+    title: 'Start building today',
+    description: 'Sign up for free credits and try every AI model instantly.',
+    button: 'Sign up free'
   },
   // Footer
   footer: {
     rights: 'All rights reserved.'
   },
-  // 模型广场
+  // model marketplace
   modelPlaza: {
-    title: '模型广场',
-    subtitle: '共 {count} 个可用模型，支持多种 AI 供应商',
-    search: '搜索模型名称...',
-    providers: '供应商',
-    userTier: '用户等级',
-    billingType: '计费类型',
-    all: '全部',
-    tokenBased: '按量计费',
-    perCall: '按次计费',
-    perCallShort: '按次',
-    tokenBasedShort: '按量',
-    input: '输入',
-    output: '输出',
-    perUnit: '单次',
-    inputPrice: '输入价格/M',
-    outputPrice: '输出价格/M',
-    modelName: '模型名称',
-    provider: '供应商',
-    discount: '折扣',
-    noResults: '没有找到匹配的模型',
-    prevPage: '上一页',
-    nextPage: '下一页',
-    copyModel: '复制模型名称',
-    signIn: '登录',
-    backHome: '首页'
+    title: 'Model marketplace',
+    subtitle: '{count} models available across multiple AI providers',
+    search: 'Search models...',
+    providers: 'Provider',
+    userTier: 'User tier',
+    billingType: 'Billing type',
+    all: 'All',
+    tokenBased: 'Pay per use',
+    perCall: 'Pay per call',
+    perCallShort: 'Per call',
+    tokenBasedShort: 'Per use',
+    input: 'Input',
+    output: 'Output',
+    perUnit: 'Per call',
+    inputPrice: 'Input price/M',
+    outputPrice: 'Output price/M',
+    modelName: 'Model name',
+    provider: 'Provider',
+    discount: 'Discount',
+    noResults: 'No matching models found',
+    prevPage: 'Previous',
+    nextPage: 'Next',
+    copyModel: 'Copy model name',
+    signIn: 'Sign in',
+    backHome: 'Home'
   },
-  // 模型详情
+  // model detail
   modelDetail: {
-    back: '返回模型广场',
-    performance: '性能监控',
-    successRate: '成功率',
-    avgLatency: '平均延迟',
-    avgSpeed: '平均速度',
-    inputPrice: '输入价格',
-    outputPrice: '输出价格',
-    priceType: '计费类型',
-    requests24h: '24h 请求量',
-    latencyTrend: '延迟趋势',
-    speedTrend: '速度 (TPS)',
-    successRateTrend: '成功率趋势',
-    tokenUsage: '用量分析',
-    pricingDetail: '定价详情',
-    userTier: '用户等级',
-    channelDetail: '渠道明细',
-    channelName: '渠道名称',
-    adminOnly: '仅管理员可见',
-    ttftDesc: '首 Token 延迟',
-    healthy: '正常',
-    degraded: '降级',
-    down: '异常',
-    noData: '无数据'
+    back: 'Back to marketplace',
+    performance: 'Performance',
+    successRate: 'Success rate',
+    avgLatency: 'Avg latency',
+    avgSpeed: 'Avg speed',
+    inputPrice: 'Input price',
+    outputPrice: 'Output price',
+    priceType: 'Billing type',
+    requests24h: '24h requests',
+    latencyTrend: 'Latency trend',
+    speedTrend: 'Speed (TPS)',
+    successRateTrend: 'Success rate trend',
+    tokenUsage: 'Usage analytics',
+    pricingDetail: 'Pricing details',
+    userTier: 'User tier',
+    channelDetail: 'Channel breakdown',
+    channelName: 'Channel name',
+    adminOnly: 'Admin only',
+    ttftDesc: 'Time to first token',
+    healthy: 'Healthy',
+    degraded: 'Degraded',
+    down: 'Error',
+    noData: 'No data'
   },
-  // 日志计费详情
+  // log billing detail
   logDetail: {
-    channelInfo: '渠道信息',
-    promptTokens: '提示 Token',
-    completionTokens: '补全 Token',
-    cachedTokens: '缓存 Token',
-    cost: '花费',
-    logContent: '日志详情',
-    noDetails: '暂无详细信息',
-    modelPrice: '模型价格',
-    billingProcess: '计费过程',
-    billingMode: '计费模式',
-    tokenBilling: '按 Token 计费',
-    fixedPrice: '固定价格',
+    channelInfo: 'Channel',
+    promptTokens: 'Prompt tokens',
+    completionTokens: 'Completion tokens',
+    cachedTokens: 'Cached tokens',
+    cost: 'Cost',
+    logContent: 'Log details',
+    noDetails: 'No details available',
+    modelPrice: 'Model price',
+    billingProcess: 'Billing breakdown',
+    billingMode: 'Billing mode',
+    tokenBilling: 'Token-based billing',
+    fixedPrice: 'Fixed price',
     perMillionInput: '/ 1M input tokens',
     perMillionOutput: '/ 1M output tokens',
     perMillionCached: '/ 1M cached tokens',
-    perMillionCache5m: '/ 1M 5分钟缓存创建 tokens',
-    perMillionCache1h: '/ 1M 1小时缓存创建 tokens',
-    perMillionCacheRead: '/ 1M 缓存读取 tokens',
-    perRequest: '/ 次',
-    referenceOnly: '仅供参考，以实际扣费为准',
-    groupRatio: '分组倍率',
-    inputTokens: '输入 Tokens',
-    outputTokens: '输出 Tokens',
-    inputText: '文本输入',
-    inputImage: '图片输入',
-    outputText: '文本输出',
-    outputImage: '图片输出',
-    outputReasoning: '推理输出',
-    cacheRead: '缓存读取',
-    cacheCreation: '缓存创建',
-    claudeCache5m: 'Claude 5分钟缓存创建',
-    claudeCache1h: 'Claude 1小时缓存创建',
-    speed: '生成速率',
-    collapse: '收起详情',
-    expand: '展开详情',
-    discountBreakdown: '折扣分量',
-    tierRatio: '等级折扣',
-    channelDiscount: '渠道折扣',
-    userChannelDiscount: '用户渠道折扣',
-    keyIndex: 'Key 索引'
+    perMillionCache5m: '/ 1M 5-min cache creation tokens',
+    perMillionCache1h: '/ 1M 1-hr cache creation tokens',
+    perMillionCacheRead: '/ 1M cache read tokens',
+    perRequest: '/ call',
+    referenceOnly: 'For reference only. Actual charges may vary.',
+    groupRatio: 'Group multiplier',
+    inputTokens: 'Input tokens',
+    outputTokens: 'Output tokens',
+    inputText: 'Text input',
+    inputImage: 'Image input',
+    outputText: 'Text output',
+    outputImage: 'Image output',
+    outputReasoning: 'Reasoning output',
+    cacheRead: 'Cache read',
+    cacheCreation: 'Cache creation',
+    claudeCache5m: 'Claude 5-min cache creation',
+    claudeCache1h: 'Claude 1-hr cache creation',
+    speed: 'Generation speed',
+    collapse: 'Collapse details',
+    expand: 'Expand details',
+    discountBreakdown: 'Discount split',
+    tierRatio: 'Tier discount',
+    channelDiscount: 'Channel discount',
+    userChannelDiscount: 'User channel discount',
+    keyIndex: 'Key index'
   },
-  // 计费/定价设置页
+  // pricing / model ratio settings
   pricing: {
-    title: '模型定价设置',
-    tabRatioSettings: '模型倍率设置',
-    tabVisualPricing: '可视化倍率设置',
-    tabUnsetModels: '未设置倍率模型',
-    tabVideoPricing: '视频模型定价',
-    saving: '保存中...',
-    save: '保存设置',
-    saveSuccess: '模型倍率设置保存成功！',
-    saveFailed: '保存失败，请重试',
-    jsonInvalid: '{field} JSON 格式错误，请检查语法',
-    fixedPrice: '模型固定价格',
-    fixedPriceHint: '一次调用消耗多少刀，优先级大于模型倍率',
-    modelRatio: '模型倍率',
-    cacheRatio: '提示缓存倍率',
+    title: 'Model pricing',
+    tabRatioSettings: 'Model ratios',
+    tabVisualPricing: 'Visual ratio editor',
+    tabUnsetModels: 'Models without ratios',
+    tabVideoPricing: 'Video model pricing',
+    saving: 'Saving...',
+    save: 'Save settings',
+    saveSuccess: 'Saved.',
+    saveFailed: 'Save failed. Please try again.',
+    jsonInvalid: '{field} contains invalid JSON. Please check the syntax.',
+    fixedPrice: 'Fixed price',
+    fixedPriceHint: 'Cost per call in USD. Takes priority over model ratio.',
+    modelRatio: 'Model ratio',
+    cacheRatio: 'Prompt cache ratio',
     cacheRatioHint:
-      '缓存读取 token 相对于输入 token 的价格倍率（如 Claude 缓存读取为 0.1，即 90% 折扣）',
-    completionRatio: '模型补全倍率（仅对自定义模型有效）',
-    completionRatioHint: '仅对自定义模型有效',
-    imageInputRatio: '图片输入倍率（仅部分模型支持该计费）',
-    imageOutputRatio: '图片输出倍率（仅部分模型支持该计费）',
-    audioInputRatio: '音频输入倍率（仅部分模型支持该计费）',
-    audioOutputRatio: '音频输出倍率（仅部分模型支持该计费）',
-    breadcrumbSettings: '系统设置'
+      'Price multiplier for cached tokens relative to input tokens (e.g. Claude cache read is 0.1, a 90% discount).',
+    completionRatio: 'Completion ratio (custom models only)',
+    completionRatioHint: 'Applies to custom models only.',
+    imageInputRatio: 'Image input ratio (select models only)',
+    imageOutputRatio: 'Image output ratio (select models only)',
+    audioInputRatio: 'Audio input ratio (select models only)',
+    audioOutputRatio: 'Audio output ratio (select models only)',
+    breadcrumbSettings: 'System settings'
   },
-  // 渠道表单（计费相关）
+  // channel form (billing)
   channelForm: {
-    discountLabel: '渠道折扣倍率',
-    discountPlaceholder: '1.0 表示无折扣，0.7 表示七折'
+    discountLabel: 'Channel discount multiplier',
+    discountPlaceholder: '1.0 = no discount, 0.7 = 30% off'
   },
-  // 用户 × 渠道类型折扣编辑器
+  // user × channel type discount editor
   channelRatios: {
-    title: '渠道类型折扣',
-    descriptionPrefix: '设置后与渠道折扣、等级折扣相乘。例：设为 0.8，最终按',
-    formulaCode: '模型官方价 × 渠道折扣 × 等级折扣 × 0.8',
-    descriptionSuffix: '计费。留空视为 1.0。'
+    title: 'Channel type discounts',
+    descriptionPrefix:
+      'Multiplied with channel and tier discounts after being set. Example: set to 0.8, final charge is',
+    formulaCode: 'model list price × channel discount × tier discount × 0.8',
+    descriptionSuffix: 'Leave blank to default to 1.0.'
   },
   // v3 Landing page
   landing: {
     nav: {
-      models: '模型',
-      pricing: '价格',
-      docs: '文档',
-      changelog: '更新日志',
-      enterprise: '企业版',
-      signIn: '登录',
-      startBuilding: '开始构建',
-      dashboard: '控制台'
+      models: 'Models',
+      pricing: 'Pricing',
+      docs: 'Docs',
+      changelog: 'Changelog',
+      enterprise: 'Enterprise',
+      signIn: 'Sign in',
+      startBuilding: 'Start building',
+      dashboard: 'Dashboard'
     },
     hero: {
-      badgeTag: '新',
-      badgeText: 'Claude Opus 4.7 已上线',
-      titleLine1: '一把密钥。',
-      titleLine2Em: '直通每个前沿模型。',
-      lede: '直接讲 OpenAI、Anthropic、Google 的原生协议——插入你正在用的 SDK 即可。没有翻译层、没有改写、没有锁定。',
-      createAccount: '免费注册 →',
-      readDocs: '阅读文档',
-      subtle: '免费额度 · 无需信用卡 · 可随时取消'
+      badgeTag: 'New',
+      badgeText: 'Claude Opus 4.7 is now available',
+      titleLine1: 'One key.',
+      titleLine2Em: 'Every frontier model.',
+      lede: "Speak OpenAI, Anthropic, and Google's native protocols directly — drop it into the SDK you're already using. No translation layer, no rewrites, no lock-in.",
+      createAccount: 'Sign up free →',
+      readDocs: 'Read the docs',
+      subtle: 'Free credits · No credit card · Cancel anytime'
     },
     marquee: {
-      label: '· 一个 API · 覆盖全部供应商 ·'
+      label: '· One API · Every provider ·'
     },
     statement: {
-      line1Strong: '一把密钥。',
-      line1Em: '每个模型。',
-      line2Em: '零锁定。',
-      sub: '为发货团队打造。自动故障切换、生产级可观测性、企业 SLA——开箱即用。'
+      line1Strong: 'One key.',
+      line1Em: 'Every model.',
+      line2Em: 'Zero lock-in.',
+      sub: 'Built for shipping teams. Automatic failover, production-grade observability, enterprise SLA — out of the box.'
     },
     models: {
-      eyebrow: '本周热门模型',
-      title: '前沿模型，',
-      titleEm: '按排名列出。',
-      viewAll: '查看全部 180+ 模型'
+      eyebrow: 'Top models this week',
+      title: 'Frontier models,',
+      titleEm: 'ranked.',
+      viewAll: 'View all 180+ models'
     },
     pillars: {
-      eyebrow: '为生产而生',
-      title: '不是中间商。',
-      titleEm: '而是基础设施。',
-      sub: '在生产环境跑 AI 的一切，你无需自建网关。',
+      eyebrow: 'Built for production',
+      title: 'Not a middleman.',
+      titleEm: 'Infrastructure.',
+      sub: 'Everything you need to run AI in production — without building your own gateway.',
       integration: {
-        num: '01 · 集成',
-        title: '每个模型，',
-        titleEm: '一把密钥。',
-        desc: '改一个字符串即可在 180+ 模型之间切换。无需改 SDK、不被厂商锁定、周末不必加班迁移。'
+        num: '01 · Integration',
+        title: 'Every model,',
+        titleEm: 'one key.',
+        desc: 'Switch between 180+ models by changing a single string. No SDK changes, no vendor lock-in, no weekend migrations.'
       },
       reliability: {
-        num: '02 · 可靠性',
-        title: '自动',
-        titleEm: '故障切换。',
-        desc: '供应商宕机，我们自动路由到同一家族的下一个最佳端点。你的应用不会眨一下眼。'
+        num: '02 · Reliability',
+        title: 'Automatic',
+        titleEm: 'failover.',
+        desc: "When a provider goes down, we route to the next best endpoint in the same family. Your app won't even blink."
       },
       observability: {
-        num: '03 · 可观测性',
-        title: '洞察，',
-        titleEm: '默认开启。',
-        desc: '每次请求记录成本、延迟、token 与模型。按 Key 的分析、异常 Webhook、用量仪表盘一应俱全。'
+        num: '03 · Observability',
+        title: 'Insights,',
+        titleEm: 'on by default.',
+        desc: 'Every request logs cost, latency, tokens, and model. Per-key analytics, anomaly webhooks, and usage dashboards included.'
       }
     },
     apps: {
-      eyebrow: '基于 EZLINK 构建',
-      title: '正在规模化交付 AI 的',
-      titleEm: '团队。',
-      sub: '从周末项目到 C 轮公司——本周这些应用正在通过 EZLINK 路由。',
-      seeAll: '查看所有应用',
-      primary: '主要模型'
+      eyebrow: 'Built on EZLINK',
+      title: 'Teams shipping AI',
+      titleEm: 'at scale.',
+      sub: 'From weekend projects to Series C companies — these apps are routing through EZLINK this week.',
+      seeAll: 'See all apps',
+      primary: 'Primary model'
     },
     trust: {
-      eyebrow: '企业版',
-      title: '为',
-      titleEm: '最后一公里准备好。',
-      sub: '采购、安全、法务会问到的一切——在他们开口之前已备齐。',
-      talkToSales: '联系销售',
+      eyebrow: 'Enterprise',
+      title: 'Ready for',
+      titleEm: 'the last mile.',
+      sub: 'Everything procurement, security, and legal will ask — answered before they ask.',
+      talkToSales: 'Talk to sales',
       compliance: {
-        label: '合规',
+        label: 'Compliance',
         value: 'SOC 2 Type II',
-        sub: 'GDPR · 支持 HIPAA'
+        sub: 'GDPR · HIPAA eligible'
       },
       availability: {
-        label: '可用性',
+        label: 'Availability',
         value: '99.99% SLA',
-        sub: '书面承诺，违约赔付'
+        sub: 'Contractual. Credits on breach.'
       },
       support: {
-        label: '技术支持',
-        value: '专属 7×24',
-        sub: '共享 Slack · 15 分钟响应'
+        label: 'Support',
+        value: 'Dedicated 24/7',
+        sub: 'Shared Slack · 15-min response'
       },
       deployment: {
-        label: '部署',
-        value: '单租户',
-        sub: 'VPC · 可自托管'
+        label: 'Deployment',
+        value: 'Single-tenant',
+        sub: 'VPC · Self-hostable'
       }
     },
     finalCta: {
-      titleLine1: '任意模型，',
+      titleLine1: 'Any model,',
       titleEm: '',
-      titleLine2: '从今天开始发货。',
-      sub: '注册即赠免费额度。无需信用卡。不会锁定。',
-      createAccount: '免费注册 →',
-      readDocs: '阅读文档'
+      titleLine2: 'shipping today.',
+      sub: 'Free credits on signup. No credit card. No lock-in.',
+      createAccount: 'Sign up free →',
+      readDocs: 'Read the docs'
     },
     footer: {
       aboutDesc:
-        '面向生产的统一 AI 网关。一个 API、覆盖前沿模型、零供应商锁定。',
+        'The production-ready unified AI gateway. One API, every frontier model, zero vendor lock-in.',
       sections: {
-        product: '产品',
-        developers: '开发者',
-        company: '公司',
-        legal: '法务'
+        product: 'Product',
+        developers: 'Developers',
+        company: 'Company',
+        legal: 'Legal'
       },
       links: {
-        models: '模型',
-        pricing: '价格',
-        dashboard: '控制台',
-        changelog: '更新日志',
-        documentation: '文档',
-        apiReference: 'API 参考',
-        sdks: 'SDK',
-        status: '服务状态',
-        enterprise: '企业版',
-        security: '安全',
-        blog: '博客',
-        careers: '招聘',
-        terms: '条款',
-        privacy: '隐私',
+        models: 'Models',
+        pricing: 'Pricing',
+        dashboard: 'Dashboard',
+        changelog: 'Changelog',
+        documentation: 'Documentation',
+        apiReference: 'API reference',
+        sdks: 'SDKs',
+        status: 'Status',
+        enterprise: 'Enterprise',
+        security: 'Security',
+        blog: 'Blog',
+        careers: 'Careers',
+        terms: 'Terms',
+        privacy: 'Privacy',
         sla: 'SLA',
         dpa: 'DPA'
       },
-      copyright: '保留所有权利。',
-      status: '所有系统正常运行'
+      copyright: 'All rights reserved.',
+      status: 'All systems operational'
     },
     playground: {
-      replay: '重新播放',
-      copy: '复制',
-      copied: '已复制',
+      replay: 'Replay',
+      copy: 'Copy',
+      copied: 'Copied',
       status: {
-        ready: '就绪',
-        streaming: '流式输出中…'
+        ready: 'Ready',
+        streaming: 'Streaming…'
       },
       file: {
         curl: 'request.sh',
@@ -363,131 +364,131 @@ const zh = {
         javascript: 'example.js'
       },
       metrics: {
-        provider: '供应商',
-        model: '模型',
+        provider: 'Provider',
+        model: 'Model',
         tokens: 'tokens',
-        latency: '延迟',
-        cost: '成本',
-        nativeNote: '原生协议 · 零翻译'
+        latency: 'Latency',
+        cost: 'Cost',
+        nativeNote: 'Native protocol · Zero translation'
       },
       promptLabel: '>  prompt',
-      doneLabel: '✓ 完成'
+      doneLabel: '✓ Done'
     }
   },
-  // 仪表盘
+  // dashboard
   dashboard: {
-    welcome: '你好',
-    welcomeBack: '欢迎回来',
+    welcome: 'Hello',
+    welcomeBack: 'Welcome back',
     tabs: {
-      overview: '概览',
-      analytics: '数据分析'
+      overview: 'Overview',
+      analytics: 'Analytics'
     },
     cards: {
       balance: {
-        title: '可用额度',
-        used: '已使用',
-        usedRatio: '占比'
+        title: 'Available quota',
+        used: 'Used',
+        usedRatio: 'Usage'
       },
       throughput: {
-        title: '实时吞吐',
-        tpm: '每分钟 Tokens',
-        rpm: '每分钟请求',
-        qpm: '每分钟消耗'
+        title: 'Live throughput',
+        tpm: 'Tokens / min',
+        rpm: 'Requests / min',
+        qpm: 'Credits / min'
       },
       today: {
-        title: '今日用量',
-        requests: '请求数',
-        spend: '消耗额度'
+        title: "Today's usage",
+        requests: 'Requests',
+        spend: 'Credits spent'
       }
     },
     popularModels: {
-      title: '热门模型',
-      description: '今日共 {count} 个模型被调用'
+      title: 'Top models',
+      description: '{count} models called today'
     }
   },
-  // 用户管理
+  // user management
   userPage: {
-    title: '用户',
-    countSuffix: '个用户',
-    description: '管理系统用户',
-    addNew: '添加用户',
+    title: 'Users',
+    countSuffix: 'users',
+    description: 'Manage system users',
+    addNew: 'Add user',
     columns: {
       id: 'ID',
-      username: '用户名',
-      displayName: '昵称',
-      email: '邮箱',
-      group: '分组',
-      statistics: '使用统计',
-      role: '角色',
-      status: '状态',
-      actions: '操作'
+      username: 'Username',
+      displayName: 'Display name',
+      email: 'Email',
+      group: 'Group',
+      statistics: 'Usage stats',
+      role: 'Role',
+      status: 'Status',
+      actions: 'Actions'
     },
     stats: {
-      balance: '余额',
-      used: '已用',
-      requests: '请求'
+      balance: 'Balance',
+      used: 'Used',
+      requests: 'Requests'
     },
     role: {
-      user: '普通用户',
-      admin: '管理员',
-      root: '超级管理员',
-      unknown: '未知身份'
+      user: 'User',
+      admin: 'Admin',
+      root: 'Super admin',
+      unknown: 'Unknown'
     },
     status: {
-      activated: '正常',
-      disabled: '已禁用',
-      unknown: '未知状态'
+      activated: 'Active',
+      disabled: 'Disabled',
+      unknown: 'Unknown'
     },
     actions: {
-      label: '操作',
-      update: '编辑',
-      delete: '删除',
-      disable: '禁用',
-      enable: '启用',
-      promote: '提升角色',
-      demote: '降低角色'
+      label: 'Actions',
+      update: 'Edit',
+      delete: 'Delete',
+      disable: 'Disable',
+      enable: 'Enable',
+      promote: 'Promote',
+      demote: 'Demote'
     }
   },
-  // 渠道管理
+  // channel management
   channelPage: {
-    title: '渠道',
-    countSuffix: '个渠道',
-    description: '管理 AI 渠道与负载',
-    addNew: '添加渠道',
+    title: 'Channels',
+    countSuffix: 'channels',
+    description: 'Manage AI channels and load balancing',
+    addNew: 'Add channel',
     columns: {
       id: 'ID',
-      name: '名称',
-      group: '分组',
-      type: '类型',
-      priority: '优先级',
-      weight: '权重',
-      status: '状态',
-      responseTime: '响应时间',
-      usedQuota: '已用配额',
-      actions: '操作'
+      name: 'Name',
+      group: 'Group',
+      type: 'Type',
+      priority: 'Priority',
+      weight: 'Weight',
+      status: 'Status',
+      responseTime: 'Response time',
+      usedQuota: 'Used quota',
+      actions: 'Actions'
     },
     status: {
-      enabled: '已启用',
-      manuallyDisabled: '手动禁用',
-      autoDisabled: '自动禁用',
-      unknown: '未知',
-      updating: '更新中…'
+      enabled: 'Enabled',
+      manuallyDisabled: 'Disabled',
+      autoDisabled: 'Auto-disabled',
+      unknown: 'Unknown',
+      updating: 'Updating…'
     },
     bulk: {
-      delete: '删除',
-      disable: '禁用',
-      enable: '启用'
+      delete: 'Delete',
+      disable: 'Disable',
+      enable: 'Enable'
     },
     response: {
-      untested: '未测试',
-      excellent: '优秀',
-      good: '良好',
-      fair: '一般',
-      slow: '需要优化',
-      lastTest: '最后测试'
+      untested: 'Untested',
+      excellent: 'Excellent',
+      good: 'Good',
+      fair: 'Fair',
+      slow: 'Needs optimization',
+      lastTest: 'Last tested'
     },
     overlay: {
-      processing: '正在处理…'
+      processing: 'Processing…'
     }
   }
 };

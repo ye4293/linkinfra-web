@@ -11,7 +11,7 @@ export const RoleValue = {
 };
 
 export const RoleValueText = {
-  [Role.RoleUser]: '普通用户',
-  [Role.RoleAdmin]: '管理员',
-  [Role.RoleRoot]: '超级管理员'
+  [Role.RoleUser]: 'User',
+  [Role.RoleAdmin]: 'Admin',
+  [Role.RoleRoot]: 'Super admin'
 };

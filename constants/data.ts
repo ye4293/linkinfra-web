@@ -180,13 +180,6 @@ export const navItems: NavItem[] = [
     roles: [1, 10, 100]
   },
   {
-    title: 'Midjourney',
-    href: '/dashboard/midjourney',
-    icon: 'userPen',
-    label: 'midjourney',
-    roles: [1, 10, 100]
-  },
-  {
     title: 'Videos',
     href: '/dashboard/video',
     icon: 'video',
@@ -207,28 +200,6 @@ export const navItems: NavItem[] = [
   //   label: 'file',
   //   roles: [10, 100]
   // },
-  // {
-  //   title: 'Images',
-  //   icon: 'images',
-  //   label: 'images',
-  //   roles: [10, 100],
-  //   children: [
-  //     {
-  //       title: 'Midjourney',
-  //       href: '/dashboard/profile',
-  //       icon: 'userPen',
-  //       label: 'profile',
-  //       roles: [10, 100]
-  //     },
-  //     {
-  //       title: 'SD',
-  //       href: '/',
-  //       icon: 'login',
-  //       label: 'login',
-  //       roles: [10, 100]
-  //     }
-  //   ]
-  // },
   {
     title: 'Setting',
     icon: 'setting',
@@ -236,42 +207,42 @@ export const navItems: NavItem[] = [
     roles: [1, 10, 100],
     children: [
       {
-        title: '个人设置',
+        title: 'Personal settings',
         href: '/dashboard/setting/updateUser',
         icon: 'user',
         label: 'personal-setting',
         roles: [1, 10, 100]
       },
       {
-        title: '系统设置',
+        title: 'System settings',
         href: '/dashboard/setting',
         icon: 'setting',
         label: 'system-setting',
         roles: [100]
       },
       {
-        title: '支付设置',
+        title: 'Payment settings',
         href: '/dashboard/setting/payment',
         icon: 'billing',
         label: 'payment-setting',
         roles: [100]
       },
       {
-        title: '分组与模型定价设置',
+        title: 'Groups & model pricing',
         href: '/dashboard/setting/pricing',
         icon: 'billing',
         label: 'pricing-setting',
         roles: [100]
       },
       {
-        title: '折扣设置',
+        title: 'Discount settings',
         href: '/dashboard/setting/discount',
         icon: 'billing',
         label: 'discount-setting',
         roles: [100]
       },
       {
-        title: '模型设置',
+        title: 'Model settings',
         href: '/dashboard/setting/model',
         icon: 'channel',
         label: 'model-setting',
