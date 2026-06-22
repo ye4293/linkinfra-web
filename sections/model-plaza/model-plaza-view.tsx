@@ -307,7 +307,7 @@ function FilterBadge({
 // --- 主视图 ---
 export default function ModelPlazaView() {
   const { t } = useLocale();
-  useDocumentTitle('模型广场');
+  useDocumentTitle('Model marketplace');
   const router = useRouter();
 
   const [models, setModels] = useState<ModelPlazaItem[]>([]);

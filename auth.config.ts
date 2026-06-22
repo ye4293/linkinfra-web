@@ -91,7 +91,7 @@ const authConfig = {
           }
         );
         const userLogin = await res.json();
-        console.log('账号密码登录', res, res.headers.get('set-cookie'));
+        console.log('Credentials login', res, res.headers.get('set-cookie'));
         console.log('----userLogin----', userLogin);
         if (!userLogin?.success) return null;
         // console.log('userLogin', userLogin)
@@ -196,7 +196,7 @@ const authConfig = {
           }
         );
 
-        console.log('github登录', res, res.headers.get('set-cookie'));
+        console.log('GitHub login', res, res.headers.get('set-cookie'));
 
         const userInfo = await res.json();
         if (!userInfo.success) return false;
@@ -259,7 +259,7 @@ const authConfig = {
           }
         );
 
-        console.log('google登录', res, res.headers.get('set-cookie'));
+        console.log('Google login', res, res.headers.get('set-cookie'));
 
         const userInfo = await res.json();
         if (!userInfo.success) return false;

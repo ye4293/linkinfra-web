@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     if (delay > 58000) {
       return NextResponse.json(
         {
-          error: `延迟时间不能超过 58000 毫秒 (Vercel Pro 限制)`,
+          error: `Delay cannot exceed 58000 ms (Vercel Pro limit).`,
           maxAllowed: 58000,
           requested: delay
         },
@@ -33,13 +33,13 @@ export async function POST(request: NextRequest) {
 
     if (delay < 0) {
       return NextResponse.json(
-        { error: `延迟时间不能为负数` },
+        { error: `Delay cannot be negative.` },
         { status: 400 }
       );
     }
 
     // eslint-disable-next-line no-console
-    console.log(`[test-timeout] 收到请求，将等待 ${delay}ms`);
+    console.log(`[test-timeout] Request received, waiting ${delay}ms`);
 
     // 模拟长时间运行的进程
     await new Promise((resolve) => setTimeout(resolve, delay));
@@ -49,12 +49,12 @@ export async function POST(request: NextRequest) {
 
     // eslint-disable-next-line no-console
     console.log(
-      `[test-timeout] 等待了 ${delay}ms，实际用时 ${actualDuration}ms，现在发送响应`
+      `[test-timeout] Waited ${delay}ms, actual duration ${actualDuration}ms, sending response now`
     );
 
     return NextResponse.json({
       success: true,
-      message: `成功！函数等待了 ${delay}ms 而没有超时`,
+      message: `Success. Function waited ${delay}ms without timing out.`,
       requestedDelay: delay,
       actualDuration: actualDuration,
       timestamp: new Date().toISOString(),
@@ -65,15 +65,15 @@ export async function POST(request: NextRequest) {
     const endTime = Date.now();
     const actualDuration = endTime - startTime;
 
-    let errorMessage = '发生了内部服务器错误';
+    let errorMessage = 'Internal server error.';
     if (error instanceof Error) {
       errorMessage = error.message;
     }
 
     // eslint-disable-next-line no-console
-    console.error('[test-timeout] 发生错误:', error);
+    console.error('[test-timeout] Error occurred:', error);
     // eslint-disable-next-line no-console
-    console.error(`[test-timeout] 错误发生时间: ${actualDuration}ms`);
+    console.error(`[test-timeout] Error time: ${actualDuration}ms`);
 
     return NextResponse.json(
       {
@@ -92,11 +92,12 @@ export async function POST(request: NextRequest) {
  */
 export async function GET() {
   return NextResponse.json({
-    info: 'Vercel 超时测试 API',
+    info: 'Vercel timeout test API',
     usage: {
       method: 'POST',
       body: { delay: 'number (0-58000)' },
-      description: '发送延迟时间（毫秒），测试 Vercel 函数是否能运行指定时间'
+      description:
+        'Send a delay in milliseconds to test how long a Vercel function can run.'
     },
     limits: {
       maxDuration: 60000,
@@ -105,11 +106,11 @@ export async function GET() {
     },
     examples: [
       {
-        description: '测试 10 秒',
+        description: 'Test 10 seconds',
         body: { delay: 10000 }
       },
       {
-        description: '测试 50 秒 (推荐)',
+        description: 'Test 50 seconds (recommended)',
         body: { delay: 50000 }
       }
     ]

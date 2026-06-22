@@ -33,20 +33,20 @@ export function SystemTokenCard() {
         await updateSession({ accessToken: json.data });
 
         toast({
-          title: '令牌已重置',
-          description: '新令牌已复制到剪贴板，请妥善保管'
+          title: 'Token reset.',
+          description: 'New token copied to clipboard. Keep it safe.'
         });
       } else {
         toast({
-          title: '生成失败',
-          description: json.message || '请重试',
+          title: 'Generation failed.',
+          description: json.message || 'Please try again.',
           variant: 'destructive'
         });
       }
     } catch (e) {
       toast({
-        title: '请求失败',
-        description: '请检查网络后重试',
+        title: 'Request failed.',
+        description: 'Check your network connection and try again.',
         variant: 'destructive'
       });
     } finally {
@@ -58,8 +58,8 @@ export function SystemTokenCard() {
     if (!systemToken) return;
     await navigator.clipboard.writeText(systemToken);
     toast({
-      title: '已复制',
-      description: '系统令牌已复制到剪贴板'
+      title: 'Copied.',
+      description: 'System token copied to clipboard.'
     });
   };
 
@@ -71,10 +71,11 @@ export function SystemTokenCard() {
             <Key className="h-5 w-5 text-primary" />
           </div>
           <div className="min-w-0 flex-1">
-            <CardTitle className="text-lg">系统访问令牌</CardTitle>
+            <CardTitle className="text-lg">System access token</CardTitle>
             <CardDescription className="mt-1 text-sm leading-relaxed">
-              用于 API
-              调用的身份验证令牌，请妥善保管。生成或重新生成后请立即保存，页面刷新后将不再显示完整令牌。
+              Authentication token for API calls. Keep it safe. Save it
+              immediately after generating or regenerating — the full token will
+              not be shown again after a page refresh.
             </CardDescription>
           </div>
         </div>
@@ -96,7 +97,7 @@ export function SystemTokenCard() {
                 className="gap-1.5"
               >
                 <Copy className="h-4 w-4" />
-                复制
+                Copy
               </Button>
               <Button
                 type="button"
@@ -110,7 +111,7 @@ export function SystemTokenCard() {
                 ) : (
                   <Key className="h-4 w-4" />
                 )}
-                重新生成
+                Regenerate
               </Button>
             </div>
           </div>
@@ -126,7 +127,7 @@ export function SystemTokenCard() {
             ) : (
               <Key className="h-4 w-4" />
             )}
-            {systemToken ? '重新生成' : '生成令牌'}
+            {systemToken ? 'Regenerate' : 'Generate token'}
           </Button>
         )}
       </CardContent>

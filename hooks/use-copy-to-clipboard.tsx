@@ -11,7 +11,7 @@ export function useCopyToClipboard() {
       const textToCopy = String(text);
       await navigator.clipboard.writeText(textToCopy);
       setIsCopied(true);
-      toast.success(`${label || '内容'}已复制到剪贴板`, {
+      toast.success(`${label || 'Content'} copied to clipboard.`, {
         duration: 2000
       });
 
@@ -20,8 +20,8 @@ export function useCopyToClipboard() {
         setIsCopied(false);
       }, 2000);
     } catch (error) {
-      console.error('复制失败:', error);
-      toast.error('复制失败，请重试', {
+      console.error('Copy failed:', error);
+      toast.error('Copy failed. Please try again.', {
         duration: 2000
       });
     }
