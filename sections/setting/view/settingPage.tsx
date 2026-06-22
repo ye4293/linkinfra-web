@@ -26,7 +26,7 @@ import {
 
 const breadcrumbItems = [
   { title: 'Dashboard', link: '/dashboard' },
-  { title: '系统设置', link: '/dashboard/setting' }
+  { title: 'System settings', link: '/dashboard/setting' }
 ];
 
 interface Option {
@@ -331,10 +331,10 @@ export default function SettingPage() {
         }
       }
 
-      toast.success('设置保存成功！');
+      toast.success('Saved.');
     } catch (error) {
       console.error('Save error:', error);
-      toast.error('保存失败，请重试');
+      toast.error('Save failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -375,11 +375,11 @@ export default function SettingPage() {
         }
       }
 
-      toast.success('SMTP 设置保存成功！');
-      setSmtpToken(''); // 清空密码输入框
+      toast.success('SMTP settings saved.');
+      setSmtpToken(''); // clear the password field
     } catch (error) {
       console.error('Save SMTP error:', error);
-      toast.error('保存 SMTP 设置失败');
+      toast.error('Save failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -402,10 +402,10 @@ export default function SettingPage() {
         throw new Error('Failed to save Feishu webhook');
       }
 
-      toast.success('飞书 Webhook 设置保存成功！');
+      toast.success('Feishu webhook settings saved.');
     } catch (error) {
       console.error('Save Feishu error:', error);
-      toast.error('保存飞书设置失败');
+      toast.error('Save failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -443,12 +443,12 @@ export default function SettingPage() {
         }
       }
 
-      toast.success('S3/R2 存储设置保存成功！');
-      setCfFileAccessKey(''); // 清空密钥输入框
+      toast.success('Storage settings saved.');
+      setCfFileAccessKey(''); // clear key fields
       setCfFileSecretKey('');
     } catch (error) {
       console.error('Save Storage error:', error);
-      toast.error('保存存储设置失败');
+      toast.error('Save failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -457,14 +457,14 @@ export default function SettingPage() {
   // ==================== 测试 SMTP 邮件发送 ====================
   const handleTestSMTP = async () => {
     if (!testEmail) {
-      toast.error('请输入测试邮箱地址');
+      toast.error('Enter a test email address.');
       return;
     }
 
-    // 简单的邮箱格式验证
+    // simple email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(testEmail)) {
-      toast.error('请输入有效的邮箱地址');
+      toast.error('Enter a valid email address.');
       return;
     }
 
@@ -479,13 +479,13 @@ export default function SettingPage() {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        toast.success('测试邮件发送成功，请检查收件箱！');
+        toast.success('Test email sent. Check your inbox.');
       } else {
-        toast.error(result.message || '测试邮件发送失败');
+        toast.error(result.message || 'Failed to send test email.');
       }
     } catch (error) {
       console.error('Test SMTP error:', error);
-      toast.error('测试邮件发送失败，请检查 SMTP 配置');
+      toast.error('Failed to send test email. Check your SMTP settings.');
     } finally {
       setIsTesting(false);
     }
@@ -494,18 +494,18 @@ export default function SettingPage() {
   // ==================== 测试飞书 Webhook ====================
   const handleTestFeishu = async () => {
     if (!feishuWebhookUrls.trim()) {
-      toast.error('请先填写飞书 Webhook URL');
+      toast.error('Enter a Feishu webhook URL first.');
       return;
     }
 
-    // 解析多个 Webhook URL（按行分割，过滤空行）
+    // parse multiple webhook URLs (split by line, filter blanks)
     const urls = feishuWebhookUrls
       .split('\n')
       .map((url) => url.trim())
       .filter((url) => url.length > 0);
 
     if (urls.length === 0) {
-      toast.error('请填写至少一个有效的 Webhook URL');
+      toast.error('Enter at least one valid webhook URL.');
       return;
     }
 
@@ -520,21 +520,23 @@ export default function SettingPage() {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        toast.success(`飞书测试消息发送成功！共 ${urls.length} 个 Webhook`);
+        toast.success(`Feishu test message sent to ${urls.length} webhook(s).`);
       } else {
-        toast.error(result.message || '飞书测试消息发送失败');
+        toast.error(result.message || 'Failed to send Feishu test message.');
       }
     } catch (error) {
       console.error('Test Feishu error:', error);
-      toast.error('飞书测试失败，请检查 Webhook URL');
+      toast.error('Feishu test failed. Check the webhook URL.');
     } finally {
       setIsTesting(false);
     }
   };
 
   if (error)
-    return <div className="p-4 text-red-500">加载设置失败: {error}</div>;
-  if (isDataLoading) return <div className="p-4">加载中...</div>;
+    return (
+      <div className="p-4 text-red-500">Failed to load settings: {error}</div>
+    );
+  if (isDataLoading) return <div className="p-4">Loading...</div>;
 
   return (
     <PageContainer scrollable>
@@ -542,11 +544,11 @@ export default function SettingPage() {
         <Breadcrumbs items={breadcrumbItems} />
 
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold tracking-tight">系统设置</h2>
+          <h2 className="text-2xl font-bold tracking-tight">System settings</h2>
           <div className="flex items-center space-x-2">
             <Button onClick={handleSave} disabled={isLoading}>
               <Save className="mr-2 h-4 w-4" />
-              {isLoading ? '保存中...' : '保存设置'}
+              {isLoading ? 'Saving...' : 'Save settings'}
             </Button>
           </div>
         </div>
@@ -555,65 +557,69 @@ export default function SettingPage() {
         <div className="grid gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>通用设置</CardTitle>
+              <CardTitle>General</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid w-full max-w-sm items-center gap-1.5">
-                <Label htmlFor="system-name">系统名称</Label>
+                <Label htmlFor="system-name">System name</Label>
                 <Input
                   id="system-name"
                   type="text"
                   value={systemName}
                   onChange={(e) => setSystemName(e.target.value)}
-                  placeholder="例如：生产环境、客户A站点"
+                  placeholder="e.g. Production, Client A"
                 />
                 <p className="text-sm text-muted-foreground">
-                  设置系统名称后，所有推送消息（邮件、飞书等）都会带上此名称前缀，方便区分不同站点
+                  Used as a prefix in all push notifications (email, Feishu,
+                  etc.) to distinguish different sites.
                 </p>
               </div>
               <div className="grid w-full max-w-2xl items-center gap-1.5">
-                <Label htmlFor="frontend-server-address">前端服务地址</Label>
+                <Label htmlFor="frontend-server-address">
+                  Frontend server address
+                </Label>
                 <Input
                   id="frontend-server-address"
                   type="text"
                   value={frontendServerAddress}
                   onChange={(e) => setFrontendServerAddress(e.target.value)}
-                  placeholder="例如：https://web.example.com"
+                  placeholder="e.g. https://web.example.com"
                 />
                 <p className="text-sm text-muted-foreground">
-                  对应配置项
-                  FrontendServerAddress，用于前端页面访问地址和浏览器回跳地址
+                  Corresponds to FrontendServerAddress. Used for frontend page
+                  access and browser redirect URLs.
                 </p>
               </div>
               <div className="grid w-full max-w-2xl items-center gap-1.5">
-                <Label htmlFor="server-address">后端服务地址</Label>
+                <Label htmlFor="server-address">Backend server address</Label>
                 <Input
                   id="server-address"
                   type="text"
                   value={serverAddress}
                   onChange={(e) => setServerAddress(e.target.value)}
-                  placeholder="例如：https://api.example.com"
+                  placeholder="e.g. https://api.example.com"
                 />
                 <p className="text-sm text-muted-foreground">
-                  对应配置项 ServerAddress，用于 API
-                  对外地址、回调地址和资源访问地址
+                  Corresponds to ServerAddress. Used for the public API address,
+                  callback URLs, and resource access.
                 </p>
               </div>
               <div className="grid w-full max-w-2xl items-center gap-1.5">
-                <Label htmlFor="docs-address">文档地址</Label>
+                <Label htmlFor="docs-address">Docs address</Label>
                 <Input
                   id="docs-address"
                   type="text"
                   value={docsAddress}
                   onChange={(e) => setDocsAddress(e.target.value)}
-                  placeholder="例如：https://docs.example.com"
+                  placeholder="e.g. https://docs.example.com"
                 />
                 <p className="text-sm text-muted-foreground">
-                  对应配置项 DocsAddress，用于首页和导航栏中的文档链接地址
+                  Corresponds to DocsAddress. Used for the documentation link on
+                  the home page and navigation bar.
                 </p>
               </div>
               <div className="grid w-full max-w-sm items-center gap-1.5">
-                <Label htmlFor="retry-count">失败重试次数</Label>
+                <Label htmlFor="retry-count">Retry count</Label>
                 <Input
                   id="retry-count"
                   type="number"
@@ -621,11 +627,11 @@ export default function SettingPage() {
                   max="10"
                   value={retryCount}
                   onChange={(e) => handleRetryCountChange(e.target.value)}
-                  placeholder="请输入重试次数"
+                  placeholder="Enter retry count"
                 />
                 <p className="text-sm text-muted-foreground">
-                  当上游渠道返回 5xx
-                  错误或超时时，系统将进行重试，请合理设置重试次数
+                  Number of retries when an upstream channel returns a 5xx error
+                  or times out. Set this carefully.
                 </p>
               </div>
             </CardContent>
@@ -633,23 +639,26 @@ export default function SettingPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>自动禁用渠道</CardTitle>
+              <CardTitle>Auto-disable channels</CardTitle>
               <CardDescription>
-                当响应返回信息包含如下关键词时，将自动禁用该渠道。一行一个关键词，支持大小写不敏感匹配。
+                When a response contains any of the following keywords, the
+                channel will be automatically disabled. One keyword per line;
+                matching is case-insensitive.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* 自动禁用开关 */}
+              {/* auto-disable toggle */}
               <div className="flex items-center justify-between rounded-lg border p-4">
                 <div className="space-y-0.5">
                   <Label
                     htmlFor="auto-disable-enabled"
                     className="text-base font-medium"
                   >
-                    启用自动禁用
+                    Enable auto-disable
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    开启后，当渠道返回包含特定关键词的错误时，系统将自动禁用该渠道
+                    When enabled, channels that return errors matching the
+                    keywords below will be disabled automatically.
                   </p>
                 </div>
                 <Switch
@@ -660,30 +669,38 @@ export default function SettingPage() {
               </div>
 
               <div className="grid w-full items-center gap-1.5">
-                <Label htmlFor="auto-disable-keywords">自动禁用关键词</Label>
+                <Label htmlFor="auto-disable-keywords">
+                  Auto-disable keywords
+                </Label>
                 <Textarea
                   id="auto-disable-keywords"
                   value={autoDisableKeywords}
                   onChange={(e) => setAutoDisableKeywords(e.target.value)}
-                  placeholder="一行一个关键词，例如：&#10;api key not valid&#10;permission denied&#10;insufficient_quota&#10;consumer&#10;has been suspended"
+                  placeholder="One keyword per line, e.g.:&#10;api key not valid&#10;permission denied&#10;insufficient_quota&#10;consumer&#10;has been suspended"
                   className="h-60 font-mono text-sm"
                 />
                 <p className="text-sm text-muted-foreground">
-                  包括API密钥错误、余额不足、权限问题、账户被暂停等各种需要自动禁用的错误关键词
+                  Include keywords for invalid API keys, insufficient balance,
+                  permission issues, suspended accounts, and other conditions
+                  that warrant auto-disabling.
                 </p>
               </div>
 
               <div className="grid w-full items-center gap-1.5">
-                <Label htmlFor="retry-keywords">跨渠道重试关键词</Label>
+                <Label htmlFor="retry-keywords">
+                  Cross-channel retry keywords
+                </Label>
                 <Textarea
                   id="retry-keywords"
                   value={retryKeywords}
                   onChange={(e) => setRetryKeywords(e.target.value)}
-                  placeholder="一行一个关键词，例如：&#10;api key not valid&#10;billing hard limit has been reached&#10;your resource has been blocked because we detected unusual behavior"
+                  placeholder="One keyword per line, e.g.:&#10;api key not valid&#10;billing hard limit has been reached&#10;your resource has been blocked because we detected unusual behavior"
                   className="h-60 font-mono text-sm"
                 />
                 <p className="text-sm text-muted-foreground">
-                  上游返回的错误消息（不区分大小写）若包含任一关键词，则视为可重试错误，会自动切换到其他渠道继续尝试
+                  When the upstream error message (case-insensitive) contains
+                  any of these keywords, it is treated as a retryable error and
+                  the system will automatically switch to another channel.
                 </p>
               </div>
             </CardContent>
@@ -691,23 +708,26 @@ export default function SettingPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>自动启用渠道</CardTitle>
+              <CardTitle>Auto-enable channels</CardTitle>
               <CardDescription>
-                定期测试被自动禁用的渠道，若测试通过则自动恢复启用。手动禁用的渠道不会被自动恢复。
+                Periodically test auto-disabled channels and re-enable them if
+                they pass. Manually disabled channels will not be
+                auto-recovered.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* 自动启用开关 */}
+              {/* auto-enable toggle */}
               <div className="flex items-center justify-between rounded-lg border p-4">
                 <div className="space-y-0.5">
                   <Label
                     htmlFor="auto-enable-enabled"
                     className="text-base font-medium"
                   >
-                    启用自动启用
+                    Enable auto-enable
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    开启后，定期测试通过的自动禁用渠道将被自动恢复为启用状态
+                    When enabled, auto-disabled channels that pass periodic
+                    tests will be automatically restored.
                   </p>
                 </div>
                 <Switch
@@ -717,10 +737,10 @@ export default function SettingPage() {
                 />
               </div>
 
-              {/* 测试频率 */}
+              {/* test frequency */}
               <div className="grid w-full items-center gap-1.5">
                 <Label htmlFor="auto-test-frequency">
-                  自动测试频率（分钟）
+                  Auto-test frequency (minutes)
                 </Label>
                 <Input
                   id="auto-test-frequency"
@@ -731,19 +751,19 @@ export default function SettingPage() {
                     const v = parseInt(e.target.value);
                     setAutoTestFrequency(isNaN(v) || v < 0 ? 0 : v);
                   }}
-                  placeholder="0 表示禁用定时测试"
+                  placeholder="0 to disable scheduled tests"
                   className="w-48"
                 />
                 <p className="text-sm text-muted-foreground">
-                  系统每隔此分钟数自动测试一次所有渠道。设为 0
-                  则不启用定时测试。修改后无需重启即可生效。
+                  The system tests all channels at this interval. Set to 0 to
+                  disable. Changes take effect without a restart.
                 </p>
               </div>
 
-              {/* 响应时间阈值 */}
+              {/* response time threshold */}
               <div className="grid w-full items-center gap-1.5">
                 <Label htmlFor="channel-disable-threshold">
-                  响应时间阈值（秒）
+                  Response time threshold (seconds)
                 </Label>
                 <Input
                   id="channel-disable-threshold"
@@ -755,12 +775,13 @@ export default function SettingPage() {
                     const v = parseFloat(e.target.value);
                     setChannelDisableThreshold(isNaN(v) || v < 0 ? 0 : v);
                   }}
-                  placeholder="例如：5"
+                  placeholder="e.g. 5"
                   className="w-48"
                 />
                 <p className="text-sm text-muted-foreground">
-                  自动测试时，若渠道响应时间超过此秒数则跳过自动启用（防止把响应过慢的渠道误恢复）。设为
-                  0 表示不校验响应时间。
+                  During auto-tests, channels whose response time exceeds this
+                  value will be skipped for auto-enabling (prevents restoring
+                  slow channels). Set to 0 to skip this check.
                 </p>
               </div>
             </CardContent>
@@ -768,14 +789,19 @@ export default function SettingPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>上游模型巡检</CardTitle>
+              <CardTitle>Upstream model patrol</CardTitle>
               <CardDescription>
-                定期检测各渠道上游模型列表变化，自动同步新增或删除的模型。仅对状态为"已启用"的渠道生效，各渠道需单独开启巡检。
+                Periodically check each channel's upstream model list for
+                additions or removals, and sync changes automatically. Only
+                applies to enabled channels; each channel must have patrol
+                enabled individually.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid w-full items-center gap-1.5">
-                <Label htmlFor="upstream-interval">巡检间隔（分钟）</Label>
+                <Label htmlFor="upstream-interval">
+                  Patrol interval (minutes)
+                </Label>
                 <Input
                   id="upstream-interval"
                   type="number"
@@ -786,79 +812,83 @@ export default function SettingPage() {
                     const v = parseInt(e.target.value);
                     setUpstreamIntervalMinutes(isNaN(v) || v < 1 ? 30 : v);
                   }}
-                  placeholder="默认 30"
+                  placeholder="Default 30"
                   className="w-48"
                 />
                 <p className="text-sm text-muted-foreground">
-                  全局生效。每隔此分钟数对已开启巡检的渠道检测一次上游模型变化。
+                  Global setting. Checks upstream model changes for all
+                  patrol-enabled channels at this interval.
                 </p>
               </div>
             </CardContent>
           </Card>
 
-          {/* ==================== 提醒设置 ==================== */}
+          {/* ==================== Notification settings ==================== */}
           <Separator className="my-6" />
-          <h3 className="text-xl font-semibold tracking-tight">提醒设置</h3>
+          <h3 className="text-xl font-semibold tracking-tight">
+            Notification settings
+          </h3>
 
-          {/* SMTP 邮箱配置 */}
+          {/* SMTP configuration */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Mail className="h-5 w-5" />
-                配置 SMTP
+                Configure SMTP
               </CardTitle>
               <CardDescription>
-                用以支持系统的邮件发送，如验证码、通知等
+                Used to enable system email sending, such as verification codes
+                and notifications.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div className="space-y-2">
-                  <Label htmlFor="smtp-server">SMTP 服务器地址</Label>
+                  <Label htmlFor="smtp-server">SMTP server</Label>
                   <Input
                     id="smtp-server"
                     value={smtpServer}
                     onChange={(e) => setSmtpServer(e.target.value)}
-                    placeholder="例如：smtp.qq.com"
+                    placeholder="e.g. smtp.gmail.com"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="smtp-port">SMTP 端口</Label>
+                  <Label htmlFor="smtp-port">SMTP port</Label>
                   <Input
                     id="smtp-port"
                     value={smtpPort}
                     onChange={(e) => setSmtpPort(e.target.value)}
-                    placeholder="例如：465 或 587"
+                    placeholder="e.g. 465 or 587"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="smtp-account">SMTP 账户</Label>
+                  <Label htmlFor="smtp-account">SMTP account</Label>
                   <Input
                     id="smtp-account"
                     value={smtpAccount}
                     onChange={(e) => setSmtpAccount(e.target.value)}
-                    placeholder="登录 SMTP 服务器的账户"
+                    placeholder="Account used to log in to the SMTP server"
                   />
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div className="space-y-2">
-                  <Label htmlFor="smtp-from">SMTP 发送者邮箱</Label>
+                  <Label htmlFor="smtp-from">Sender address</Label>
                   <Input
                     id="smtp-from"
                     value={smtpFrom}
                     onChange={(e) => setSmtpFrom(e.target.value)}
-                    placeholder="发送邮件时显示的邮箱地址"
+                    placeholder="From address displayed on outgoing emails"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="smtp-token">SMTP 访问凭证</Label>
+                  <Label htmlFor="smtp-token">SMTP credential</Label>
                   <Input
                     id="smtp-token"
                     type="password"
                     value={smtpToken}
                     onChange={(e) => setSmtpToken(e.target.value)}
-                    placeholder="敏感信息不会发送到前端显示"
+                    placeholder="Sensitive — not displayed after saving"
                   />
                 </div>
                 <div className="flex items-center space-x-2 pt-6">
@@ -867,25 +897,25 @@ export default function SettingPage() {
                     checked={smtpSSLEnabled}
                     onCheckedChange={setSmtpSSLEnabled}
                   />
-                  <Label htmlFor="smtp-ssl">启用 SMTP SSL</Label>
+                  <Label htmlFor="smtp-ssl">Enable SMTP SSL</Label>
                 </div>
               </div>
               <div className="flex flex-wrap items-end gap-4">
                 <Button onClick={handleSaveSMTP} disabled={isLoading}>
                   <Save className="mr-2 h-4 w-4" />
-                  保存 SMTP 设置
+                  Save SMTP settings
                 </Button>
 
-                {/* 测试 SMTP */}
+                {/* test SMTP */}
                 <div className="flex items-end gap-2">
                   <div className="space-y-2">
-                    <Label htmlFor="test-email">测试邮箱</Label>
+                    <Label htmlFor="test-email">Test email address</Label>
                     <Input
                       id="test-email"
                       type="email"
                       value={testEmail}
                       onChange={(e) => setTestEmail(e.target.value)}
-                      placeholder="输入接收测试邮件的邮箱"
+                      placeholder="Enter the address to receive the test email"
                       className="w-64"
                     />
                   </div>
@@ -895,44 +925,45 @@ export default function SettingPage() {
                     disabled={isTesting || !smtpServer}
                   >
                     <SendHorizontal className="mr-2 h-4 w-4" />
-                    {isTesting ? '发送中...' : '发送测试邮件'}
+                    {isTesting ? 'Sending...' : 'Send test email'}
                   </Button>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* 飞书 Webhook 配置 */}
+          {/* Feishu Webhook configuration */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MessageSquare className="h-5 w-5" />
-                配置飞书提醒
+                Configure Feishu notifications
               </CardTitle>
               <CardDescription>
-                用以支持系统通过飞书 Webhook 发送通知提醒，支持配置多个 Webhook
+                Used to send notifications via Feishu webhooks. Multiple
+                webhooks are supported.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="feishu-webhook">飞书 Webhook URL</Label>
+                <Label htmlFor="feishu-webhook">Feishu webhook URL</Label>
                 <Textarea
                   id="feishu-webhook"
                   value={feishuWebhookUrls}
                   onChange={(e) => setFeishuWebhookUrls(e.target.value)}
-                  placeholder="一行一个 Webhook URL，例如：&#10;https://open.feishu.cn/open-apis/bot/v2/hook/xxxxxxxx&#10;https://open.feishu.cn/open-apis/bot/v2/hook/yyyyyyyy"
+                  placeholder="One webhook URL per line, e.g.:&#10;https://open.feishu.cn/open-apis/bot/v2/hook/xxxxxxxx&#10;https://open.feishu.cn/open-apis/bot/v2/hook/yyyyyyyy"
                   className="h-32 font-mono text-sm"
                 />
                 <p className="text-sm text-muted-foreground">
-                  在飞书群组中添加自定义机器人后获取的 Webhook
-                  地址。支持填写多个，每行一个，系统将向所有配置的 Webhook
-                  发送通知。
+                  The webhook URL obtained after adding a custom bot to a Feishu
+                  group. Multiple URLs are supported — enter one per line and
+                  notifications will be sent to all of them.
                 </p>
               </div>
               <div className="flex gap-4">
                 <Button onClick={handleSaveFeishu} disabled={isLoading}>
                   <Save className="mr-2 h-4 w-4" />
-                  保存飞书设置
+                  Save Feishu settings
                 </Button>
                 <Button
                   variant="outline"
@@ -940,40 +971,44 @@ export default function SettingPage() {
                   disabled={isTesting || !feishuWebhookUrls.trim()}
                 >
                   <SendHorizontal className="mr-2 h-4 w-4" />
-                  {isTesting ? '发送中...' : '发送测试消息'}
+                  {isTesting ? 'Sending...' : 'Send test message'}
                 </Button>
               </div>
             </CardContent>
           </Card>
 
-          {/* ==================== 存储设置 ==================== */}
+          {/* ==================== Storage settings ==================== */}
           <Separator className="my-6" />
-          <h3 className="text-xl font-semibold tracking-tight">存储设置</h3>
+          <h3 className="text-xl font-semibold tracking-tight">
+            Storage settings
+          </h3>
 
-          {/* S3/R2 存储配置 */}
+          {/* S3/R2 storage configuration */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <HardDrive className="h-5 w-5" />
-                配置 S3/R2 存储
+                Configure S3/R2 storage
               </CardTitle>
               <CardDescription>
-                配置 S3 兼容的对象存储服务（如 Cloudflare R2、阿里云 OSS、AWS
-                S3），用于存储生成的图片和视频文件
+                Configure an S3-compatible object storage service (e.g.
+                Cloudflare R2, Alibaba Cloud OSS, AWS S3) for storing generated
+                images and videos.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* 启用开关 */}
+              {/* enable toggle */}
               <div className="flex items-center justify-between rounded-lg border p-4">
                 <div className="space-y-0.5">
                   <Label
                     htmlFor="cf-r2store-enabled"
                     className="text-base font-medium"
                   >
-                    启用 S3/R2 存储
+                    Enable S3/R2 storage
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    开启后，生成的图片和视频将上传到 S3 兼容存储并返回 URL
+                    When enabled, generated images and videos will be uploaded
+                    to S3-compatible storage and returned as URLs.
                   </p>
                 </div>
                 <Switch
@@ -985,44 +1020,45 @@ export default function SettingPage() {
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="cf-file-endpoint">S3 端点 (Endpoint)</Label>
+                  <Label htmlFor="cf-file-endpoint">S3 endpoint</Label>
                   <Input
                     id="cf-file-endpoint"
                     value={cfFileEndpoint}
                     onChange={(e) => setCfFileEndpoint(e.target.value)}
-                    placeholder="例如：https://xxx.r2.cloudflarestorage.com"
+                    placeholder="e.g. https://xxx.r2.cloudflarestorage.com"
                   />
                   <p className="text-xs text-muted-foreground">
-                    S3 兼容服务的端点 URL
+                    Endpoint URL of the S3-compatible service.
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="cf-bucket-filename">
-                    存储桶名称 (Bucket)
-                  </Label>
+                  <Label htmlFor="cf-bucket-filename">Bucket name</Label>
                   <Input
                     id="cf-bucket-filename"
                     value={cfBucketFileName}
                     onChange={(e) => setCfBucketFileName(e.target.value)}
-                    placeholder="例如：my-bucket"
+                    placeholder="e.g. my-bucket"
                   />
                   <p className="text-xs text-muted-foreground">
-                    存储文件的桶名称
+                    The name of the bucket to store files in.
                   </p>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="cf-file-publicurl">公共访问 URL (可选)</Label>
+                <Label htmlFor="cf-file-publicurl">
+                  Public access URL (optional)
+                </Label>
                 <Input
                   id="cf-file-publicurl"
                   value={cfFilePublicUrl}
                   onChange={(e) => setCfFilePublicUrl(e.target.value)}
-                  placeholder="例如：https://file.example.com"
+                  placeholder="e.g. https://file.example.com"
                 />
                 <p className="text-xs text-muted-foreground">
-                  用于生成可公开访问的文件链接。Cloudflare R2 需配置自定义域；若
-                  S3 端点本身支持公开访问（如 Rains3），可留空。
+                  Used to generate publicly accessible file links. Cloudflare R2
+                  requires a custom domain. If the S3 endpoint already supports
+                  public access (e.g. Rains3), this can be left blank.
                 </p>
               </div>
 
@@ -1034,7 +1070,7 @@ export default function SettingPage() {
                     type="password"
                     value={cfFileAccessKey}
                     onChange={(e) => setCfFileAccessKey(e.target.value)}
-                    placeholder="敏感信息不会发送到前端显示"
+                    placeholder="Sensitive — not displayed after saving"
                   />
                 </div>
                 <div className="space-y-2">
@@ -1044,27 +1080,27 @@ export default function SettingPage() {
                     type="password"
                     value={cfFileSecretKey}
                     onChange={(e) => setCfFileSecretKey(e.target.value)}
-                    placeholder="敏感信息不会发送到前端显示"
+                    placeholder="Sensitive — not displayed after saving"
                   />
                 </div>
               </div>
 
               <div className="rounded-lg bg-muted p-4">
                 <p className="text-sm text-muted-foreground">
-                  <strong>支持的 S3 兼容服务：</strong>
+                  <strong>Supported S3-compatible services:</strong>
                 </p>
                 <ul className="mt-2 list-inside list-disc text-sm text-muted-foreground">
                   <li>Cloudflare R2</li>
-                  <li>阿里云 OSS（使用 S3 兼容端点）</li>
+                  <li>Alibaba Cloud OSS (via S3-compatible endpoint)</li>
                   <li>AWS S3</li>
                   <li>MinIO</li>
-                  <li>其他 S3 兼容服务</li>
+                  <li>Other S3-compatible services</li>
                 </ul>
               </div>
 
               <Button onClick={handleSaveStorage} disabled={isLoading}>
                 <Save className="mr-2 h-4 w-4" />
-                保存存储设置
+                Save storage settings
               </Button>
             </CardContent>
           </Card>

@@ -113,9 +113,9 @@ const statusMap: {
     variant: 'default' | 'destructive' | 'secondary' | 'outline';
   };
 } = {
-  1: { text: '已启用', variant: 'default' },
-  2: { text: '手动禁用', variant: 'secondary' },
-  3: { text: '自动禁用', variant: 'destructive' }
+  1: { text: 'Enabled', variant: 'default' },
+  2: { text: 'Disabled', variant: 'secondary' },
+  3: { text: 'Auto-disabled', variant: 'destructive' }
 };
 
 const MultiKeyManagementModal: React.FC<MultiKeyManagementModalProps> = ({
@@ -142,10 +142,14 @@ const MultiKeyManagementModal: React.FC<MultiKeyManagementModalProps> = ({
       if ((statsRes as any).success) {
         setKeyStats((statsRes as any).data);
       } else {
-        throw new Error((statsRes as any).message || '获取统计信息失败');
+        throw new Error(
+          (statsRes as any).message || 'Failed to load key stats.'
+        );
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : '获取统计信息失败');
+      setError(
+        err instanceof Error ? err.message : 'Failed to load key stats.'
+      );
     }
   }, [channel]);
 
@@ -168,10 +172,12 @@ const MultiKeyManagementModal: React.FC<MultiKeyManagementModalProps> = ({
         setKeyDetails((detailsRes as any).data.keys || []);
         setTotalKeys((detailsRes as any).data.total_count || 0);
       } else {
-        throw new Error((detailsRes as any).message || '获取密钥详情失败');
+        throw new Error(
+          (detailsRes as any).message || 'Failed to load key details.'
+        );
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : '发生未知错误');
+      setError(err instanceof Error ? err.message : 'Unknown error.');
     } finally {
       setIsLoading(false);
     }
@@ -211,7 +217,11 @@ const MultiKeyManagementModal: React.FC<MultiKeyManagementModalProps> = ({
         throw new Error((res as any).message);
       }
     } catch (err) {
-      alert(`操作失败: ${err instanceof Error ? err.message : '未知错误'}`);
+      alert(
+        `Operation failed: ${
+          err instanceof Error ? err.message : 'Unknown error.'
+        }`
+      );
     }
   };
 
@@ -241,7 +251,9 @@ const MultiKeyManagementModal: React.FC<MultiKeyManagementModalProps> = ({
         );
 
         if (!(allKeysRes as any).success) {
-          throw new Error((allKeysRes as any).message || '获取密钥列表失败');
+          throw new Error(
+            (allKeysRes as any).message || 'Failed to load key list.'
+          );
         }
 
         const pageKeys = (allKeysRes as any).data.keys || [];
@@ -257,7 +269,7 @@ const MultiKeyManagementModal: React.FC<MultiKeyManagementModalProps> = ({
       }
 
       if (allKeys.length === 0) {
-        alert('没有找到密钥');
+        alert('No keys found.');
         return;
       }
 
@@ -275,7 +287,11 @@ const MultiKeyManagementModal: React.FC<MultiKeyManagementModalProps> = ({
         throw new Error((res as any).message);
       }
     } catch (err) {
-      alert(`操作失败: ${err instanceof Error ? err.message : '未知错误'}`);
+      alert(
+        `Operation failed: ${
+          err instanceof Error ? err.message : 'Unknown error.'
+        }`
+      );
     } finally {
       setLoading(false);
     }
@@ -283,7 +299,7 @@ const MultiKeyManagementModal: React.FC<MultiKeyManagementModalProps> = ({
 
   const handleDeleteDisabledKeys = async () => {
     if (!channel) return;
-    if (!confirm('确定要删除所有被禁用的密钥吗？此操作不可恢复。')) return;
+    if (!confirm('Delete all disabled keys? This cannot be undone.')) return;
     try {
       const res = await request.post(`/api/channel/keys/delete-disabled`, {
         id: channel.id
@@ -294,14 +310,20 @@ const MultiKeyManagementModal: React.FC<MultiKeyManagementModalProps> = ({
         throw new Error((res as any).message);
       }
     } catch (err) {
-      alert(`操作失败: ${err instanceof Error ? err.message : '未知错误'}`);
+      alert(
+        `Operation failed: ${
+          err instanceof Error ? err.message : 'Unknown error.'
+        }`
+      );
     }
   };
 
   const handleFixKeyStatus = async () => {
     if (!channel) return;
     if (
-      !confirm('确定要修复密钥状态吗？这将为所有没有状态的密钥设置为启用状态。')
+      !confirm(
+        'Fix key statuses? This will set all keys without a status to Enabled.'
+      )
     )
       return;
     try {
@@ -315,7 +337,9 @@ const MultiKeyManagementModal: React.FC<MultiKeyManagementModalProps> = ({
         throw new Error((res as any).message);
       }
     } catch (err) {
-      alert(`修复失败: ${err instanceof Error ? err.message : '未知错误'}`);
+      alert(
+        `Fix failed: ${err instanceof Error ? err.message : 'Unknown error.'}`
+      );
     }
   };
 
@@ -330,7 +354,7 @@ const MultiKeyManagementModal: React.FC<MultiKeyManagementModalProps> = ({
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
               <DialogTitle className="text-lg font-semibold">
-                多密钥管理
+                Multi-key management
               </DialogTitle>
               <Badge
                 variant="outline"
@@ -341,10 +365,10 @@ const MultiKeyManagementModal: React.FC<MultiKeyManagementModalProps> = ({
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Badge variant="secondary" className="text-xs font-normal">
-                总密钥数:{' '}
+                Total keys:{' '}
                 {channel.multi_key_info?.key_selection_mode === 0
-                  ? '轮询'
-                  : '随机'}
+                  ? 'Round-robin'
+                  : 'Random'}
               </Badge>
             </div>
           </div>
@@ -360,7 +384,7 @@ const MultiKeyManagementModal: React.FC<MultiKeyManagementModalProps> = ({
               {error && (
                 <Alert variant="destructive" className="mb-4">
                   <Terminal className="h-4 w-4" />
-                  <AlertTitle>加载失败</AlertTitle>
+                  <AlertTitle>Failed to load</AlertTitle>
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
@@ -368,7 +392,7 @@ const MultiKeyManagementModal: React.FC<MultiKeyManagementModalProps> = ({
               {keyStats && (
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <Card
-                    status="已启用"
+                    status="Enabled"
                     count={keyStats.enabled}
                     total={keyStats.total}
                     color="text-green-600"
@@ -376,7 +400,7 @@ const MultiKeyManagementModal: React.FC<MultiKeyManagementModalProps> = ({
                     borderColor="border-border/50"
                   />
                   <Card
-                    status="手动禁用"
+                    status="Disabled"
                     count={keyStats.manually_disabled}
                     total={keyStats.total}
                     color="text-yellow-600"
@@ -384,7 +408,7 @@ const MultiKeyManagementModal: React.FC<MultiKeyManagementModalProps> = ({
                     borderColor="border-border/50"
                   />
                   <Card
-                    status="自动禁用"
+                    status="Auto-disabled"
                     count={keyStats.auto_disabled}
                     total={keyStats.total}
                     color="text-red-600"
@@ -406,13 +430,13 @@ const MultiKeyManagementModal: React.FC<MultiKeyManagementModalProps> = ({
                     }}
                   >
                     <SelectTrigger className="h-9 w-full bg-background sm:w-[140px]">
-                      <SelectValue placeholder="筛选状态" />
+                      <SelectValue placeholder="Filter status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">全部状态</SelectItem>
-                      <SelectItem value="1">已启用</SelectItem>
-                      <SelectItem value="2">手动禁用</SelectItem>
-                      <SelectItem value="3">自动禁用</SelectItem>
+                      <SelectItem value="all">All</SelectItem>
+                      <SelectItem value="1">Enabled</SelectItem>
+                      <SelectItem value="2">Disabled</SelectItem>
+                      <SelectItem value="3">Auto-disabled</SelectItem>
                     </SelectContent>
                   </Select>
                   <Button
@@ -439,10 +463,10 @@ const MultiKeyManagementModal: React.FC<MultiKeyManagementModalProps> = ({
                           disabled={enableLoading}
                         >
                           <PlayCircle className="mr-2 h-3.5 w-3.5 text-green-600" />
-                          {enableLoading ? '启用中' : '启用全部'}
+                          {enableLoading ? 'Enabling...' : 'Enable all'}
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>启用所有密钥</TooltipContent>
+                      <TooltipContent>Enable all keys</TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
 
@@ -457,10 +481,10 @@ const MultiKeyManagementModal: React.FC<MultiKeyManagementModalProps> = ({
                           disabled={disableLoading}
                         >
                           <PauseCircle className="mr-2 h-3.5 w-3.5 text-yellow-600" />
-                          {disableLoading ? '禁用中' : '禁用全部'}
+                          {disableLoading ? 'Disabling...' : 'Disable all'}
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>禁用所有密钥</TooltipContent>
+                      <TooltipContent>Disable all keys</TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
 
@@ -474,10 +498,10 @@ const MultiKeyManagementModal: React.FC<MultiKeyManagementModalProps> = ({
                           className="h-9 w-full sm:w-auto"
                         >
                           <Trash2 className="mr-2 h-3.5 w-3.5 text-red-600" />
-                          删除禁用
+                          Delete disabled
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>删除所有被禁用的密钥</TooltipContent>
+                      <TooltipContent>Delete all disabled keys</TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
 
@@ -491,11 +515,11 @@ const MultiKeyManagementModal: React.FC<MultiKeyManagementModalProps> = ({
                           className="h-9 w-full sm:w-auto"
                         >
                           <RotateCcw className="mr-2 h-3.5 w-3.5" />
-                          修复状态
+                          Fix statuses
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>
-                        为无状态的密钥设置初始状态
+                        Set initial status for keys without one.
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -508,19 +532,19 @@ const MultiKeyManagementModal: React.FC<MultiKeyManagementModalProps> = ({
                 <TableHeader className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
                   <TableRow className="border-b border-border/50 hover:bg-transparent">
                     <TableHead className="min-w-[150px] bg-transparent">
-                      密钥
+                      Key
                     </TableHead>
                     <TableHead className="w-[80px] bg-transparent text-center">
-                      状态
+                      Status
                     </TableHead>
                     <TableHead className="hidden min-w-[200px] bg-transparent sm:table-cell">
-                      禁用原因
+                      Disable reason
                     </TableHead>
                     <TableHead className="hidden w-[160px] bg-transparent md:table-cell">
-                      禁用时间
+                      Disabled at
                     </TableHead>
                     <TableHead className="w-[80px] bg-transparent text-right">
-                      操作
+                      Action
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -559,7 +583,7 @@ const MultiKeyManagementModal: React.FC<MultiKeyManagementModalProps> = ({
                                 : 'border-red-200 bg-red-50 text-red-700'
                             }`}
                           >
-                            {statusMap[key.status]?.text || '未知'}
+                            {statusMap[key.status]?.text || 'Unknown'}
                           </Badge>
                         </TableCell>
                         <TableCell className="hidden sm:table-cell">
@@ -580,13 +604,13 @@ const MultiKeyManagementModal: React.FC<MultiKeyManagementModalProps> = ({
                                 >
                                   <div className="space-y-2">
                                     <div className="font-semibold">
-                                      禁用详情
+                                      Disable details
                                     </div>
                                     <div className="text-xs">
                                       {key.disabled_model && (
                                         <div className="flex gap-2">
                                           <span className="text-muted-foreground">
-                                            模型:
+                                            Model:
                                           </span>
                                           <span>{key.disabled_model}</span>
                                         </div>
@@ -594,7 +618,7 @@ const MultiKeyManagementModal: React.FC<MultiKeyManagementModalProps> = ({
                                       {key.disable_time && (
                                         <div className="flex gap-2">
                                           <span className="text-muted-foreground">
-                                            时间:
+                                            Time:
                                           </span>
                                           <span>
                                             {dayjs
@@ -638,7 +662,7 @@ const MultiKeyManagementModal: React.FC<MultiKeyManagementModalProps> = ({
                               handleToggleKeyStatus(key.index, key.status)
                             }
                           >
-                            {key.status === 1 ? '禁用' : '启用'}
+                            {key.status === 1 ? 'Disable' : 'Enable'}
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -649,7 +673,7 @@ const MultiKeyManagementModal: React.FC<MultiKeyManagementModalProps> = ({
                         colSpan={5}
                         className="h-24 text-center text-muted-foreground"
                       >
-                        暂无数据
+                        No data.
                       </TableCell>
                     </TableRow>
                   )}
@@ -660,7 +684,7 @@ const MultiKeyManagementModal: React.FC<MultiKeyManagementModalProps> = ({
             <div className="flex-shrink-0 border-t bg-background px-4 py-3 sm:px-6 sm:py-4">
               <div className="flex items-center justify-between">
                 <div className="hidden text-sm text-muted-foreground sm:block">
-                  共 {totalKeys} 条记录
+                  {totalKeys} records total
                 </div>
                 <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
                   <Button

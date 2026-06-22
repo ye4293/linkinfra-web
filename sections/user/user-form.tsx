@@ -209,14 +209,14 @@ export default function UserForm() {
   const handleAdjustBalance = () => {
     const amount = parseFloat(adjustAmount);
     if (isNaN(amount) || amount === 0) {
-      toast.error('请输入有效的调整金额');
+      toast.error('Enter a valid adjustment amount.');
       return;
     }
 
     const currentDollars = parseFloat(dollarDisplay) || 0;
     const newDollars = currentDollars + amount;
     if (newDollars < 0) {
-      toast.error('调整后余额不能为负数');
+      toast.error('Balance cannot go below zero.');
       return;
     }
 
@@ -225,9 +225,9 @@ export default function UserForm() {
     setDollarDisplay(newDollars.toFixed(2));
     setAdjustAmount('');
     toast.success(
-      `余额已调整 ${amount >= 0 ? '+' : ''}$${amount.toFixed(
+      `Balance adjusted ${amount >= 0 ? '+' : ''}$${amount.toFixed(
         2
-      )} → 当前 $${newDollars.toFixed(2)}`
+      )} → now $${newDollars.toFixed(2)}`
     );
   };
 
@@ -278,9 +278,11 @@ export default function UserForm() {
                     : 'grid w-full grid-cols-2'
                 }
               >
-                <TabsTrigger value="basic">基本信息</TabsTrigger>
+                <TabsTrigger value="basic">Basic info</TabsTrigger>
                 {!isCreate && (
-                  <TabsTrigger value="discount">额外折扣</TabsTrigger>
+                  <TabsTrigger value="discount">
+                    Additional discount
+                  </TabsTrigger>
                 )}
               </TabsList>
 

@@ -189,7 +189,7 @@ export default function UpdateUserForm() {
     if (success) {
       router.push('/dashboard/setting');
       router.refresh();
-      toast.success('更新成功');
+      toast.success('Updated.');
     } else {
       toast.error(message);
     }
@@ -200,9 +200,9 @@ export default function UpdateUserForm() {
       <SystemTokenCard />
       <Card className="rounded-xl border bg-card">
         <CardHeader className="pb-4">
-          <CardTitle className="text-lg font-semibold">用户信息</CardTitle>
+          <CardTitle className="text-lg font-semibold">Profile</CardTitle>
           <CardDescription className="text-sm text-muted-foreground">
-            管理您的账户基本信息与登录凭证
+            Manage your account information and login credentials.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -214,9 +214,9 @@ export default function UpdateUserForm() {
                   name="username"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>用户名</FormLabel>
+                      <FormLabel>Username</FormLabel>
                       <FormControl>
-                        <Input placeholder="请输入用户名" {...field} />
+                        <Input placeholder="Enter your username" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -227,9 +227,12 @@ export default function UpdateUserForm() {
                   name="display_name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>显示名称</FormLabel>
+                      <FormLabel>Display name</FormLabel>
                       <FormControl>
-                        <Input placeholder="请输入显示名称" {...field} />
+                        <Input
+                          placeholder="Enter your display name"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -241,11 +244,11 @@ export default function UpdateUserForm() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>密码</FormLabel>
+                    <FormLabel>Password</FormLabel>
                     <FormControl>
                       <Input
                         type="password"
-                        placeholder="留空则不修改密码"
+                        placeholder="Leave blank to keep current password"
                         {...field}
                       />
                     </FormControl>
@@ -263,7 +266,7 @@ export default function UpdateUserForm() {
                       <FormLabel>GitHub ID</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="未绑定"
+                          placeholder="Not linked"
                           className="bg-muted/50"
                           {...field}
                         />
@@ -281,7 +284,7 @@ export default function UpdateUserForm() {
                       <FormLabel>Google ID</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="未绑定"
+                          placeholder="Not linked"
                           className="bg-muted/50"
                           {...field}
                         />
@@ -296,10 +299,10 @@ export default function UpdateUserForm() {
                   disabled
                   render={({ field }) => (
                     <FormItem className="sm:col-span-2">
-                      <FormLabel>邮箱</FormLabel>
+                      <FormLabel>Email</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="未绑定"
+                          placeholder="Not linked"
                           className="bg-muted/50"
                           {...field}
                         />
@@ -315,9 +318,9 @@ export default function UpdateUserForm() {
                   variant="outline"
                   onClick={() => window.history.back()}
                 >
-                  返回
+                  Cancel
                 </Button>
-                <Button type="submit">保存更改</Button>
+                <Button type="submit">Save changes</Button>
               </div>
             </form>
           </Form>

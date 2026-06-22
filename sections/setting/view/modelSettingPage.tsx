@@ -21,8 +21,8 @@ import AffinitySection from '@/sections/channel/affinity-modal';
 
 const breadcrumbItems = [
   { title: 'Dashboard', link: '/dashboard' },
-  { title: '系统设置', link: '/dashboard/setting' },
-  { title: '模型设置', link: '/dashboard/setting/model' }
+  { title: 'System settings', link: '/dashboard/setting' },
+  { title: 'Model settings', link: '/dashboard/setting/model' }
 ];
 
 interface Option {
@@ -113,7 +113,7 @@ export default function ModelSettingPage() {
         }
       }
     } catch (error) {
-      toast.error('获取设置失败');
+      toast.error('Failed to load settings.');
       console.error(error);
     } finally {
       setLoading(false);
@@ -133,7 +133,7 @@ export default function ModelSettingPage() {
     });
     const result = await response.json();
     if (!result.success) {
-      throw new Error(result.message || '保存失败');
+      throw new Error(result.message || 'Save failed.');
     }
   };
 
@@ -146,7 +146,7 @@ export default function ModelSettingPage() {
       JSON.parse(jsonStr);
       return true;
     } catch {
-      toast.error(`${fieldName} JSON 格式错误`);
+      toast.error(`${fieldName} has invalid JSON format.`);
       return false;
     }
   };
@@ -154,15 +154,20 @@ export default function ModelSettingPage() {
   // 保存所有设置
   const handleSave = async () => {
     // 验证 JSON 格式
-    if (!validateJSON(claudeDefaultMaxTokens, '缺省 MaxTokens')) return;
-    if (!validateJSON(claudeReasoningEffortMap, 'ReasoningEffort 百分比映射'))
+    if (!validateJSON(claudeDefaultMaxTokens, 'Default MaxTokens')) return;
+    if (
+      !validateJSON(claudeReasoningEffortMap, 'ReasoningEffort percentage map')
+    )
       return;
-    if (!validateJSON(claudeRequestHeaders, 'Claude 请求头覆盖')) return;
+    if (!validateJSON(claudeRequestHeaders, 'Claude request header override'))
+      return;
 
-    // 验证百分比范围
+    // validate percentage range
     const ratio = parseFloat(claudeThinkingBudgetRatio);
     if (isNaN(ratio) || ratio < 0.1 || ratio > 1.0) {
-      toast.error('思考适配 BudgetTokens 百分比必须在 0.1 到 1.0 之间');
+      toast.error(
+        'Thinking BudgetTokens percentage must be between 0.1 and 1.0.'
+      );
       return;
     }
 
@@ -195,9 +200,9 @@ export default function ModelSettingPage() {
         );
       }
 
-      toast.success('保存成功');
+      toast.success('Saved.');
     } catch (error: any) {
-      toast.error(error.message || '保存失败');
+      toast.error(error.message || 'Save failed.');
       console.error(error);
     } finally {
       setSaving(false);
@@ -233,32 +238,34 @@ export default function ModelSettingPage() {
       <div className="space-y-4">
         <Breadcrumbs items={breadcrumbItems} />
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold tracking-tight">模型设置</h2>
+          <h2 className="text-2xl font-bold tracking-tight">Model settings</h2>
           <div className="flex gap-2">
             <Button variant="outline" onClick={fetchOptions} disabled={loading}>
               <RefreshCcw className="mr-2 h-4 w-4" />
-              刷新
+              Refresh
             </Button>
             <Button onClick={handleSave} disabled={saving}>
               <Save className="mr-2 h-4 w-4" />
-              {saving ? '保存中...' : '保存'}
+              {saving ? 'Saving...' : 'Save'}
             </Button>
           </div>
         </div>
         <Separator />
 
-        {/* Claude 设置 */}
+        {/* Claude settings */}
         <Card>
           <CardHeader>
-            <CardTitle>Claude 设置</CardTitle>
+            <CardTitle>Claude settings</CardTitle>
             <CardDescription>
-              配置 Claude 模型的 thinking 功能和请求参数
+              Configure Claude model thinking and request parameters.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* 请求头覆盖 */}
+            {/* request header override */}
             <div className="space-y-2">
-              <Label htmlFor="claudeRequestHeaders">Claude 请求头覆盖</Label>
+              <Label htmlFor="claudeRequestHeaders">
+                Claude request header override
+              </Label>
               <Textarea
                 id="claudeRequestHeaders"
                 placeholder="{}"
@@ -267,13 +274,13 @@ export default function ModelSettingPage() {
                 className="min-h-[100px] font-mono text-sm"
               />
               <p className="text-sm text-muted-foreground">
-                示例: {JSON.stringify(exampleRequestHeaders)}
+                Example: {JSON.stringify(exampleRequestHeaders)}
               </p>
             </div>
 
-            {/* 缺省 MaxTokens */}
+            {/* default MaxTokens */}
             <div className="space-y-2">
-              <Label htmlFor="claudeDefaultMaxTokens">缺省 MaxTokens</Label>
+              <Label htmlFor="claudeDefaultMaxTokens">Default MaxTokens</Label>
               <Textarea
                 id="claudeDefaultMaxTokens"
                 placeholder="{}"
@@ -282,19 +289,19 @@ export default function ModelSettingPage() {
                 className="min-h-[120px] font-mono text-sm"
               />
               <p className="text-sm text-muted-foreground">
-                示例: {JSON.stringify(defaultMaxTokens)}
+                Example: {JSON.stringify(defaultMaxTokens)}
               </p>
             </div>
 
-            {/* 启用 Claude 思考适配 */}
+            {/* enable Claude thinking adaptation */}
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label htmlFor="claudeThinkingEnabled">
-                  启用 Claude 思考适配（-thinking 后缀）
+                  Enable Claude thinking adaptation (-thinking suffix)
                 </Label>
                 <p className="text-sm text-muted-foreground">
-                  开启后，模型名以 -thinking 结尾时会自动启用 Claude
-                  的扩展思考功能
+                  When enabled, models ending in -thinking will automatically
+                  activate Claude's extended thinking.
                 </p>
               </div>
               <Switch
@@ -304,10 +311,10 @@ export default function ModelSettingPage() {
               />
             </div>
 
-            {/* 思考适配 BudgetTokens 百分比 */}
+            {/* thinking BudgetTokens percentage */}
             <div className="space-y-2">
               <Label htmlFor="claudeThinkingBudgetRatio">
-                思考适配 BudgetTokens 百分比
+                Thinking BudgetTokens percentage
               </Label>
               <Input
                 id="claudeThinkingBudgetRatio"
@@ -320,15 +327,15 @@ export default function ModelSettingPage() {
                 className="w-32"
               />
               <p className="text-sm text-muted-foreground">
-                Claude 思考适配 BudgetTokens = MaxTokens * BudgetTokens
-                百分比，范围 0.1 到 1.0
+                BudgetTokens = MaxTokens × BudgetTokens percentage. Range: 0.1
+                to 1.0.
               </p>
             </div>
 
-            {/* ReasoningEffort 百分比映射 */}
+            {/* ReasoningEffort percentage map */}
             <div className="space-y-2">
               <Label htmlFor="claudeReasoningEffortMap">
-                ReasoningEffort 百分比映射
+                ReasoningEffort percentage map
               </Label>
               <Textarea
                 id="claudeReasoningEffortMap"
@@ -338,23 +345,24 @@ export default function ModelSettingPage() {
                 className="min-h-[150px] font-mono text-sm"
               />
               <p className="text-sm text-muted-foreground">
-                OpenAI 的 reasoning_effort 参数到 thinking budget 百分比的映射。
-                支持的值：none, minimal, low, medium, high, xhigh
+                Maps OpenAI's reasoning_effort parameter to thinking budget
+                percentages. Supported values: none, minimal, low, medium, high,
+                xhigh.
               </p>
               <p className="text-sm text-muted-foreground">
-                示例: {JSON.stringify(defaultReasoningEffortMap)}
+                Example: {JSON.stringify(defaultReasoningEffortMap)}
               </p>
             </div>
           </CardContent>
         </Card>
 
-        {/* 渠道亲和性 */}
+        {/* channel affinity */}
         <Card>
           <CardHeader>
-            <CardTitle>渠道亲和性</CardTitle>
+            <CardTitle>Channel affinity</CardTitle>
             <CardDescription>
-              基于请求上下文或 JSON Body 中的
-              Key，优先复用上一次成功的渠道（粘滞选路）
+              Prefer reusing the last successful channel based on request
+              context or a key in the JSON body (sticky routing).
             </CardDescription>
           </CardHeader>
           <CardContent>

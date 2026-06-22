@@ -85,22 +85,22 @@ const formSchema = z.object({
   priority: z
     .number()
     .min(0, {
-      message: '优先级必须大于等于0'
+      message: 'Priority must be 0 or greater.'
     })
     .optional(),
   weight: z
     .number()
     .min(0, {
-      message: '权重必须大于等于0'
+      message: 'Weight must be 0 or greater.'
     })
     .optional(),
   discount: z
     .number()
     .min(0.01, {
-      message: '折扣倍率必须大于0'
+      message: 'Discount multiplier must be greater than 0.'
     })
     .max(1, {
-      message: '折扣倍率不能超过1'
+      message: 'Discount multiplier cannot exceed 1.'
     })
     .optional(),
   auto_disabled: z.boolean().default(true),
@@ -214,7 +214,7 @@ export default function ChannelForm() {
       const notification = document.createElement('div');
       notification.className =
         'fixed top-4 right-4 z-50 rounded-lg bg-green-500 px-4 py-2 text-white shadow-lg transition-all duration-300 transform translate-x-0';
-      notification.textContent = `已复制: ${text}`;
+      notification.textContent = `Copied: ${text}`;
       document.body.appendChild(notification);
 
       // 3秒后移除提示
@@ -227,8 +227,8 @@ export default function ChannelForm() {
         }, 300);
       }, 2000);
     } catch (err) {
-      console.error('复制失败:', err);
-      alert(`复制失败: ${text}`);
+      console.error('Copy failed:', err);
+      alert(`Copy failed: ${text}`);
     }
   };
 
@@ -298,7 +298,7 @@ export default function ChannelForm() {
 
         if (!key) {
           const { toast } = await import('sonner');
-          toast.error('请先填写密钥');
+          toast.error('Enter an API key first.');
           setIsFetchingModels(false);
           return;
         }
@@ -324,15 +324,15 @@ export default function ChannelForm() {
         setModelSelectModalOpen(true);
 
         const { toast } = await import('sonner');
-        toast.success(`成功获取 ${uniqueModels.length} 个模型`);
+        toast.success(`Fetched ${uniqueModels.length} models.`);
       } else {
         const { toast } = await import('sonner');
-        toast.error(data.message || '获取模型列表失败');
+        toast.error(data.message || 'Failed to load models.');
       }
     } catch (error: any) {
-      console.error('获取上游模型列表失败:', error);
+      console.error('Failed to fetch upstream models:', error);
       const { toast } = await import('sonner');
-      toast.error(error.message || '获取模型列表失败');
+      toast.error(error.message || 'Failed to load models.');
     } finally {
       setIsFetchingModels(false);
     }
@@ -358,14 +358,16 @@ export default function ChannelForm() {
         const { toast } = await import('sonner');
         const addCount = (data.data.add_models || []).length;
         const rmCount = (data.data.remove_models || []).length;
-        toast.success(`检测完成：新增 ${addCount} 个，待删除 ${rmCount} 个`);
+        toast.success(
+          `Scan complete: ${addCount} added, ${rmCount} to remove.`
+        );
       } else {
         const { toast } = await import('sonner');
-        toast.error(data.message || '检测失败');
+        toast.error(data.message || 'Scan failed.');
       }
     } catch (e: any) {
       const { toast } = await import('sonner');
-      toast.error(e.message || '检测失败');
+      toast.error(e.message || 'Scan failed.');
     } finally {
       setIsDetecting(false);
     }
@@ -403,17 +405,17 @@ export default function ChannelForm() {
         });
         const { toast } = await import('sonner');
         toast.success(
-          `已应用：新增 ${(data.data.added_models || []).length} 个，删除 ${
+          `Applied: ${(data.data.added_models || []).length} added, ${
             (data.data.removed_models || []).length
-          } 个`
+          } removed.`
         );
       } else {
         const { toast } = await import('sonner');
-        toast.error(data.message || '应用失败');
+        toast.error(data.message || 'Apply failed.');
       }
     } catch (e: any) {
       const { toast } = await import('sonner');
-      toast.error(e.message || '应用失败');
+      toast.error(e.message || 'Apply failed.');
     } finally {
       setIsApplyingUpstream(false);
     }
@@ -807,7 +809,7 @@ export default function ChannelForm() {
               fileName: file.name,
               projectId: '',
               status: 'error',
-              error: '文件过大（超过10MB）'
+              error: 'File too large (over 10 MB).'
             });
             continue;
           }
@@ -818,7 +820,7 @@ export default function ChannelForm() {
               fileName: file.name,
               projectId: '',
               status: 'error',
-              error: '文件类型不正确（需要.json文件）'
+              error: 'Invalid file type (must be a .json file).'
             });
             continue;
           }
@@ -831,7 +833,7 @@ export default function ChannelForm() {
               fileName: file.name,
               projectId: '',
               status: 'error',
-              error: '文件内容为空'
+              error: 'File is empty.'
             });
             continue;
           }
@@ -844,7 +846,7 @@ export default function ChannelForm() {
               fileName: file.name,
               projectId: '',
               status: 'error',
-              error: '不是有效的Google Cloud服务账号JSON'
+              error: 'Not a valid Google Cloud service account JSON.'
             });
             continue;
           }
@@ -862,7 +864,7 @@ export default function ChannelForm() {
               fileName: file.name,
               projectId: '',
               status: 'error',
-              error: '缺少project_id字段'
+              error: 'Missing project_id field.'
             });
           }
         } catch (error) {
@@ -870,7 +872,7 @@ export default function ChannelForm() {
             fileName: file.name,
             projectId: '',
             status: 'error',
-            error: error instanceof Error ? error.message : 'JSON格式错误'
+            error: error instanceof Error ? error.message : 'Invalid JSON.'
           });
         }
       }
@@ -924,36 +926,38 @@ export default function ChannelForm() {
         (p) => p.status === 'error'
       ).length;
 
-      let message = `🔄 文件解析完成！\n✅ 成功: ${successCount}个文件`;
+      let message = `🔄 Files parsed!\n✅ Succeeded: ${successCount}`;
       if (errorCount > 0) {
-        message += `\n❌ 失败: ${errorCount}个文件`;
+        message += `\n❌ Failed: ${errorCount}`;
       }
 
-      // 根据模式提供不同的提示
+      // provide different hints based on mode
       if (!isBatchCreate && !isAggregateMode && !isMultiKey) {
         if (successCount > 0) {
-          message += '\n\n已自动填充相关字段';
+          message += '\n\nRelevant fields have been auto-filled.';
         }
       } else {
         if (successCount > 0) {
-          message += '\n\n已添加到相应的密钥字段';
+          message += '\n\nKeys added to the relevant field.';
         }
       }
 
-      // 显示详细的错误信息
+      // show error details
       if (errorCount > 0) {
         const errorDetails = newPreviewItems
           .filter((item) => item.status === 'error')
           .map((item) => `• ${item.fileName}: ${item.error}`)
           .join('\n');
-        message += `\n\n错误详情:\n${errorDetails}`;
+        message += `\n\nErrors:\n${errorDetails}`;
       }
 
       alert(message);
     } catch (error) {
-      console.error('解析Vertex AI JSON文件失败:', error);
+      console.error('Failed to parse Vertex AI JSON files:', error);
       alert(
-        `❌ 解析失败: ${error instanceof Error ? error.message : '未知错误'}`
+        `❌ Parse failed: ${
+          error instanceof Error ? error.message : 'Unknown error.'
+        }`
       );
     }
   };
@@ -978,10 +982,10 @@ export default function ChannelForm() {
         <div className="mb-2 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              📋 文件解析预览
+              📋 File parse preview
             </span>
             <span className="text-xs text-gray-500">
-              总计:{files.length} | ✅{successCount} | ❌{errorCount}
+              Total: {files.length} | ✅{successCount} | ❌{errorCount}
             </span>
           </div>
           <Button
@@ -991,7 +995,7 @@ export default function ChannelForm() {
             onClick={onClear}
             className="h-6 px-2 text-xs"
           >
-            清空全部
+            Clear all
           </Button>
         </div>
         <div className="max-h-40 space-y-1 overflow-y-auto">
@@ -1031,7 +1035,7 @@ export default function ChannelForm() {
                   size="sm"
                   onClick={() => onRemove(index)}
                   className="h-4 w-4 p-0 hover:bg-red-100 dark:hover:bg-red-900"
-                  title="删除此文件"
+                  title="Remove this file"
                 >
                   ✕
                 </Button>
@@ -1043,7 +1047,7 @@ export default function ChannelForm() {
         {/* 统计信息 */}
         {files.length > 5 && (
           <div className="mt-2 border-t pt-2 text-xs text-gray-500">
-            💡 提示：已显示全部 {files.length} 个文件，滚动查看更多
+            💡 Showing all {files.length} files — scroll to see more.
           </div>
         )}
       </div>
@@ -1060,19 +1064,19 @@ export default function ChannelForm() {
     // inputs.type === 15 ? '按照如下格式输入：APIKey|SecretKey' : (inputs.type === 18 ? '按照如下格式输入：APPID|APISecret|APIKey' : '请输入渠道对应的鉴权密钥')
     switch (type) {
       case '15':
-        return '按照如下格式输入：APIKey|SecretKey';
+        return 'Format: APIKey|SecretKey';
       case '18':
-        return '按照如下格式输入：APPID|APISecret|APIKey';
+        return 'Format: APPID|APISecret|APIKey';
       case '22':
-        return '按照如下格式输入：APIKey-AppId，例如：fastgpt-0sp2gtvfdgyi4k30jwlgwf1i-64f335d84283f05518e9e041';
+        return 'Format: APIKey-AppId, e.g. fastgpt-0sp2gtvfdgyi4k30jwlgwf1i-64f335d84283f05518e9e041';
       case '23':
-        return '按照如下格式输入：AppId|SecretId|SecretKey';
+        return 'Format: AppId|SecretId|SecretKey';
       case '33':
-        return '按照如下格式输入：AK|SK|Region，例如：AKIA1234567890ABCDEF|wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY|us-east-1';
+        return 'Format: AK|SK|Region, e.g. AKIA1234567890ABCDEF|wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY|us-east-1';
       case '41':
-        return '按照如下格式输入：AK|SK，例如：your-access-key|your-secret-key';
+        return 'Format: AK|SK, e.g. your-access-key|your-secret-key';
       default:
-        return '请输入渠道对应的鉴权密钥';
+        return 'Enter the API key for this channel.';
     }
   };
 
@@ -1305,7 +1309,7 @@ export default function ChannelForm() {
         });
 
         if (keys.length === 0) {
-          throw new Error('请输入至少一个有效的key');
+          throw new Error('Enter at least one valid key.');
         }
 
         const channelParams = {
@@ -1314,7 +1318,7 @@ export default function ChannelForm() {
           key: keys.join('\n')
         };
 
-        console.log('发送聚合创建请求...');
+        console.log('Sending aggregate create request...');
         const res = await fetch(`/api/channel`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1323,12 +1327,13 @@ export default function ChannelForm() {
         });
 
         if (!res.ok)
-          throw new Error(`HTTP错误: ${res.status} ${res.statusText}`);
+          throw new Error(`HTTP error: ${res.status} ${res.statusText}`);
         const result = await res.json();
-        if (!result.success) throw new Error(result.message || '创建失败');
+        if (!result.success)
+          throw new Error(result.message || 'Create failed.');
 
         alert(
-          `成功创建聚合渠道 "${values.name}"，包含 ${keys.length} 个密钥。`
+          `Aggregate channel "${values.name}" created with ${keys.length} keys.`
         );
         // 设置刷新标记，返回后列表页会自动刷新
         sessionStorage.setItem('channel_list_refresh', Date.now().toString());
@@ -1338,7 +1343,7 @@ export default function ChannelForm() {
         console.log('=== 执行路径：普通批量创建模式 ===');
         console.log('=== 优化后的批量创建模式（分批串行处理）===');
         if (keys.length === 0) {
-          throw new Error('请输入至少一个有效的key');
+          throw new Error('Enter at least one valid key.');
         }
 
         const startTime = Date.now();
@@ -1360,9 +1365,10 @@ export default function ChannelForm() {
             credentials: 'include'
           });
           if (!res.ok)
-            throw new Error(`HTTP错误: ${res.status} ${res.statusText}`);
+            throw new Error(`HTTP error: ${res.status} ${res.statusText}`);
           const result = await res.json();
-          if (!result.success) throw new Error(result.message || '创建失败');
+          if (!result.success)
+            throw new Error(result.message || 'Create failed.');
           return { success: true, index, key };
         };
 
@@ -1390,7 +1396,7 @@ export default function ChannelForm() {
                 key: string;
               };
               errors.push(
-                `第${errorResult.index + 1}个key(${errorResult.key})失败: ${
+                `Key #${errorResult.index + 1} (${errorResult.key}) failed: ${
                   errorResult.error
                 }`
               );
@@ -1403,11 +1409,11 @@ export default function ChannelForm() {
         }
 
         const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-        const resultMessage = `批量创建完成！\n总数: ${
+        const resultMessage = `Batch create complete!\nTotal: ${
           keys.length
-        }个\n成功: ${successCount}个\n失败: ${failCount}个\n用时: ${duration}秒${
+        }\nSucceeded: ${successCount}\nFailed: ${failCount}\nTime: ${duration}s${
           errors.length > 0
-            ? '\n\n错误详情:\n' +
+            ? '\n\nErrors:\n' +
               errors.slice(0, 10).join('\n') +
               (errors.length > 10 ? '\n...' : '')
             : ''
@@ -1477,17 +1483,22 @@ export default function ChannelForm() {
         });
 
         if (!res.ok)
-          throw new Error(`HTTP错误: ${res.status} ${res.statusText}`);
+          throw new Error(`HTTP error: ${res.status} ${res.statusText}`);
         const result = await res.json();
-        if (!result.success) throw new Error(result.message || '未知错误');
+        if (!result.success)
+          throw new Error(result.message || 'Unknown error.');
 
         // 设置刷新标记，返回后列表页会自动刷新
         sessionStorage.setItem('channel_list_refresh', Date.now().toString());
         router.back();
       }
     } catch (error) {
-      console.error('提交过程中发生错误:', error);
-      alert(`操作失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      console.error('Submit error:', error);
+      alert(
+        `Operation failed: ${
+          error instanceof Error ? error.message : 'Unknown error.'
+        }`
+      );
     } finally {
       setIsSubmitting(false);
       setBatchProgress({ current: 0, total: 0 });
@@ -1502,12 +1513,12 @@ export default function ChannelForm() {
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
               <span className="text-lg">⚙️</span>
             </div>
-            {channelId !== 'create' ? '编辑渠道' : '创建渠道'}
+            {channelId !== 'create' ? 'Edit channel' : 'New channel'}
           </CardTitle>
           <p className="text-sm text-gray-600 dark:text-gray-400">
             {channelId !== 'create'
-              ? '修改渠道配置信息，确保渠道正常运行'
-              : '配置新的渠道信息，支持单个和批量创建'}
+              ? 'Update channel configuration and keep everything running smoothly.'
+              : 'Configure a new channel. Supports single and bulk creation.'}
           </p>
         </CardHeader>
         <CardContent className="p-6">
@@ -1518,7 +1529,7 @@ export default function ChannelForm() {
                 <div className="space-y-6">
                   <div className="rounded-lg border border-gray-200 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-900">
                     <h3 className="mb-4 flex items-center gap-2 text-lg font-medium text-gray-800 dark:text-gray-200">
-                      <span>⚙️</span> 基础配置
+                      <span>⚙️</span> Basic configuration
                     </h3>
                     <div className="space-y-4">
                       <FormField
@@ -1527,7 +1538,7 @@ export default function ChannelForm() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel className="font-medium text-gray-700 dark:text-gray-300">
-                              渠道类型
+                              Channel type
                             </FormLabel>
                             <Select
                               onValueChange={(value) => {
@@ -1538,7 +1549,7 @@ export default function ChannelForm() {
                             >
                               <FormControl>
                                 <SelectTrigger className="border-gray-300 focus:border-gray-500 focus:ring-gray-200">
-                                  <SelectValue placeholder="选择渠道类型" />
+                                  <SelectValue placeholder="Select channel type" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent style={{ height: '300px' }}>
@@ -1563,12 +1574,12 @@ export default function ChannelForm() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel className="font-medium text-gray-700 dark:text-gray-300">
-                              渠道名称
+                              Channel name
                             </FormLabel>
                             <FormControl>
                               <Input
                                 className="border-gray-300 focus:border-gray-500 focus:ring-gray-200"
-                                placeholder="请输入渠道名称"
+                                placeholder="Enter a channel name"
                                 {...field}
                               />
                             </FormControl>
@@ -1583,7 +1594,7 @@ export default function ChannelForm() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel className="font-medium text-gray-700 dark:text-gray-300">
-                              分组
+                              Channel group
                             </FormLabel>
                             <FormControl>
                               <div className="flex flex-row flex-wrap gap-3">
@@ -1628,7 +1639,7 @@ export default function ChannelForm() {
                       {form.watch('type') === '3' && (
                         <div className="mt-4 rounded-lg border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-800 dark:bg-yellow-950">
                           <h4 className="mb-3 flex items-center gap-2 font-medium text-yellow-800 dark:text-yellow-200">
-                            <span>🔧</span> Azure OpenAI 配置
+                            <span>🔧</span> Azure OpenAI configuration
                           </h4>
                           <div className="space-y-4">
                             <FormField
@@ -1640,7 +1651,7 @@ export default function ChannelForm() {
                                   <FormControl>
                                     <Textarea
                                       className="h-auto max-h-24 min-h-16 resize-none overflow-auto border-yellow-300 focus:border-yellow-500"
-                                      placeholder="请输入 AZURE_OPENAI_ENDPOINT，例如：https://docs-test-001.openai.azure.com"
+                                      placeholder="Enter AZURE_OPENAI_ENDPOINT, e.g. https://docs-test-001.openai.azure.com"
                                       {...field}
                                     />
                                   </FormControl>
@@ -1653,11 +1664,11 @@ export default function ChannelForm() {
                               name="other"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>默认 API 版本</FormLabel>
+                                  <FormLabel>Default API version</FormLabel>
                                   <FormControl>
                                     <Textarea
                                       className="h-auto max-h-24 min-h-16 resize-none overflow-auto border-yellow-300 focus:border-yellow-500"
-                                      placeholder="请输入默认 API 版本，例如：2024-03-01-preview"
+                                      placeholder="Enter default API version, e.g. 2024-03-01-preview"
                                       {...field}
                                     />
                                   </FormControl>
@@ -1672,7 +1683,7 @@ export default function ChannelForm() {
                       {form.watch('type') === '8' && (
                         <div className="mt-4 rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-950">
                           <h4 className="mb-3 flex items-center gap-2 font-medium text-green-800 dark:text-green-200">
-                            <span>🌐</span> 自定义渠道配置
+                            <span>🌐</span> Custom channel configuration
                           </h4>
                           <FormField
                             control={form.control}
@@ -1683,7 +1694,7 @@ export default function ChannelForm() {
                                 <FormControl>
                                   <Textarea
                                     className="h-auto max-h-24 min-h-16 resize-none overflow-auto border-green-300 focus:border-green-500"
-                                    placeholder="请输入自定义渠道的 Base URL，例如：https://openai.justsong.cn"
+                                    placeholder="Enter custom channel Base URL, e.g. https://openai.justsong.cn"
                                     {...field}
                                   />
                                 </FormControl>
@@ -1701,7 +1712,7 @@ export default function ChannelForm() {
                 <div className="space-y-6">
                   <div className="rounded-lg border border-gray-200 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-900">
                     <h3 className="mb-4 flex items-center gap-2 text-lg font-medium text-gray-800 dark:text-gray-200">
-                      <span>🔑</span> 性能配置
+                      <span>🔑</span> Performance settings
                     </h3>
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -1711,7 +1722,7 @@ export default function ChannelForm() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="font-medium text-gray-700 dark:text-gray-300">
-                                优先级
+                                Priority
                               </FormLabel>
                               <FormControl>
                                 <Input
@@ -1740,7 +1751,7 @@ export default function ChannelForm() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="font-medium text-gray-700 dark:text-gray-300">
-                                权重
+                                Weight
                               </FormLabel>
                               <FormControl>
                                 <Input
@@ -1771,10 +1782,12 @@ export default function ChannelForm() {
                           <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
                             <div className="space-y-0.5">
                               <FormLabel className="text-base font-medium text-gray-700 dark:text-gray-300">
-                                自动禁用
+                                Auto-disable
                               </FormLabel>
                               <div className="text-[0.8rem] text-muted-foreground">
-                                开启后，当渠道出现错误时系统会自动禁用该渠道。关闭后，即使出现错误也不会自动禁用。
+                                When enabled, the channel will be automatically
+                                disabled if it encounters errors. When disabled,
+                                the channel will never be auto-disabled.
                               </div>
                             </div>
                             <FormControl>
@@ -1795,10 +1808,13 @@ export default function ChannelForm() {
                           <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
                             <div className="space-y-0.5">
                               <FormLabel className="text-base font-medium text-gray-700 dark:text-gray-300">
-                                自动启用
+                                Auto-enable
                               </FormLabel>
                               <div className="text-[0.8rem] text-muted-foreground">
-                                开启后，被自动禁用的渠道在定时测试通过时会自动恢复为启用状态。关闭后该渠道不会被自动恢复，需手动启用。
+                                When enabled, auto-disabled channels will be
+                                automatically restored after passing a scheduled
+                                test. When disabled, the channel must be
+                                re-enabled manually.
                               </div>
                             </div>
                             <FormControl>
@@ -1818,14 +1834,15 @@ export default function ChannelForm() {
                         render={({ field }) => (
                           <FormItem className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
                             <FormLabel className="text-base font-medium text-gray-700 dark:text-gray-300">
-                              测试模型 (Test Model)
+                              Test model
                             </FormLabel>
                             <div className="mb-2 text-[0.8rem] text-muted-foreground">
-                              指定自动测试本渠道时使用的模型名。留空则默认使用渠道支持的第一个模型。
+                              Model to use when auto-testing this channel. Leave
+                              blank to use the first supported model.
                             </div>
                             <FormControl>
                               <Input
-                                placeholder="例如：gpt-3.5-turbo"
+                                placeholder="e.g. gpt-3.5-turbo"
                                 {...field}
                                 value={field.value ?? ''}
                               />
@@ -1845,7 +1862,7 @@ export default function ChannelForm() {
                     form.watch('type') === '40') && (
                     <div className="rounded-lg border border-gray-200 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-900">
                       <h3 className="mb-4 flex items-center gap-2 text-lg font-medium text-gray-800 dark:text-gray-200">
-                        <span>🎯</span> 特殊配置
+                        <span>🎯</span> Special configuration
                       </h3>
                       <div className="space-y-4">
                         {form.watch('type') === '18' && (
@@ -1855,12 +1872,12 @@ export default function ChannelForm() {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel className="font-medium text-gray-700 dark:text-gray-300">
-                                  星火模型版本
+                                  Spark model version
                                 </FormLabel>
                                 <FormControl>
                                   <Textarea
                                     className="h-auto max-h-24 min-h-16 resize-none overflow-auto border-gray-300 focus:border-gray-500"
-                                    placeholder="请输入星火大模型版本，注意是接口地址中的版本号，例如：v2.1"
+                                    placeholder="Enter Spark model version (from the API URL), e.g. v2.1"
                                     {...field}
                                   />
                                 </FormControl>
@@ -1877,12 +1894,12 @@ export default function ChannelForm() {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel className="font-medium text-gray-700 dark:text-gray-300">
-                                  知识库 ID
+                                  Knowledge base ID
                                 </FormLabel>
                                 <FormControl>
                                   <Input
                                     className="border-gray-300 focus:border-gray-500 focus:ring-gray-200"
-                                    placeholder="请输入知识库 ID，例如：123456"
+                                    placeholder="Enter knowledge base ID, e.g. 123456"
                                     {...field}
                                   />
                                 </FormControl>
@@ -1899,12 +1916,12 @@ export default function ChannelForm() {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel className="font-medium text-gray-700 dark:text-gray-300">
-                                  插件参数
+                                  Plugin parameter
                                 </FormLabel>
                                 <FormControl>
                                   <Input
                                     className="border-gray-300 focus:border-gray-500 focus:ring-gray-200"
-                                    placeholder="请输入插件参数，即 X-DashScope-Plugin 请求头的取值"
+                                    placeholder="Enter plugin parameter (the value of the X-DashScope-Plugin request header)"
                                     {...field}
                                   />
                                 </FormControl>
@@ -1919,16 +1936,16 @@ export default function ChannelForm() {
                             <div className="mb-2 flex items-center gap-2">
                               <span className="text-blue-600">ℹ️</span>
                               <span className="font-medium text-blue-800 dark:text-blue-200">
-                                Coze 配置说明
+                                Coze configuration notes
                               </span>
                             </div>
                             <p className="text-sm text-blue-700 dark:text-blue-300">
-                              对于 Coze 而言，模型名称即 Bot
-                              ID，你可以添加一个前缀{' '}
+                              For Coze, the model name is the Bot ID. You can
+                              add a{' '}
                               <code className="rounded bg-blue-100 px-1 dark:bg-blue-900">
                                 bot-
                               </code>
-                              ，例如：
+                              prefix, e.g.
                               <code className="rounded bg-blue-100 px-1 dark:bg-blue-900">
                                 bot-123456
                               </code>
@@ -1941,19 +1958,20 @@ export default function ChannelForm() {
                             <div className="mb-2 flex items-center gap-2">
                               <span className="text-green-600">ℹ️</span>
                               <span className="font-medium text-green-800 dark:text-green-200">
-                                豆包配置说明
+                                Doubao configuration notes
                               </span>
                             </div>
                             <p className="text-sm text-green-700 dark:text-green-300">
-                              对于豆包而言，需要手动去{' '}
+                              For Doubao, you must manually go to the{' '}
                               <a
                                 target="_blank"
                                 href="https://console.volcengine.com/ark/region:ark+cn-beijing/endpoint"
                                 className="text-green-600 underline hover:text-green-800"
                               >
-                                模型推理页面
+                                Model inference page
                               </a>{' '}
-                              创建推理接入点，以接入点名称作为模型名称，例如：
+                              to create an inference endpoint. Use the endpoint
+                              name as the model name, e.g.
                               <code className="rounded bg-green-100 px-1 dark:bg-green-900">
                                 ep-20240608051426-tkxvl
                               </code>
@@ -1970,7 +1988,7 @@ export default function ChannelForm() {
               {form.watch('type') !== '43' && (
                 <div className="rounded-lg border border-gray-200 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-900">
                   <h3 className="mb-4 flex items-center gap-2 text-lg font-medium text-gray-800 dark:text-gray-200">
-                    <span>🤖</span> 模型配置
+                    <span>🤖</span> Model configuration
                   </h3>
                   <div className="space-y-6">
                     {/* 自定义模型名称 - 移到顶部 */}
@@ -1981,13 +1999,13 @@ export default function ChannelForm() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel className="flex items-center gap-2 font-medium text-blue-800 dark:text-blue-200">
-                              <span>✨</span> 自定义模型名称
+                              <span>✨</span> Custom model names
                             </FormLabel>
                             <FormControl>
                               <div className="space-y-2">
                                 <Input
                                   className="border-blue-300 bg-white focus:border-blue-500 focus:ring-blue-200 dark:border-blue-600 dark:bg-gray-800"
-                                  placeholder="输入自定义模型名称，多个模型用逗号分隔，例如：gpt-4o,claude-3.5-sonnet"
+                                  placeholder="Enter custom model names, comma-separated, e.g. gpt-4o,claude-3.5-sonnet"
                                   {...field}
                                 />
                                 <Button
@@ -2016,13 +2034,13 @@ export default function ChannelForm() {
                                     }
                                   }}
                                 >
-                                  🔄 立即添加到下方模型列表
+                                  🔄 Add to model list below
                                 </Button>
                               </div>
                             </FormControl>
                             <div className="text-sm text-blue-700 dark:text-blue-300">
-                              💡
-                              点击"立即添加"按钮将自定义模型直接添加到下方的模型选择列表中，方便您直观查看
+                              💡 Click "Add to model list below" to add custom
+                              models directly to the selection list.
                             </div>
                             <FormMessage />
                           </FormItem>
@@ -2036,9 +2054,9 @@ export default function ChannelForm() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="flex items-center justify-between font-medium text-gray-700 dark:text-gray-300">
-                            <span>支持的模型</span>
+                            <span>Supported models</span>
                             <span className="text-sm font-normal text-gray-500">
-                              已选择 {field.value?.length || 0} 个模型
+                              {field.value?.length || 0} models selected
                             </span>
                           </FormLabel>
                           <FormControl>
@@ -2047,15 +2065,15 @@ export default function ChannelForm() {
                               <div className="relative rounded-lg border border-purple-200 bg-purple-50 p-4 dark:border-purple-700 dark:bg-purple-900/50">
                                 <div className="mb-3 flex items-center gap-2">
                                   <span className="font-medium text-purple-800 dark:text-purple-200">
-                                    🔍 模型搜索
+                                    🔍 Search models
                                   </span>
                                   <span className="text-sm text-purple-600 dark:text-purple-400">
-                                    快速找到并添加模型
+                                    Quickly find and add models
                                   </span>
                                 </div>
                                 <div className="relative">
                                   <Input
-                                    placeholder="输入模型名称进行搜索，例如：gpt-4、claude、gemini..."
+                                    placeholder="Search model names, e.g. gpt-4, claude, gemini..."
                                     value={searchQuery}
                                     onChange={(e) => {
                                       const query = e.target.value;
@@ -2086,7 +2104,7 @@ export default function ChannelForm() {
                                           setShowSearchResults(false);
                                         }}
                                         className="rounded p-1 hover:bg-purple-100 dark:hover:bg-purple-800"
-                                        title="清空搜索"
+                                        title="Clear search"
                                       >
                                         <span className="text-xs text-purple-600">
                                           ✕
@@ -2101,7 +2119,7 @@ export default function ChannelForm() {
                                   <div className="mt-3 rounded-lg border border-purple-200 bg-white p-3 dark:border-purple-600 dark:bg-gray-800">
                                     <div className="mb-2 flex items-center justify-between">
                                       <span className="text-sm font-medium text-purple-700 dark:text-purple-300">
-                                        搜索结果 ({searchResults.length})
+                                        Search results ({searchResults.length})
                                       </span>
                                       {searchResults.length > 0 && (
                                         <button
@@ -2133,7 +2151,7 @@ export default function ChannelForm() {
                                           }}
                                           className="text-xs text-purple-600 hover:text-purple-800 hover:underline dark:text-purple-400 dark:hover:text-purple-200"
                                         >
-                                          全部添加
+                                          Add all
                                         </button>
                                       )}
                                     </div>
@@ -2141,8 +2159,8 @@ export default function ChannelForm() {
                                     {searchResults.length === 0 ? (
                                       <div className="text-center text-sm text-gray-500 dark:text-gray-400">
                                         {isSearching
-                                          ? '搜索中...'
-                                          : '未找到匹配的模型'}
+                                          ? 'Searching...'
+                                          : 'No matching models found.'}
                                       </div>
                                     ) : (
                                       <div className="grid max-h-40 grid-cols-1 gap-2 overflow-y-auto md:grid-cols-2">
@@ -2164,13 +2182,13 @@ export default function ChannelForm() {
                                                   onClick={() =>
                                                     copyToClipboard(model.id)
                                                   }
-                                                  title={`点击复制: ${model.id}`}
+                                                  title={`Click to copy: ${model.id}`}
                                                 >
                                                   {model.id}
                                                 </span>
                                                 {isAlreadySelected && (
                                                   <span className="text-xs text-green-600 dark:text-green-400">
-                                                    ✓ 已选择
+                                                    ✓ Selected
                                                   </span>
                                                 )}
                                               </div>
@@ -2186,9 +2204,9 @@ export default function ChannelForm() {
                                                     field.onChange(newModels);
                                                   }}
                                                   className="rounded bg-purple-500 px-2 py-1 text-xs text-white hover:bg-purple-600"
-                                                  title="添加此模型"
+                                                  title="Add this model"
                                                 >
-                                                  添加
+                                                  Add
                                                 </button>
                                               )}
                                             </div>
@@ -2220,7 +2238,7 @@ export default function ChannelForm() {
                                     field.onChange(relatedModelIds);
                                   }}
                                 >
-                                  🎯 填充相关模型
+                                  🎯 Fill with related models
                                 </Button>
                                 <Button
                                   type="button"
@@ -2233,10 +2251,10 @@ export default function ChannelForm() {
                                   {isFetchingModels ? (
                                     <>
                                       <span className="mr-1 h-3 w-3 animate-spin rounded-full border-2 border-purple-500 border-t-transparent"></span>
-                                      获取中...
+                                      Fetching...
                                     </>
                                   ) : (
-                                    '🔄 获取模型列表'
+                                    '🔄 Fetch model list'
                                   )}
                                 </Button>
                                 <Button
@@ -2251,7 +2269,7 @@ export default function ChannelForm() {
                                     field.onChange(allModelIds);
                                   }}
                                 >
-                                  ✅ 全选
+                                  ✅ Select all
                                 </Button>
                                 <Button
                                   type="button"
@@ -2260,7 +2278,7 @@ export default function ChannelForm() {
                                   className="border-orange-300 text-orange-700 hover:bg-orange-50 dark:border-orange-600 dark:text-orange-300 dark:hover:bg-orange-900"
                                   onClick={() => field.onChange([])}
                                 >
-                                  🗑️ 清空所有模型
+                                  🗑️ Clear all models
                                 </Button>
                               </div>
 
@@ -2269,10 +2287,10 @@ export default function ChannelForm() {
                                 <div className="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-700 dark:bg-green-900/50">
                                   <div className="mb-3 flex items-center gap-2">
                                     <span className="font-medium text-green-800 dark:text-green-200">
-                                      ✅ 已选择的模型
+                                      ✅ Selected models
                                     </span>
                                     <span className="text-sm text-green-600 dark:text-green-400">
-                                      ({field.value.length} 个)
+                                      ({field.value.length} models)
                                     </span>
                                   </div>
                                   <div className="flex flex-wrap gap-2">
@@ -2286,7 +2304,7 @@ export default function ChannelForm() {
                                           onClick={() =>
                                             copyToClipboard(modelId)
                                           }
-                                          title={`点击复制: ${modelId}`}
+                                          title={`Click to copy: ${modelId}`}
                                         >
                                           {modelId}
                                         </span>
@@ -2301,7 +2319,7 @@ export default function ChannelForm() {
                                             field.onChange(newValues);
                                           }}
                                           className="ml-1 rounded-full p-0.5 hover:bg-green-300 dark:hover:bg-green-600"
-                                          title="移除此模型"
+                                          title="Remove this model"
                                         >
                                           <span className="text-xs">✕</span>
                                         </button>
@@ -2315,10 +2333,11 @@ export default function ChannelForm() {
                               <div className="space-y-3">
                                 <div className="flex items-center justify-between">
                                   <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                                    可选模型列表
+                                    Available models
                                   </span>
                                   <span className="text-xs text-gray-500">
-                                    单击选择/取消 | 右键或双击复制名称
+                                    Click to select/deselect | Right-click or
+                                    double-click to copy name
                                   </span>
                                 </div>
                                 <div className="grid max-h-80 grid-cols-2 gap-2 overflow-y-auto rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800 md:grid-cols-3 lg:grid-cols-4">
@@ -2351,9 +2370,11 @@ export default function ChannelForm() {
                                           e.preventDefault();
                                           copyToClipboard(item.id);
                                         }}
-                                        title={`单击${
-                                          isSelected ? '取消选择' : '选择'
-                                        } | 右键或双击复制: ${item.id}`}
+                                        title={`Click to ${
+                                          isSelected ? 'deselect' : 'select'
+                                        } | Right-click or double-click to copy: ${
+                                          item.id
+                                        }`}
                                       >
                                         <div className="flex items-center justify-center gap-2">
                                           <div
@@ -2398,19 +2419,19 @@ export default function ChannelForm() {
                         <FormItem>
                           <FormControl>
                             <JSONEditor
-                              label="模型重定向"
+                              label="Model mapping"
                               value={field.value || ''}
                               onChange={field.onChange}
-                              placeholder={`可选配置，用于修改请求体中的模型名称，格式为 JSON 字符串\n示例：\n${JSON.stringify(
+                              placeholder={`Optional. Rewrites model names in request bodies. Format: JSON string.\nExample:\n${JSON.stringify(
                                 MODEL_MAPPING_EXAMPLE,
                                 null,
                                 2
                               )}`}
                               template={MODEL_MAPPING_EXAMPLE}
-                              templateLabel="填入模板"
-                              keyPlaceholder="请求的模型名称"
-                              valuePlaceholder="实际发送的模型名称"
-                              extraText="键为请求中的模型名称，值为要替换的模型名称"
+                              templateLabel="Fill template"
+                              keyPlaceholder="Requested model name"
+                              valuePlaceholder="Actual model name to use"
+                              extraText="Keys are the requested model name, values are the replacement."
                               channelModels={form.watch('models') || []}
                               onAddModels={(models) => {
                                 const currentModels =
@@ -2434,25 +2455,25 @@ export default function ChannelForm() {
                         <FormItem>
                           <FormControl>
                             <JSONEditor
-                              label="自定义请求头"
+                              label="Custom request headers"
                               value={field.value || ''}
                               onChange={field.onChange}
-                              placeholder={`可选配置，用于添加或覆盖转发请求的HTTP头，格式为 JSON 字符串\n示例：\n${JSON.stringify(
+                              placeholder={`Optional. Add or override HTTP headers for forwarded requests. Format: JSON string.\nExample:\n${JSON.stringify(
                                 {
                                   'X-Custom-Header': 'custom-value',
                                   Authorization: 'Bearer {api_key}'
                                 },
                                 null,
                                 2
-                              )}\n\n支持变量: {api_key} 会被替换为实际的API Key`}
+                              )}\n\nSupported variable: {api_key} is replaced with the actual API key.`}
                               template={{
                                 'X-Custom-Header': 'custom-value',
                                 Authorization: 'Bearer {api_key}'
                               }}
-                              templateLabel="填入模板"
-                              keyPlaceholder="请求头名称"
-                              valuePlaceholder="请求头值"
-                              extraText="渠道配置的请求头优先级最高，会覆盖用户传递的同名请求头"
+                              templateLabel="Fill template"
+                              keyPlaceholder="Header name"
+                              valuePlaceholder="Header value"
+                              extraText="Channel-level headers take the highest priority and will override any headers from the client."
                             />
                           </FormControl>
                           <FormMessage />
@@ -2471,31 +2492,31 @@ export default function ChannelForm() {
                     name="aws_key_type"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>密钥格式</FormLabel>
+                        <FormLabel>Key format</FormLabel>
                         <Select
                           onValueChange={field.onChange}
                           value={field.value || ''}
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="不选则自动识别格式" />
+                              <SelectValue placeholder="Auto-detect format" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="ak_sk">
-                              AK|SK|Region（SigV4）
+                              AK|SK|Region (SigV4)
                             </SelectItem>
                             <SelectItem value="api_key">
-                              Bedrock API Key（Bearer）
+                              Bedrock API Key (Bearer)
                             </SelectItem>
                           </SelectContent>
                         </Select>
                         <div className="text-[0.8rem] text-muted-foreground">
                           {!field.value
-                            ? '不选时后端按密钥内容自动识别：2段=Bedrock API Key，3段=AK|SK|Region'
+                            ? 'When not selected, the backend auto-detects the format: 2 parts = Bedrock API Key, 3 parts = AK|SK|Region.'
                             : field.value === 'ak_sk'
-                            ? '格式：AccessKey|SecretKey|Region，每行一个'
-                            : '格式：BedrockAPIKey|Region，每行一个（BedrockAPIKey 为 Base64 编码）'}
+                            ? 'Format: AccessKey|SecretKey|Region, one per line.'
+                            : 'Format: BedrockAPIKey|Region, one per line (BedrockAPIKey is Base64-encoded).'}
                         </div>
                         <FormMessage />
                       </FormItem>
@@ -2506,13 +2527,13 @@ export default function ChannelForm() {
                     name="key"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>密钥（Key）</FormLabel>
+                        <FormLabel>API key (Key)</FormLabel>
                         <FormControl>
                           <Textarea
                             placeholder={
                               form.watch('aws_key_type') === 'api_key'
-                                ? '每行一个，格式：BedrockAPIKey|Region'
-                                : '每行一个，格式：AK|SK|Region'
+                                ? 'One per line, format: BedrockAPIKey|Region'
+                                : 'One per line, format: AK|SK|Region'
                             }
                             {...field}
                           />
@@ -2532,14 +2553,14 @@ export default function ChannelForm() {
                     name="vertex_key_type"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>密钥格式</FormLabel>
+                        <FormLabel>Key format</FormLabel>
                         <Select
                           onValueChange={field.onChange}
                           value={field.value || 'json'}
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="选择密钥格式" />
+                              <SelectValue placeholder="Select key format" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -2549,8 +2570,8 @@ export default function ChannelForm() {
                         </Select>
                         <div className="text-[0.8rem] text-muted-foreground">
                           {(field.value || 'json') === 'json'
-                            ? 'JSON 模式支持手动输入或上传服务账号 JSON'
-                            : 'API Key 模式直接使用 Vertex AI API 密钥'}
+                            ? 'JSON mode supports manual entry or service account JSON upload.'
+                            : 'API Key mode uses a Vertex AI API key directly.'}
                         </div>
                         <FormMessage />
                       </FormItem>
@@ -2564,7 +2585,7 @@ export default function ChannelForm() {
                       <div className="space-y-3 rounded-lg border p-4">
                         <div className="flex items-center gap-4">
                           <span className="text-sm font-medium">
-                            密钥输入方式
+                            Key input method
                           </span>
                           <div className="flex gap-2">
                             <Button
@@ -2577,7 +2598,7 @@ export default function ChannelForm() {
                               size="sm"
                               onClick={() => setVertexInputMode('upload')}
                             >
-                              文件上传
+                              File upload
                             </Button>
                             <Button
                               type="button"
@@ -2589,7 +2610,7 @@ export default function ChannelForm() {
                               size="sm"
                               onClick={() => setVertexInputMode('manual')}
                             >
-                              手动输入
+                              Manual entry
                             </Button>
                           </div>
                         </div>
@@ -2597,7 +2618,7 @@ export default function ChannelForm() {
                         {/* 文件上传 */}
                         {vertexInputMode === 'upload' && (
                           <div className="space-y-3">
-                            <FormLabel>密钥文件 (.json) *</FormLabel>
+                            <FormLabel>Key file (.json) *</FormLabel>
                             <FileUploader
                               value={vertexAiFiles}
                               onValueChange={setVertexAiFiles}
@@ -2613,7 +2634,8 @@ export default function ChannelForm() {
                               className="w-full"
                             />
                             <div className="text-xs text-muted-foreground">
-                              点击上传文件或拖拽文件到这里，仅支持 JSON 文件
+                              Click to upload or drag files here. JSON files
+                              only.
                             </div>
                             {/* 文件预览 */}
                             <FilePreviewList
@@ -2634,7 +2656,9 @@ export default function ChannelForm() {
                             name="vertex_ai_adc"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>服务账号 JSON 凭证</FormLabel>
+                                <FormLabel>
+                                  Service account JSON credential
+                                </FormLabel>
                                 <FormControl>
                                   <Textarea
                                     className="h-auto max-h-48 min-h-32 resize-none overflow-auto font-mono text-sm"
@@ -2647,7 +2671,7 @@ export default function ChannelForm() {
                                   />
                                 </FormControl>
                                 <div className="text-[0.8rem] text-muted-foreground">
-                                  粘贴JSON后会自动提取project_id
+                                  Paste JSON to auto-extract project_id.
                                 </div>
                                 <FormMessage />
                               </FormItem>
@@ -2661,10 +2685,11 @@ export default function ChannelForm() {
                         <div className="flex flex-row items-center justify-between rounded-lg border p-4">
                           <div className="space-y-0.5">
                             <div className="text-sm font-medium">
-                              多密钥处理方式
+                              Multi-key handling
                             </div>
                             <div className="text-[0.8rem] text-muted-foreground">
-                              选择如何处理上传或输入的多个 JSON 凭证
+                              How to handle multiple JSON credentials uploaded
+                              or entered.
                             </div>
                           </div>
                           <div className="flex items-center space-x-4">
@@ -2682,7 +2707,7 @@ export default function ChannelForm() {
                                     htmlFor="vertex_json_batch_create"
                                     className="cursor-pointer text-sm font-medium leading-none"
                                   >
-                                    批量创建
+                                    Batch create
                                   </label>
                                 </FormItem>
                               )}
@@ -2702,7 +2727,7 @@ export default function ChannelForm() {
                                       htmlFor="vertex_json_aggregate_mode"
                                       className="cursor-pointer text-sm font-medium leading-none"
                                     >
-                                      密钥聚合模式
+                                      Key aggregate mode
                                     </label>
                                   </FormItem>
                                 )}
@@ -2716,10 +2741,10 @@ export default function ChannelForm() {
                       {channelId === 'create' && (
                         <div className="text-[0.8rem] text-muted-foreground">
                           {!form.watch('batch_create')
-                            ? '💡 默认：所有 JSON 凭证将聚合到一个渠道，系统自动轮询使用'
+                            ? '💡 Default: all JSON credentials are aggregated into one channel; keys are rotated automatically.'
                             : form.watch('aggregate_mode')
-                            ? '✅ 聚合模式：所有 JSON 凭证将聚合到一个渠道，系统自动轮询使用'
-                            : '📦 批量创建：每个 JSON 凭证将创建一个独立的渠道'}
+                            ? '✅ Aggregate mode: all JSON credentials are aggregated into one channel; keys are rotated automatically.'
+                            : '📦 Batch create: each JSON credential will create a separate channel.'}
                         </div>
                       )}
                     </>
@@ -2736,14 +2761,14 @@ export default function ChannelForm() {
                             <FormLabel>API Key *</FormLabel>
                             <FormControl>
                               <Textarea
-                                placeholder="输入 Vertex AI API Key，支持多个 Key（每行一个）"
+                                placeholder="Enter Vertex AI API Keys (one per line)"
                                 rows={3}
                                 {...field}
                               />
                             </FormControl>
                             <div className="text-[0.8rem] text-muted-foreground">
-                              使用 Vertex AI API Key 进行认证，支持输入多个
-                              Key（每行一个）
+                              Authenticate with Vertex AI API Keys. Multiple
+                              keys are supported (one per line).
                             </div>
                             <FormMessage />
                           </FormItem>
@@ -2755,10 +2780,10 @@ export default function ChannelForm() {
                         <div className="flex flex-row items-center justify-between rounded-lg border p-4">
                           <div className="space-y-0.5">
                             <div className="text-sm font-medium">
-                              多密钥处理方式
+                              Multi-key handling
                             </div>
                             <div className="text-[0.8rem] text-muted-foreground">
-                              选择如何处理输入的多个 API Key
+                              How to handle multiple API keys entered.
                             </div>
                           </div>
                           <div className="flex items-center space-x-4">
@@ -2776,7 +2801,7 @@ export default function ChannelForm() {
                                     htmlFor="vertex_batch_create"
                                     className="cursor-pointer text-sm font-medium leading-none"
                                   >
-                                    批量创建
+                                    Batch create
                                   </label>
                                 </FormItem>
                               )}
@@ -2796,7 +2821,7 @@ export default function ChannelForm() {
                                       htmlFor="vertex_aggregate_mode"
                                       className="cursor-pointer text-sm font-medium leading-none"
                                     >
-                                      密钥聚合模式
+                                      Key aggregate mode
                                     </label>
                                   </FormItem>
                                 )}
@@ -2809,10 +2834,10 @@ export default function ChannelForm() {
                       {/* 提示信息 */}
                       <div className="text-[0.8rem] text-muted-foreground">
                         {!form.watch('batch_create')
-                          ? '💡 默认：所有 Key 将聚合到一个渠道，系统自动轮询使用'
+                          ? '💡 Default: all keys are aggregated into one channel; keys are rotated automatically.'
                           : form.watch('aggregate_mode')
-                          ? '✅ 聚合模式：所有 Key 将聚合到一个渠道，系统自动轮询使用'
-                          : '📦 批量创建：每个 Key 将创建一个独立的渠道'}
+                          ? '✅ Aggregate mode: all keys are aggregated into one channel; keys are rotated automatically.'
+                          : '📦 Batch create: each key will create a separate channel.'}
                       </div>
                     </div>
                   )}
@@ -2820,7 +2845,9 @@ export default function ChannelForm() {
                   {/* 部署地区配置 */}
                   <div className="space-y-4 rounded-lg border p-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">部署地区</span>
+                      <span className="text-sm font-medium">
+                        Deployment region
+                      </span>
                       <div className="flex gap-2">
                         <Button
                           type="button"
@@ -2832,7 +2859,7 @@ export default function ChannelForm() {
                           size="sm"
                           onClick={() => setVertexRegionMode('visual')}
                         >
-                          可视化
+                          Visual
                         </Button>
                         <Button
                           type="button"
@@ -2844,7 +2871,7 @@ export default function ChannelForm() {
                           size="sm"
                           onClick={() => setVertexRegionMode('manual')}
                         >
-                          手动编辑
+                          Manual edit
                         </Button>
                         <Button
                           type="button"
@@ -2865,7 +2892,7 @@ export default function ChannelForm() {
                             );
                           }}
                         >
-                          填入模板
+                          Fill template
                         </Button>
                       </div>
                     </div>
@@ -2879,10 +2906,10 @@ export default function ChannelForm() {
                           name="region"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>默认区域</FormLabel>
+                              <FormLabel>Default region</FormLabel>
                               <FormControl>
                                 <Input
-                                  placeholder="默认区域，如: us-central1"
+                                  placeholder="Default region, e.g. us-central1"
                                   {...field}
                                 />
                               </FormControl>
@@ -2893,14 +2920,14 @@ export default function ChannelForm() {
 
                         {/* 模型专用区域 */}
                         <div className="space-y-3">
-                          <FormLabel>模型专用区域</FormLabel>
+                          <FormLabel>Model-specific regions</FormLabel>
                           {vertexModelRegions.map((item, index) => (
                             <div
                               key={index}
                               className="flex items-center gap-2"
                             >
                               <Input
-                                placeholder="模型名称"
+                                placeholder="Model name"
                                 value={item.model}
                                 onChange={(e) => {
                                   const newRegions = [...vertexModelRegions];
@@ -2911,7 +2938,7 @@ export default function ChannelForm() {
                                 className="flex-1"
                               />
                               <Input
-                                placeholder="区域"
+                                placeholder="Region"
                                 value={item.region}
                                 onChange={(e) => {
                                   const newRegions = [...vertexModelRegions];
@@ -2933,7 +2960,7 @@ export default function ChannelForm() {
                                   updateVertexModelRegionField(newRegions);
                                 }}
                               >
-                                删除
+                                Delete
                               </Button>
                             </div>
                           ))}
@@ -2948,11 +2975,11 @@ export default function ChannelForm() {
                               ]);
                             }}
                           >
-                            + 添加模型区域
+                            + Add model region
                           </Button>
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          设置默认地区和特定模型的专用地区
+                          Set default and model-specific regions.
                         </div>
                       </div>
                     )}
@@ -2964,7 +2991,7 @@ export default function ChannelForm() {
                         name="vertex_model_region"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>模型区域映射 (JSON)</FormLabel>
+                            <FormLabel>Model region map (JSON)</FormLabel>
                             <FormControl>
                               <Textarea
                                 className="h-auto min-h-24 resize-none font-mono text-sm"
@@ -2985,16 +3012,16 @@ export default function ChannelForm() {
                     name="google_storage"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Google Storage 存储桶 (可选)</FormLabel>
+                        <FormLabel>Google Storage bucket (optional)</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="例如: gs://ezlinkai-veo322"
+                            placeholder="e.g. gs://ezlinkai-veo322"
                             {...field}
                           />
                         </FormControl>
                         <div className="text-[0.8rem] text-muted-foreground">
-                          用于 Veo3 视频生成的存储桶地址，格式为
-                          gs://bucket-name，不填则使用默认配置
+                          Storage bucket for Veo3 video generation. Format:
+                          gs://bucket-name. Leave blank to use the default.
                         </div>
                         <FormMessage />
                       </FormItem>
@@ -3011,7 +3038,10 @@ export default function ChannelForm() {
                     <FormItem>
                       <FormLabel>User ID</FormLabel>
                       <FormControl>
-                        <Input placeholder="生成该密钥的用户 ID" {...field} />
+                        <Input
+                          placeholder="User ID that generated the key"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -3026,10 +3056,10 @@ export default function ChannelForm() {
                   name="key"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>密钥（Key）</FormLabel>
+                      <FormLabel>API key (Key)</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="请输入可灵密钥，每行一个，格式为：AK|SK"
+                          placeholder="Enter Kling AI keys, one per line, format: AK|SK"
                           {...field}
                         />
                       </FormControl>
@@ -3054,10 +3084,11 @@ export default function ChannelForm() {
                           <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                             <div className="space-y-0.5">
                               <FormLabel className="text-base">
-                                批量创建
+                                Batch create
                               </FormLabel>
                               <div className="text-[0.8rem] text-muted-foreground">
-                                开启后可以批量输入多个key来创建多个渠道（并行处理，速度更快）
+                                When enabled, enter multiple keys to create
+                                multiple channels in parallel.
                               </div>
                             </div>
                             <FormControl>
@@ -3079,7 +3110,7 @@ export default function ChannelForm() {
                                           htmlFor="aggregate_mode"
                                           className="cursor-pointer text-sm font-medium leading-none"
                                         >
-                                          密钥聚合模式
+                                          Key aggregate mode
                                         </label>
                                       </FormItem>
                                     )}
@@ -3102,7 +3133,7 @@ export default function ChannelForm() {
                           <div className="rounded border border-green-200 bg-green-50 p-4">
                             <div className="mb-2 flex items-center justify-between">
                               <span className="text-sm font-medium text-green-800">
-                                批量创建进度
+                                Batch create progress
                               </span>
                               <span className="text-sm text-green-600">
                                 {batchProgress.current} / {batchProgress.total}
@@ -3124,8 +3155,8 @@ export default function ChannelForm() {
                             </div>
                             <div className="mt-1 text-xs text-green-600">
                               {batchProgress.current === batchProgress.total
-                                ? '处理完成，正在跳转...'
-                                : '正在并行创建渠道...'}
+                                ? 'Done! Redirecting...'
+                                : 'Creating channels in parallel...'}
                             </div>
                           </div>
                         )}
@@ -3145,18 +3176,18 @@ export default function ChannelForm() {
                       name="batch_keys"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>批量密钥</FormLabel>
+                          <FormLabel>Batch keys</FormLabel>
                           <FormControl>
                             <Textarea
                               className="h-auto max-h-64 min-h-32 resize-none overflow-auto"
-                              placeholder={`请按行输入多个密钥，每行一个密钥。
+                              placeholder={`Enter keys one per line.
 
-🚀 性能优化：
-• 采用并行处理，速度快10倍
-• 每批处理10个，避免服务器压力
-• 自动显示创建进度
+🚀 Performance:
+• Parallel processing — 10x faster
+• Batches of 10 to reduce server load
+• Progress shown automatically
 
-示例格式：
+Example:
 sk-1234567890abcdef
 sk-0987654321fedcba
 sk-abcdef1234567890
@@ -3174,8 +3205,9 @@ ${type2secretPrompt(form.watch('type'))}`}
                     {form.watch('type') === '48' && (
                       <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950">
                         <div className="text-sm text-blue-700 dark:text-blue-300">
-                          💡 <strong>Vertex AI 用户提示</strong>：可以在上方的
-                          "Vertex AI JSON文件上传" 区域批量上传多个JSON文件
+                          💡 <strong>Vertex AI tip</strong>: Use the "Vertex AI
+                          JSON file upload" section above to upload multiple
+                          JSON files in batch.
                         </div>
                       </div>
                     )}
@@ -3195,10 +3227,10 @@ ${type2secretPrompt(form.watch('type'))}`}
                         return (
                           <FormItem>
                             <FormLabel>
-                              {isMultiKey ? '密钥管理' : '密钥'}
+                              {isMultiKey ? 'Key management' : 'API key'}
                               {isMultiKey && (
                                 <span className="ml-2 text-xs text-blue-600">
-                                  (多密钥聚合渠道)
+                                  (Multi-key aggregate channel)
                                 </span>
                               )}
                             </FormLabel>
@@ -3207,22 +3239,22 @@ ${type2secretPrompt(form.watch('type'))}`}
                                 <div className="space-y-3">
                                   <Textarea
                                     className="h-auto max-h-48 min-h-24 resize-none overflow-auto"
-                                    placeholder={`多密钥聚合渠道密钥管理：
+                                    placeholder={`Multi-key aggregate channel key management:
 
-🔑 添加密钥：
-• 每行输入一个密钥
-• 支持批量粘贴多个密钥
-• 根据编辑模式决定是追加还是覆盖现有密钥
+🔑 Add keys:
+• One key per line
+• Paste multiple keys at once
+• Append or overwrite existing keys based on edit mode
 
-⚙️ 当前配置：
-• 密钥选择模式：${
+⚙️ Current config:
+• Key selection: ${
                                       form.watch('key_selection_mode') === 0
-                                        ? '轮询模式'
-                                        : '随机模式'
+                                        ? 'Round-robin'
+                                        : 'Random'
                                     }
-• 编辑模式：${form.watch('batch_import_mode') === 0 ? '覆盖模式' : '追加模式'}
+• Edit mode: ${form.watch('batch_import_mode') === 0 ? 'Overwrite' : 'Append'}
 
-💡 提示：在渠道编辑页面可以修改密钥选择和编辑模式`}
+💡 You can change key selection and edit mode in the channel settings.`}
                                     {...field}
                                   />
 
@@ -3230,15 +3262,16 @@ ${type2secretPrompt(form.watch('type'))}`}
                                   {form.watch('type') === '48' && (
                                     <div className="rounded-lg border border-green-200 bg-green-50 p-3 dark:border-green-800 dark:bg-green-950">
                                       <div className="text-sm text-green-700 dark:text-green-300">
-                                        💡 <strong>Vertex AI 用户提示</strong>
-                                        ：可以在上方的 "Vertex AI JSON文件上传"
-                                        区域上传多个JSON文件
+                                        💡 <strong>Vertex AI tip</strong>: Use
+                                        the "Vertex AI JSON file upload" section
+                                        above to upload multiple JSON files.
                                         <br />
-                                        🔧 系统会根据当前编辑模式(
+                                        🔧 Keys will be processed according to
+                                        the current edit mode (
                                         {form.watch('batch_import_mode') === 0
-                                          ? '覆盖'
-                                          : '追加'}
-                                        )自动处理密钥
+                                          ? 'overwrite'
+                                          : 'append'}
+                                        ).
                                       </div>
                                     </div>
                                   )}
@@ -3255,14 +3288,17 @@ ${type2secretPrompt(form.watch('type'))}`}
                             {isMultiKey && (
                               <div className="text-xs text-gray-600">
                                 <p>
-                                  • <strong>追加模式</strong>
-                                  ：新密钥将添加到现有密钥列表中
+                                  • <strong>Append mode</strong>: new keys are
+                                  added to the existing key list.
                                 </p>
                                 <p>
-                                  • <strong>覆盖模式</strong>
-                                  ：新密钥将替换所有现有密钥
+                                  • <strong>Overwrite mode</strong>: new keys
+                                  replace all existing keys.
                                 </p>
-                                <p>• 可在上方密钥配置区域修改编辑模式</p>
+                                <p>
+                                  • Edit mode can be changed in the key
+                                  configuration section above.
+                                </p>
                               </div>
                             )}
                             <FormMessage />
@@ -3283,7 +3319,7 @@ ${type2secretPrompt(form.watch('type'))}`}
                       <FormLabel>Account ID</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="请输入 Account ID，例如：d8d7c61dbc334c32d3ced580e4bf42b4"
+                          placeholder="Enter Account ID, e.g. d8d7c61dbc334c32d3ced580e4bf42b4"
                           {...field}
                         />
                       </FormControl>
@@ -3321,11 +3357,11 @@ ${type2secretPrompt(form.watch('type'))}`}
                   name="base_url"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>私有部署地址</FormLabel>
+                      <FormLabel>Private deployment address</FormLabel>
                       <FormControl>
                         <Textarea
                           className="h-auto max-h-64 min-h-32 resize-none overflow-auto"
-                          placeholder="请输入私有部署地址，格式为：https://fastgpt.run/api/openapi"
+                          placeholder="Enter private deployment address, e.g. https://fastgpt.run/api/openapi"
                           {...field}
                         />
                       </FormControl>
@@ -3340,12 +3376,12 @@ ${type2secretPrompt(form.watch('type'))}`}
                 name="priority"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>优先级</FormLabel>
+                    <FormLabel>Priority</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         min="0"
-                        placeholder="请输入优先级，默认为0"
+                        placeholder="Enter priority (default 0)"
                         {...field}
                         value={field.value || ''}
                         onChange={(e) => {
@@ -3366,12 +3402,12 @@ ${type2secretPrompt(form.watch('type'))}`}
                 name="weight"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>权重</FormLabel>
+                    <FormLabel>Weight</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         min="0"
-                        placeholder="请输入权重，默认为0"
+                        placeholder="Enter weight (default 0)"
                         {...field}
                         value={field.value || ''}
                         onChange={(e) => {
@@ -3422,9 +3458,10 @@ ${type2secretPrompt(form.watch('type'))}`}
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
-                      <FormLabel className="text-base">自动禁用</FormLabel>
+                      <FormLabel className="text-base">Auto-disable</FormLabel>
                       <div className="text-[0.8rem] text-muted-foreground">
-                        开启后，当渠道出现错误时系统会自动禁用该渠道。关闭后，即使出现错误也不会自动禁用。
+                        When enabled, the channel will be automatically disabled
+                        if it encounters errors.
                       </div>
                     </div>
                     <FormControl>
@@ -3443,9 +3480,10 @@ ${type2secretPrompt(form.watch('type'))}`}
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
-                      <FormLabel className="text-base">自动启用</FormLabel>
+                      <FormLabel className="text-base">Auto-enable</FormLabel>
                       <div className="text-[0.8rem] text-muted-foreground">
-                        开启后，被自动禁用的渠道在定时测试通过时会自动恢复为启用状态。关闭后该渠道不会被自动恢复，需手动启用。
+                        When enabled, auto-disabled channels will be
+                        automatically restored after passing a scheduled test.
                       </div>
                     </div>
                     <FormControl>
@@ -3463,15 +3501,14 @@ ${type2secretPrompt(form.watch('type'))}`}
                 name="test_model"
                 render={({ field }) => (
                   <FormItem className="rounded-lg border p-4">
-                    <FormLabel className="text-base">
-                      测试模型 (Test Model)
-                    </FormLabel>
+                    <FormLabel className="text-base">Test model</FormLabel>
                     <div className="mb-2 text-[0.8rem] text-muted-foreground">
-                      指定自动测试本渠道时使用的模型名。留空则默认使用渠道支持的第一个模型。
+                      Model to use when auto-testing this channel. Leave blank
+                      to use the first supported model.
                     </div>
                     <FormControl>
                       <Input
-                        placeholder="例如：gpt-3.5-turbo"
+                        placeholder="e.g. gpt-3.5-turbo"
                         {...field}
                         value={field.value ?? ''}
                       />
@@ -3490,11 +3527,12 @@ ${type2secretPrompt(form.watch('type'))}`}
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-800 dark:bg-blue-950/30">
                       <div className="space-y-0.5">
                         <FormLabel className="text-base">
-                          支持 Token 计数
+                          Support token counting
                         </FormLabel>
                         <div className="text-[0.8rem] text-muted-foreground">
-                          开启后，该渠道可用于处理 /v1/messages/count_tokens
-                          请求。需要确保上游 API 支持此功能。
+                          When enabled, this channel can handle
+                          /v1/messages/count_tokens requests. Ensure the
+                          upstream API supports this.
                         </div>
                       </div>
                       <FormControl>
@@ -3517,11 +3555,11 @@ ${type2secretPrompt(form.watch('type'))}`}
                     <FormItem className="rounded-lg border border-amber-200 bg-amber-50/50 p-4 dark:border-amber-800 dark:bg-amber-950/30">
                       <div className="space-y-0.5">
                         <FormLabel className="text-base">
-                          Beta Flag 过滤模式
+                          Beta flag filter mode
                         </FormLabel>
                         <div className="text-[0.8rem] text-muted-foreground">
-                          过滤客户端发送的不兼容 beta flag，避免上游返回 400
-                          错误。
+                          Filter incompatible beta flags from clients to prevent
+                          400 errors from upstream.
                         </div>
                       </div>
                       <FormControl>
@@ -3530,20 +3568,20 @@ ${type2secretPrompt(form.watch('type'))}`}
                           onValueChange={field.onChange}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="不过滤（直接透传）" />
+                            <SelectValue placeholder="No filter (pass through)" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="none">
-                              不过滤（直接透传）
+                              No filter (pass through)
                             </SelectItem>
                             <SelectItem value="bedrock">
-                              过滤为 AWS Bedrock 兼容
+                              Filter for AWS Bedrock compatibility
                             </SelectItem>
                             <SelectItem value="vertex">
-                              过滤为 Vertex AI 兼容
+                              Filter for Vertex AI compatibility
                             </SelectItem>
                             <SelectItem value="bedrock_vertex">
-                              Bedrock + Vertex 兼容（最严格）
+                              Bedrock + Vertex AI compatible (strictest)
                             </SelectItem>
                           </SelectContent>
                         </Select>
@@ -3562,7 +3600,7 @@ ${type2secretPrompt(form.watch('type'))}`}
                     name="key_selection_mode"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>密钥选择模式</FormLabel>
+                        <FormLabel>Key selection mode</FormLabel>
                         <Select
                           onValueChange={(value) =>
                             field.onChange(parseInt(value))
@@ -3571,18 +3609,18 @@ ${type2secretPrompt(form.watch('type'))}`}
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="选择密钥选择模式" />
+                              <SelectValue placeholder="Select key selection mode" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="0">轮询模式</SelectItem>
-                            <SelectItem value="1">随机模式</SelectItem>
+                            <SelectItem value="0">Round-robin</SelectItem>
+                            <SelectItem value="1">Random</SelectItem>
                           </SelectContent>
                         </Select>
                         <div className="text-[0.8rem] text-muted-foreground">
                           {field.value === 0
-                            ? '按顺序轮流使用密钥'
-                            : '随机选择可用密钥'}
+                            ? 'Use keys in order.'
+                            : 'Pick a key at random.'}
                         </div>
                         <FormMessage />
                       </FormItem>
@@ -3594,7 +3632,7 @@ ${type2secretPrompt(form.watch('type'))}`}
                     name="batch_import_mode"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>密钥编辑模式</FormLabel>
+                        <FormLabel>Key edit mode</FormLabel>
                         <Select
                           onValueChange={(value) =>
                             field.onChange(parseInt(value))
@@ -3603,18 +3641,18 @@ ${type2secretPrompt(form.watch('type'))}`}
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="选择密钥编辑模式" />
+                              <SelectValue placeholder="Select key edit mode" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="0">覆盖模式</SelectItem>
-                            <SelectItem value="1">追加模式</SelectItem>
+                            <SelectItem value="0">Overwrite</SelectItem>
+                            <SelectItem value="1">Append</SelectItem>
                           </SelectContent>
                         </Select>
                         <div className="text-[0.8rem] text-muted-foreground">
                           {field.value === 0
-                            ? '编辑时覆盖现有密钥'
-                            : '编辑时追加到现有密钥'}
+                            ? 'Overwrites existing keys on edit.'
+                            : 'Appends to existing keys on edit.'}
                         </div>
                         <FormMessage />
                       </FormItem>
@@ -3626,17 +3664,18 @@ ${type2secretPrompt(form.watch('type'))}`}
               {/* 上游模型巡检配置 */}
               <div className="rounded-lg border border-indigo-200 bg-indigo-50/50 p-5 dark:border-indigo-800 dark:bg-indigo-950/30">
                 <h3 className="mb-4 flex items-center gap-2 text-lg font-medium text-indigo-800 dark:text-indigo-200">
-                  <span>🔄</span> 上游模型巡检
+                  <span>🔄</span> Upstream model patrol
                 </h3>
                 <div className="space-y-4">
                   {/* 开启巡检开关 */}
                   <div className="flex flex-row items-center justify-between rounded-lg border border-indigo-200 bg-white p-4 dark:border-indigo-700 dark:bg-gray-800">
                     <div className="space-y-0.5">
                       <div className="text-base font-medium text-gray-700 dark:text-gray-300">
-                        开启上游模型巡检
+                        Enable upstream model patrol
                       </div>
                       <div className="text-[0.8rem] text-muted-foreground">
-                        开启后系统会定时检测上游是否有新增或删除的模型
+                        When enabled, the system periodically checks upstream
+                        for added or removed models.
                       </div>
                     </div>
                     <Checkbox
@@ -3653,10 +3692,11 @@ ${type2secretPrompt(form.watch('type'))}`}
                       <div className="flex flex-row items-center justify-between rounded-lg border border-indigo-200 bg-white p-4 dark:border-indigo-700 dark:bg-gray-800">
                         <div className="space-y-0.5">
                           <div className="text-base font-medium text-gray-700 dark:text-gray-300">
-                            自动同步新增模型
+                            Auto-sync new models
                           </div>
                           <div className="text-[0.8rem] text-muted-foreground">
-                            巡检发现的新增模型自动加入渠道模型列表
+                            New models detected by patrol are automatically
+                            added to the channel's model list.
                           </div>
                         </div>
                         <Checkbox
@@ -3672,10 +3712,11 @@ ${type2secretPrompt(form.watch('type'))}`}
                       <div className="flex flex-row items-center justify-between rounded-lg border border-indigo-200 bg-white p-4 dark:border-indigo-700 dark:bg-gray-800">
                         <div className="space-y-0.5">
                           <div className="text-base font-medium text-gray-700 dark:text-gray-300">
-                            自动删除已移除模型
+                            Auto-remove deprecated models
                           </div>
                           <div className="text-[0.8rem] text-muted-foreground">
-                            上游不再提供的模型自动从渠道模型列表中移除
+                            Models no longer provided upstream are automatically
+                            removed from the channel's model list.
                           </div>
                         </div>
                         <Checkbox
@@ -3701,11 +3742,11 @@ ${type2secretPrompt(form.watch('type'))}`}
                           onClick={handleDetectUpstream}
                           className="border-indigo-300 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-600 dark:text-indigo-300"
                         >
-                          {isDetecting ? '检测中...' : '🔍 立即检测'}
+                          {isDetecting ? 'Scanning...' : '🔍 Scan now'}
                         </Button>
                         {upstreamDetectResult?.lastCheckTime ? (
                           <span className="text-xs text-muted-foreground">
-                            上次检测：
+                            Last scanned:
                             {new Date(
                               upstreamDetectResult.lastCheckTime * 1000
                             ).toLocaleString()}
@@ -3719,14 +3760,14 @@ ${type2secretPrompt(form.watch('type'))}`}
                           upstreamDetectResult.removeModels.length > 0) && (
                           <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-700 dark:bg-yellow-950/40">
                             <div className="mb-3 font-medium text-yellow-800 dark:text-yellow-200">
-                              待处理变更
+                              Pending changes
                             </div>
                             <div className="space-y-3">
                               {upstreamDetectResult.addModels.length > 0 && (
                                 <div>
                                   <div className="mb-1 flex items-center justify-between">
                                     <span className="text-sm font-medium text-green-700 dark:text-green-400">
-                                      ➕ 新增模型 (
+                                      ➕ New models (
                                       {upstreamDetectResult.addModels.length})
                                     </span>
                                     <Button
@@ -3743,7 +3784,7 @@ ${type2secretPrompt(form.watch('type'))}`}
                                       }
                                       className="h-6 border-green-300 px-2 text-xs text-green-700 hover:bg-green-50 dark:border-green-600 dark:text-green-300"
                                     >
-                                      全部添加
+                                      Add all
                                     </Button>
                                   </div>
                                   <div className="flex flex-wrap gap-1">
@@ -3763,7 +3804,7 @@ ${type2secretPrompt(form.watch('type'))}`}
                                         +
                                         {upstreamDetectResult.addModels.length -
                                           12}{' '}
-                                        个
+                                        more
                                       </span>
                                     )}
                                   </div>
@@ -3773,7 +3814,7 @@ ${type2secretPrompt(form.watch('type'))}`}
                                 <div>
                                   <div className="mb-1 flex items-center justify-between">
                                     <span className="text-sm font-medium text-red-600 dark:text-red-400">
-                                      ➖ 待删除模型 (
+                                      ➖ Models to remove (
                                       {upstreamDetectResult.removeModels.length}
                                       )
                                     </span>
@@ -3791,7 +3832,7 @@ ${type2secretPrompt(form.watch('type'))}`}
                                       }
                                       className="h-6 border-red-300 px-2 text-xs text-red-600 hover:bg-red-50 dark:border-red-600 dark:text-red-400"
                                     >
-                                      全部删除
+                                      Remove all
                                     </Button>
                                   </div>
                                   <div className="flex flex-wrap gap-1">
@@ -3811,7 +3852,7 @@ ${type2secretPrompt(form.watch('type'))}`}
                                         +
                                         {upstreamDetectResult.removeModels
                                           .length - 12}{' '}
-                                        个
+                                        more
                                       </span>
                                     )}
                                   </div>
@@ -3834,8 +3875,8 @@ ${type2secretPrompt(form.watch('type'))}`}
                                     className="bg-indigo-600 text-white hover:bg-indigo-700"
                                   >
                                     {isApplyingUpstream
-                                      ? '应用中...'
-                                      : '✅ 全部应用（新增 + 删除）'}
+                                      ? 'Applying...'
+                                      : '✅ Apply all (add + remove)'}
                                   </Button>
                                 )}
                             </div>
@@ -3847,7 +3888,8 @@ ${type2secretPrompt(form.watch('type'))}`}
                         upstreamDetectResult.removeModels.length === 0 &&
                         upstreamDetectResult.lastCheckTime > 0 && (
                           <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-700 dark:border-green-700 dark:bg-green-950/30 dark:text-green-300">
-                            ✅ 上游模型列表与当前配置一致，无变更
+                            ✅ Upstream model list is in sync — no changes
+                            detected.
                           </div>
                         )}
                     </div>
@@ -3866,7 +3908,7 @@ ${type2secretPrompt(form.watch('type'))}`}
                       onClick={() => window.history.back()}
                     >
                       <span className="mr-2">⬅️</span>
-                      返回列表
+                      Back to list
                     </Button>
                   </div>
 
@@ -3876,8 +3918,8 @@ ${type2secretPrompt(form.watch('type'))}`}
                         <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-gray-600 dark:border-gray-400"></div>
                         <span>
                           {form.watch('batch_create') && batchProgress.total > 0
-                            ? `批量创建中... (${batchProgress.current}/${batchProgress.total})`
-                            : '处理中...'}
+                            ? `Batch creating... (${batchProgress.current}/${batchProgress.total})`
+                            : 'Processing...'}
                         </span>
                       </div>
                     )}
@@ -3898,13 +3940,13 @@ ${type2secretPrompt(form.watch('type'))}`}
                       )}
                       {isSubmitting
                         ? form.watch('batch_create') && batchProgress.total > 0
-                          ? `创建中... (${batchProgress.current}/${batchProgress.total})`
-                          : '提交中...'
+                          ? `Creating... (${batchProgress.current}/${batchProgress.total})`
+                          : 'Submitting...'
                         : channelId !== 'create'
-                        ? '更新渠道配置'
+                        ? 'Update channel'
                         : form.watch('batch_create')
-                        ? '开始批量创建'
-                        : '创建新渠道'}
+                        ? 'Start batch create'
+                        : 'Create channel'}
                     </Button>
                   </div>
                 </div>
@@ -3915,17 +3957,17 @@ ${type2secretPrompt(form.watch('type'))}`}
                     <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                       <span>ℹ️</span>
                       <span>
-                        {channelId !== 'create' ? '编辑模式' : '创建模式'}
-                        {form.watch('batch_create') && ' - 批量创建'}
+                        {channelId !== 'create' ? 'Edit mode' : 'Create mode'}
+                        {form.watch('batch_create') && ' - Batch create'}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                       <span>✓</span>
-                      <span>自动保存配置</span>
+                      <span>Auto-save configuration</span>{' '}
                     </div>
                     <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                       <span>🔒</span>
-                      <span>安全验证通过</span>
+                      <span>Security verified</span>
                     </div>
                   </div>
                 </div>

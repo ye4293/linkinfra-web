@@ -31,8 +31,8 @@ import type { GroupConfigItem } from '@/lib/types/model-plaza';
 
 const breadcrumbItems = [
   { title: 'Dashboard', link: '/dashboard' },
-  { title: '系统设置', link: '/dashboard/setting' },
-  { title: '折扣设置', link: '/dashboard/setting/discount' }
+  { title: 'System settings', link: '/dashboard/setting' },
+  { title: 'Discount settings', link: '/dashboard/setting/discount' }
 ];
 
 interface GroupFormData {
@@ -87,7 +87,7 @@ export default function DiscountPage() {
         setGroups(sortedGroups);
       }
     } catch (err) {
-      toast.error('获取分组列表失败');
+      toast.error('Failed to load groups.');
     } finally {
       setIsLoading(false);
     }
@@ -118,15 +118,15 @@ export default function DiscountPage() {
 
   const handleSave = async () => {
     if (!formData.group_key.trim()) {
-      toast.error('请输入分组标识');
+      toast.error('Group key is required.');
       return;
     }
     if (!formData.display_name.trim()) {
-      toast.error('请输入显示名称');
+      toast.error('Display name is required.');
       return;
     }
     if (formData.discount < 0 || formData.discount > 100) {
-      toast.error('折扣率必须在 0-100 之间');
+      toast.error('Discount must be between 0 and 100.');
       return;
     }
 
@@ -151,14 +151,14 @@ export default function DiscountPage() {
       }
       const result = await response.json();
       if (result.success) {
-        toast.success(isEdit ? '更新分组成功' : '创建分组成功');
+        toast.success(isEdit ? 'Group updated.' : 'Group created.');
         setDialogOpen(false);
         fetchGroups();
       } else {
-        toast.error(result.message || '操作失败');
+        toast.error(result.message || 'Operation failed.');
       }
     } catch (err) {
-      toast.error('操作失败');
+      toast.error('Operation failed.');
     } finally {
       setIsSaving(false);
     }
@@ -182,15 +182,15 @@ export default function DiscountPage() {
       }
       const result = await response.json();
       if (result.success) {
-        toast.success('删除分组成功');
+        toast.success('Group deleted.');
         setDeleteDialogOpen(false);
         setDeletingGroup(null);
         fetchGroups();
       } else {
-        toast.error(result.message || '删除失败');
+        toast.error(result.message || 'Delete failed.');
       }
     } catch (err) {
-      toast.error('删除失败');
+      toast.error('Delete failed.');
     } finally {
       setIsDeleting(false);
     }
@@ -202,13 +202,15 @@ export default function DiscountPage() {
       <div className="space-y-4">
         <Breadcrumbs items={breadcrumbItems} />
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold tracking-tight">折扣设置</h2>
+          <h2 className="text-2xl font-bold tracking-tight">
+            Discount settings
+          </h2>
         </div>
         <Separator />
 
         <Tabs defaultValue="group-discount" className="space-y-4">
           <TabsList>
-            <TabsTrigger value="group-discount">用户分组折扣</TabsTrigger>
+            <TabsTrigger value="group-discount">Group discounts</TabsTrigger>
           </TabsList>
 
           {/* ==================== 用户分组折扣 Tab ==================== */}
@@ -216,13 +218,13 @@ export default function DiscountPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">
-                  管理用户分组及其对应的折扣率。折扣率为百分比，100
-                  表示无折扣，50 表示五折。
+                  Manage user groups and their corresponding discount rates. The
+                  rate is a percentage: 100 means no discount, 50 means 50% off.
                 </p>
               </div>
               <Button onClick={openCreateDialog} size="sm">
                 <Plus className="mr-2 h-4 w-4" />
-                新增分组
+                Add group
               </Button>
             </div>
 
@@ -231,12 +233,14 @@ export default function DiscountPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[120px]">分组标识</TableHead>
-                    <TableHead className="w-[120px]">显示名称</TableHead>
-                    <TableHead className="w-[100px]">折扣率</TableHead>
-                    <TableHead className="w-[80px]">排序</TableHead>
-                    <TableHead>描述</TableHead>
-                    <TableHead className="w-[100px] text-right">操作</TableHead>
+                    <TableHead className="w-[120px]">Group key</TableHead>
+                    <TableHead className="w-[120px]">Display name</TableHead>
+                    <TableHead className="w-[100px]">Discount rate</TableHead>
+                    <TableHead className="w-[80px]">Order</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead className="w-[100px] text-right">
+                      Actions
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -252,7 +256,7 @@ export default function DiscountPage() {
                         colSpan={6}
                         className="h-24 text-center text-muted-foreground"
                       >
-                        暂无分组配置，点击"新增分组"添加
+                        No groups configured. Click "Add group" to create one.
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -282,7 +286,7 @@ export default function DiscountPage() {
                               size="icon"
                               className="h-8 w-8"
                               onClick={() => openEditDialog(group)}
-                              title="编辑"
+                              title="Edit"
                             >
                               <Edit2 className="h-4 w-4" />
                             </Button>
@@ -291,7 +295,7 @@ export default function DiscountPage() {
                               size="icon"
                               className="h-8 w-8 text-destructive hover:bg-destructive/10"
                               onClick={() => openDeleteDialog(group)}
-                              title="删除"
+                              title="Delete"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -311,22 +315,24 @@ export default function DiscountPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-[480px]">
           <DialogHeader>
-            <DialogTitle>{editingGroup ? '编辑分组' : '新增分组'}</DialogTitle>
+            <DialogTitle>
+              {editingGroup ? 'Edit group' : 'Add group'}
+            </DialogTitle>
             <DialogDescription>
               {editingGroup
-                ? '修改用户分组的折扣配置'
-                : '创建一个新的用户分组折扣配置'}
+                ? 'Modify the discount configuration for this group.'
+                : 'Create a new user group discount configuration.'}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="group_key">
-                分组标识 <span className="text-destructive">*</span>
+                Group key <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="group_key"
-                placeholder="例如: vip, premium, default"
+                placeholder="e.g. vip, premium, default"
                 value={formData.group_key}
                 onChange={(e) =>
                   setFormData({ ...formData, group_key: e.target.value })
@@ -334,17 +340,17 @@ export default function DiscountPage() {
                 disabled={editingGroup !== null}
               />
               <p className="text-xs text-muted-foreground">
-                唯一标识，创建后不可修改
+                Unique identifier — cannot be changed after creation.
               </p>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="display_name">
-                显示名称 <span className="text-destructive">*</span>
+                Display name <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="display_name"
-                placeholder="例如: VIP用户, 高级会员"
+                placeholder="e.g. VIP, Premium member"
                 value={formData.display_name}
                 onChange={(e) =>
                   setFormData({ ...formData, display_name: e.target.value })
@@ -354,7 +360,7 @@ export default function DiscountPage() {
 
             <div className="space-y-2">
               <Label htmlFor="discount">
-                折扣率 (%) <span className="text-destructive">*</span>
+                Discount rate (%) <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="discount"
@@ -372,12 +378,12 @@ export default function DiscountPage() {
                 }
               />
               <p className="text-xs text-muted-foreground">
-                100 表示原价（无折扣），50 表示五折，0 表示免费
+                100 = full price (no discount), 50 = 50% off, 0 = free.
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="sort_order">排序权重</Label>
+              <Label htmlFor="sort_order">Sort order</Label>
               <Input
                 id="sort_order"
                 type="number"
@@ -390,14 +396,16 @@ export default function DiscountPage() {
                   })
                 }
               />
-              <p className="text-xs text-muted-foreground">数值越小越靠前</p>
+              <p className="text-xs text-muted-foreground">
+                Lower values appear first.
+              </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">描述</Label>
+              <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
-                placeholder="分组的说明信息"
+                placeholder="Notes about this group"
                 value={formData.description}
                 onChange={(e) =>
                   setFormData({ ...formData, description: e.target.value })
@@ -413,7 +421,7 @@ export default function DiscountPage() {
               onClick={() => setDialogOpen(false)}
               disabled={isSaving}
             >
-              取消
+              Cancel
             </Button>
             <Button onClick={handleSave} disabled={isSaving}>
               {isSaving ? (
@@ -421,7 +429,7 @@ export default function DiscountPage() {
               ) : (
                 <Save className="mr-2 h-4 w-4" />
               )}
-              {isSaving ? '保存中...' : '保存'}
+              {isSaving ? 'Saving...' : 'Save'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -431,10 +439,10 @@ export default function DiscountPage() {
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
-            <DialogTitle>确认删除</DialogTitle>
+            <DialogTitle>Confirm deletion</DialogTitle>
             <DialogDescription>
-              确定要删除分组「{deletingGroup?.display_name}
-              」吗？此操作不可撤销。
+              Delete the group "{deletingGroup?.display_name}"? This cannot be
+              undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -443,7 +451,7 @@ export default function DiscountPage() {
               onClick={() => setDeleteDialogOpen(false)}
               disabled={isDeleting}
             >
-              取消
+              Cancel
             </Button>
             <Button
               variant="destructive"
@@ -455,7 +463,7 @@ export default function DiscountPage() {
               ) : (
                 <Trash2 className="mr-2 h-4 w-4" />
               )}
-              {isDeleting ? '删除中...' : '确认删除'}
+              {isDeleting ? 'Deleting...' : 'Delete'}
             </Button>
           </DialogFooter>
         </DialogContent>

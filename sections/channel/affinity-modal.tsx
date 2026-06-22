@@ -123,20 +123,20 @@ function RuleEditDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{rule ? '编辑规则' : '新增规则'}</DialogTitle>
+          <DialogTitle>{rule ? 'Edit rule' : 'Add rule'}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <Label>规则名称</Label>
+              <Label>Rule name</Label>
               <Input
                 value={form.Name}
                 onChange={(e) => handle('Name', e.target.value)}
-                placeholder="如 claude-cli"
+                placeholder="e.g. claude-cli"
               />
             </div>
             <div className="space-y-1">
-              <Label>TTL（秒，0 使用全局默认）</Label>
+              <Label>TTL (seconds, 0 = use global default)</Label>
               <Input
                 type="number"
                 value={form.TTLSeconds}
@@ -145,7 +145,7 @@ function RuleEditDialog({
             </div>
           </div>
           <div className="space-y-1">
-            <Label>模型正则（每行一条）</Label>
+            <Label>Model regex (one per line)</Label>
             <Textarea
               rows={2}
               value={form.ModelRegex.join('\n')}
@@ -156,7 +156,7 @@ function RuleEditDialog({
             />
           </div>
           <div className="space-y-1">
-            <Label>路径正则（每行一条，为空不限制）</Label>
+            <Label>Path regex (one per line; leave blank for any path)</Label>
             <Textarea
               rows={2}
               value={form.PathRegex.join('\n')}
@@ -168,11 +168,11 @@ function RuleEditDialog({
           </div>
           <div className="space-y-1">
             <Label>
-              Key 来源（仅支持一条 gjson，Path 如 metadata.user_id）
+              Key source (only gjson is supported; Path e.g. metadata.user_id)
             </Label>
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">类型</Label>
+                <Label className="text-xs text-muted-foreground">Type</Label>
                 <Input
                   value={form.KeySources[0]?.Type ?? 'gjson'}
                   onChange={(e) => {
@@ -185,7 +185,7 @@ function RuleEditDialog({
               </div>
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">
-                  路径 / Key
+                  Path / Key
                 </Label>
                 <Input
                   value={
@@ -212,33 +212,33 @@ function RuleEditDialog({
                 checked={form.SkipRetryOnFailure}
                 onCheckedChange={(v) => handle('SkipRetryOnFailure', v)}
               />
-              <Label>失败后不重试</Label>
+              <Label>No retry on failure</Label>
             </div>
             <div className="flex items-center gap-2">
               <Switch
                 checked={form.IncludeRuleName}
                 onCheckedChange={(v) => handle('IncludeRuleName', v)}
               />
-              <Label>Key 含规则名</Label>
+              <Label>Include rule name in key</Label>
             </div>
             <div className="flex items-center gap-2">
               <Switch
                 checked={form.IncludeModelName}
                 onCheckedChange={(v) => handle('IncludeModelName', v)}
               />
-              <Label>Key 含模型名</Label>
+              <Label>Include model name in key</Label>
             </div>
             <div className="flex items-center gap-2">
               <Switch
                 checked={form.IncludeUsingGroup}
                 onCheckedChange={(v) => handle('IncludeUsingGroup', v)}
               />
-              <Label>Key 含分组</Label>
+              <Label>Include group in key</Label>
             </div>
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              取消
+              Cancel
             </Button>
             <Button
               onClick={() => {
@@ -246,7 +246,7 @@ function RuleEditDialog({
                 onOpenChange(false);
               }}
             >
-              保存规则
+              Save rule
             </Button>
           </div>
         </div>
@@ -278,7 +278,7 @@ export default function AffinitySection() {
         setJsonText(JSON.stringify(res.data, null, 2));
       }
     } catch {
-      toast.error('加载亲和配置失败');
+      toast.error('Failed to load affinity config.');
     }
   }, []);
 
@@ -312,13 +312,15 @@ export default function AffinitySection() {
         cfg
       )) as unknown as ApiResponse;
       if (res?.success) {
-        toast.success('保存成功');
+        toast.success('Saved.');
         setConfig(cfg);
       } else {
-        toast.error(res?.message ?? '保存失败');
+        toast.error(res?.message ?? 'Save failed.');
       }
     } catch (e: unknown) {
-      toast.error('保存失败: ' + (e instanceof Error ? e.message : String(e)));
+      toast.error(
+        'Save failed: ' + (e instanceof Error ? e.message : String(e))
+      );
     } finally {
       setSaving(false);
     }
@@ -331,13 +333,13 @@ export default function AffinitySection() {
         '/api/affinity/cache'
       )) as unknown as ApiResponse;
       if (res?.success) {
-        toast.success(res?.message ?? '缓存已清空');
+        toast.success(res?.message ?? 'Cache cleared.');
         setCacheCount(0);
       } else {
-        toast.error(res?.message ?? '清空失败');
+        toast.error(res?.message ?? 'Failed to clear cache.');
       }
     } catch {
-      toast.error('清空缓存失败');
+      toast.error('Failed to clear cache.');
     } finally {
       setClearing(false);
     }
@@ -354,7 +356,7 @@ export default function AffinitySection() {
       setConfig(cfg);
       setJsonMode(false);
     } catch {
-      toast.error('JSON 格式错误，无法切换');
+      toast.error('Invalid JSON — cannot switch to visual mode.');
     }
   };
 
@@ -402,8 +404,8 @@ export default function AffinitySection() {
         <Alert className="border-blue-200 bg-blue-50">
           <Info className="h-4 w-4 text-blue-600" />
           <AlertDescription className="text-blue-700">
-            渠道亲和性会基于从请求上下文或 JSON Body 提取的
-            Key，优先复用上一次成功的渠道。
+            Channel affinity prefers to reuse the last successful channel based
+            on a key extracted from request context or the JSON body.
           </AlertDescription>
         </Alert>
 
@@ -412,7 +414,7 @@ export default function AffinitySection() {
             {/* 全局开关 + 参数 */}
             <div className="grid grid-cols-3 gap-6">
               <div className="space-y-2">
-                <Label className="text-base font-semibold">启用</Label>
+                <Label className="text-base font-semibold">Enable</Label>
                 <div className="flex items-center gap-2">
                   <Switch
                     checked={config.Enabled}
@@ -422,11 +424,12 @@ export default function AffinitySection() {
                   />
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  启用后将优先复用上一次成功的渠道（粘滞选路）。
+                  When enabled, the last successful channel will be preferred
+                  (sticky routing).
                 </p>
               </div>
               <div className="space-y-2">
-                <Label className="text-base font-semibold">最大条目数</Label>
+                <Label className="text-base font-semibold">Max entries</Label>
                 <Input
                   type="number"
                   value={config.MaxSize}
@@ -439,12 +442,13 @@ export default function AffinitySection() {
                   className="w-36"
                 />
                 <p className="text-xs text-muted-foreground">
-                  内存存储最大条目数。0 表示使用后端默认容量：100000。
+                  Maximum in-memory entries. 0 uses the backend default of
+                  100,000.
                 </p>
               </div>
               <div className="space-y-2">
                 <Label className="text-base font-semibold">
-                  默认 TTL（秒）
+                  Default TTL (seconds)
                 </Label>
                 <Input
                   type="number"
@@ -458,15 +462,17 @@ export default function AffinitySection() {
                   className="w-36"
                 />
                 <p className="text-xs text-muted-foreground">
-                  规则 ttl_seconds 为 0 时使用。0 表示使用后端默认 TTL：3600
-                  秒。
+                  Used when a rule's ttl_seconds is 0. 0 uses the backend
+                  default of 3,600 seconds.
                 </p>
               </div>
             </div>
 
             {/* 成功后切换亲和 */}
             <div className="space-y-2">
-              <Label className="text-base font-semibold">成功后切换亲和</Label>
+              <Label className="text-base font-semibold">
+                Switch affinity on success
+              </Label>
               <div className="flex items-center gap-2">
                 <Switch
                   checked={config.SwitchAffinityOnSuccess}
@@ -479,24 +485,25 @@ export default function AffinitySection() {
                 />
               </div>
               <p className="text-xs text-muted-foreground">
-                如果亲和到的渠道失败，重试到其他渠道成功后，将亲和更新到成功的渠道。
+                If the affinity channel fails and a retry on another channel
+                succeeds, update the affinity to the successful channel.
               </p>
             </div>
 
             {/* 工具栏 */}
             <div className="flex flex-wrap items-center gap-2">
               <Button variant="outline" size="sm" onClick={handleSwitchToJson}>
-                JSON 模式
+                JSON mode
               </Button>
               <Button variant="outline" size="sm" onClick={handleAddRule}>
-                <Plus className="mr-1 h-3 w-3" /> 新增规则
+                <Plus className="mr-1 h-3 w-3" /> Add rule
               </Button>
               <Button size="sm" onClick={handleSave} disabled={saving}>
-                {saving ? '保存中...' : '保存'}
+                {saving ? 'Saving...' : 'Save'}
               </Button>
               <Button variant="outline" size="sm" onClick={fetchCacheStats}>
                 <RefreshCw className="mr-1 h-3 w-3" />
-                刷新缓存统计
+                Refresh cache stats
                 <span className="ml-1 text-muted-foreground">
                   ({cacheCount})
                 </span>
@@ -507,7 +514,7 @@ export default function AffinitySection() {
                 onClick={handleClearCache}
                 disabled={clearing}
               >
-                {clearing ? '清空中...' : '清空全部缓存'}
+                {clearing ? 'Clearing...' : 'Clear all cache'}
               </Button>
             </div>
 
@@ -516,13 +523,13 @@ export default function AffinitySection() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>名称</TableHead>
-                    <TableHead>模型正则</TableHead>
-                    <TableHead>路径正则</TableHead>
-                    <TableHead>Key 来源</TableHead>
-                    <TableHead>TTL（秒）</TableHead>
-                    <TableHead>失败后是否重试</TableHead>
-                    <TableHead>操作</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Model regex</TableHead>
+                    <TableHead>Path regex</TableHead>
+                    <TableHead>Key source</TableHead>
+                    <TableHead>TTL (s)</TableHead>
+                    <TableHead>Retry on failure</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -532,7 +539,7 @@ export default function AffinitySection() {
                         colSpan={7}
                         className="py-8 text-center text-muted-foreground"
                       >
-                        暂无规则，点击"新增规则"添加
+                        No rules configured. Click "Add rule" to create one.
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -580,11 +587,11 @@ export default function AffinitySection() {
                         <TableCell>
                           {rule.SkipRetryOnFailure ? (
                             <Badge variant="destructive" className="text-xs">
-                              不重试
+                              No retry
                             </Badge>
                           ) : (
                             <Badge variant="secondary" className="text-xs">
-                              重试
+                              Retry
                             </Badge>
                           )}
                         </TableCell>
@@ -623,10 +630,10 @@ export default function AffinitySection() {
                 size="sm"
                 onClick={handleSwitchToVisual}
               >
-                可视化模式
+                Visual mode
               </Button>
               <Button size="sm" onClick={handleSave} disabled={saving}>
-                {saving ? '保存中...' : '保存'}
+                {saving ? 'Saving...' : 'Save'}
               </Button>
             </div>
             <Textarea

@@ -65,7 +65,7 @@ const MODEL_CATEGORIES: Record<
     match: (model) => model.toLowerCase().includes('deepseek')
   },
   zhipu: {
-    label: '智谱',
+    label: 'Zhipu',
     match: (model) => {
       const m = model.toLowerCase();
       return (
@@ -74,7 +74,7 @@ const MODEL_CATEGORIES: Record<
     }
   },
   qwen: {
-    label: '通义千问',
+    label: 'Qwen',
     match: (model) => model.toLowerCase().includes('qwen')
   },
   moonshot: {
@@ -149,7 +149,7 @@ const categorizeModels = (models: string[]) => {
   // 添加"其他"分类
   if (uncategorized.length > 0) {
     categorized['other'] = {
-      label: '其他',
+      label: 'Other',
       models: uncategorized
     };
   }
@@ -274,7 +274,7 @@ export const ModelSelectModal: React.FC<ModelSelectModalProps> = ({
     if (categoryEntries.length === 0) {
       return (
         <div className="flex items-center justify-center py-8 text-muted-foreground">
-          暂无模型
+          No models.
         </div>
       );
     }
@@ -310,7 +310,7 @@ export const ModelSelectModal: React.FC<ModelSelectModalProps> = ({
                     </span>
                   </div>
                   <Badge variant="outline" className="mr-2">
-                    已选 {selectedCount}/{categoryData.models.length}
+                    Selected: {selectedCount}/{categoryData.models.length}
                   </Badge>
                 </div>
               </AccordionTrigger>
@@ -361,8 +361,8 @@ export const ModelSelectModal: React.FC<ModelSelectModalProps> = ({
       <DialogContent className="max-h-[85vh] max-w-4xl overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
-            <span>选择模型</span>
-            <Badge variant="secondary">新获取的模型 ({models.length})</Badge>
+            <span>Select models</span>
+            <Badge variant="secondary">Fetched models ({models.length})</Badge>
           </DialogTitle>
         </DialogHeader>
 
@@ -370,7 +370,7 @@ export const ModelSelectModal: React.FC<ModelSelectModalProps> = ({
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="搜索模型..."
+            placeholder="Search models..."
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             className="pl-9"
@@ -380,7 +380,7 @@ export const ModelSelectModal: React.FC<ModelSelectModalProps> = ({
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            <span className="ml-2 text-muted-foreground">加载中...</span>
+            <span className="ml-2 text-muted-foreground">Loading...</span>
           </div>
         ) : (
           <>
@@ -388,13 +388,13 @@ export const ModelSelectModal: React.FC<ModelSelectModalProps> = ({
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="new" disabled={newModels.length === 0}>
-                  新获取的模型 ({newModels.length})
+                  New models ({newModels.length})
                 </TabsTrigger>
                 <TabsTrigger
                   value="existing"
                   disabled={existingModels.length === 0}
                 >
-                  已有的模型 ({existingModels.length})
+                  Existing models ({existingModels.length})
                 </TabsTrigger>
               </TabsList>
 
@@ -412,7 +412,7 @@ export const ModelSelectModal: React.FC<ModelSelectModalProps> = ({
             {/* 底部统计 */}
             <div className="flex items-center justify-between border-t pt-4">
               <div className="text-sm text-muted-foreground">
-                已选择 {currentSelectedCount} / {currentModels.length}
+                Selected {currentSelectedCount} / {currentModels.length}
               </div>
               <label className="flex cursor-pointer items-center gap-2">
                 <Checkbox
@@ -423,7 +423,7 @@ export const ModelSelectModal: React.FC<ModelSelectModalProps> = ({
                     handleSelectAllCurrent(checked as boolean)
                   }
                 />
-                <span className="text-sm">全选当前分类</span>
+                <span className="text-sm">Select all in current category</span>
               </label>
             </div>
           </>
@@ -431,10 +431,10 @@ export const ModelSelectModal: React.FC<ModelSelectModalProps> = ({
 
         <DialogFooter>
           <Button variant="outline" onClick={onCancel}>
-            取消
+            Cancel
           </Button>
           <Button onClick={handleConfirm} disabled={loading}>
-            确定
+            Confirm
           </Button>
         </DialogFooter>
       </DialogContent>
