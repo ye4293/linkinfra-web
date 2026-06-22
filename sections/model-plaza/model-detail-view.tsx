@@ -49,7 +49,7 @@ export default function ModelDetailView() {
   const router = useRouter();
   const { data: session } = useSession();
   const { t } = useLocale();
-  useDocumentTitle('模型详情');
+  useDocumentTitle('Model details');
 
   const modelName = decodeURIComponent(params.model as string);
   const userIsAdmin = session?.user?.role ? isAdmin(session.user.role) : false;
