@@ -1,8 +1,8 @@
 import ModelDetailView from '@/sections/model-plaza/model-detail-view';
 
 export const metadata = {
-  title: '模型详情',
-  description: '查看模型的性能监控数据'
+  title: 'Model details',
+  description: 'View model performance metrics'
 };
 
 export default function ModelDetailPage() {

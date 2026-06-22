@@ -71,7 +71,9 @@ export default async function ChannelListingPage({}: TChannelListingPage) {
     return (
       <PageContainer>
         <div className="py-8 text-center">
-          <p className="text-red-500">认证失败，请重新登录</p>
+          <p className="text-red-500">
+            Authentication failed. Please sign in again.
+          </p>
         </div>
       </PageContainer>
     );

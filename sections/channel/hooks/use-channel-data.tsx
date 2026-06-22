@@ -91,7 +91,7 @@ export const useChannelData = ({
         setTotal(0);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : '获取数据失败');
+      setError(err instanceof Error ? err.message : 'Failed to load data.');
       setData([]);
       setTotal(0);
     } finally {

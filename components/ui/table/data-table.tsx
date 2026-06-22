@@ -180,7 +180,7 @@ export function DataTable<TData, TValue>({
       {showColumnToggle && (
         <div className="flex items-center justify-between">
           <div className="text-xs text-muted-foreground sm:hidden">
-            💡 左右滑动查看更多列
+            💡 Scroll left/right to see more columns
           </div>
           <DataTableViewOptions table={table} />
         </div>

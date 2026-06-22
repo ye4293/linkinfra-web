@@ -637,18 +637,18 @@ export default function PricingPage() {
 
       const result = await response.json();
       if (result.success) {
-        toast.success('保存成功');
+        toast.success('Saved.');
         setEditingRow(null);
         setEditDialogOpen(false);
         fetchConfiguredModels();
         fetchUnsetModels();
         fetchPricingOptions();
       } else {
-        toast.error(result.message || '保存失败');
+        toast.error(result.message || 'Save failed.');
       }
     } catch (error) {
       console.error('Save error:', error);
-      toast.error('保存失败');
+      toast.error('Save failed.');
     } finally {
       setIsLoading(false);
     }
@@ -862,7 +862,7 @@ export default function PricingPage() {
       });
 
     if (modelsToSave.length === 0) {
-      toast.error('请至少填写一个模型的倍率');
+      toast.error('Enter at least one model ratio.');
       return;
     }
 
@@ -876,17 +876,17 @@ export default function PricingPage() {
 
       const result = await response.json();
       if (result.success) {
-        toast.success(`成功配置 ${modelsToSave.length} 个模型`);
+        toast.success(`Configured ${modelsToSave.length} model(s).`);
         setSelectedModels(new Set());
         fetchConfiguredModels();
         fetchUnsetModels();
         fetchPricingOptions();
       } else {
-        toast.error(result.message || '保存失败');
+        toast.error(result.message || 'Save failed.');
       }
     } catch (error) {
       console.error('Save error:', error);
-      toast.error('保存失败');
+      toast.error('Save failed.');
     } finally {
       setIsLoading(false);
     }
@@ -895,7 +895,7 @@ export default function PricingPage() {
   // 批量设置选中模型的默认倍率（1.0）
   const batchSetDefaultRatio = async () => {
     if (selectedModels.size === 0) {
-      toast.error('请先选择要配置的模型');
+      toast.error('Select a model to configure first.');
       return;
     }
 
@@ -915,17 +915,17 @@ export default function PricingPage() {
 
       const result = await response.json();
       if (result.success) {
-        toast.success(`成功配置 ${selectedModels.size} 个模型为默认倍率`);
+        toast.success(`Set ${selectedModels.size} model(s) to default ratio.`);
         setSelectedModels(new Set());
         fetchConfiguredModels();
         fetchUnsetModels();
         fetchPricingOptions();
       } else {
-        toast.error(result.message || '批量保存失败');
+        toast.error(result.message || 'Batch save failed.');
       }
     } catch (error) {
       console.error('Batch save error:', error);
-      toast.error('批量保存失败');
+      toast.error('Batch save failed.');
     } finally {
       setIsLoading(false);
     }
@@ -1013,14 +1013,14 @@ export default function PricingPage() {
 
       const result = await response.json();
       if (result.success) {
-        toast.success(`成功保存 ${validRules.length} 条视频定价规则`);
+        toast.success(`Saved ${validRules.length} video pricing rule(s).`);
         setVideoPricingRules(validRules);
       } else {
-        toast.error(result.message || '保存失败');
+        toast.error(result.message || 'Save failed.');
       }
     } catch (error) {
       console.error('Save video pricing error:', error);
-      toast.error('保存失败');
+      toast.error('Save failed.');
     } finally {
       setIsLoading(false);
     }
@@ -1038,11 +1038,11 @@ export default function PricingPage() {
     return (
       <div className="flex items-center justify-between px-2 py-4">
         <div className="text-sm text-muted-foreground">
-          显示第 {Math.min((page - 1) * pageSize + 1, total)} 条-第{' '}
-          {Math.min(page * pageSize, total)} 条，共 {total} 条
+          Showing {Math.min((page - 1) * pageSize + 1, total)}–
+          {Math.min(page * pageSize, total)} of {total}
         </div>
         <div className="flex items-center space-x-2">
-          <span className="text-sm text-muted-foreground">每页条数:</span>
+          <span className="text-sm text-muted-foreground">Per page:</span>
           <Select
             value={pageSize.toString()}
             onValueChange={(v) => {
@@ -1098,8 +1098,12 @@ export default function PricingPage() {
   };
 
   if (error)
-    return <div className="p-4 text-red-500">加载价格设置失败: {error}</div>;
-  if (isDataLoading) return <div className="p-4">加载中...</div>;
+    return (
+      <div className="p-4 text-red-500">
+        Failed to load pricing settings: {error}
+      </div>
+    );
+  if (isDataLoading) return <div className="p-4">Loading...</div>;
 
   return (
     <PageContainer scrollable>
@@ -1246,7 +1250,7 @@ export default function PricingPage() {
               <div className="relative max-w-sm flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="搜索模型名称..."
+                  placeholder="Search model name..."
                   value={configuredKeyword}
                   onChange={(e) => {
                     setConfiguredKeyword(e.target.value);
@@ -1264,7 +1268,7 @@ export default function PricingPage() {
                 disabled={isLoading}
               >
                 <RefreshCcw className="mr-2 h-4 w-4" />
-                刷新
+                Refresh
               </Button>
             </div>
 
@@ -1272,30 +1276,30 @@ export default function PricingPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[220px]">模型名称</TableHead>
-                    <TableHead className="w-[90px]">按次计费(元)</TableHead>
-                    <TableHead className="w-[100px]">输入价格($/1M)</TableHead>
-                    <TableHead className="w-[100px]">输出价格($/1M)</TableHead>
-                    <TableHead className="w-[70px]">缓存</TableHead>
-                    <TableHead className="w-[70px]">图片入</TableHead>
-                    <TableHead className="w-[70px]">图片出</TableHead>
-                    <TableHead className="w-[70px]">音频入</TableHead>
-                    <TableHead className="w-[70px]">音频出</TableHead>
-                    <TableHead className="w-[80px]">计费类型</TableHead>
-                    <TableHead className="w-[60px]">操作</TableHead>
+                    <TableHead className="w-[220px]">Model name</TableHead>
+                    <TableHead className="w-[90px]">Per-call (¥)</TableHead>
+                    <TableHead className="w-[100px]">Input ($/1M)</TableHead>
+                    <TableHead className="w-[100px]">Output ($/1M)</TableHead>
+                    <TableHead className="w-[70px]">Cache</TableHead>
+                    <TableHead className="w-[70px]">Image in</TableHead>
+                    <TableHead className="w-[70px]">Image out</TableHead>
+                    <TableHead className="w-[70px]">Audio in</TableHead>
+                    <TableHead className="w-[70px]">Audio out</TableHead>
+                    <TableHead className="w-[80px]">Billing type</TableHead>
+                    <TableHead className="w-[60px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isConfiguredLoading ? (
                     <TableRow>
                       <TableCell colSpan={11} className="h-24 text-center">
-                        加载中...
+                        Loading...
                       </TableCell>
                     </TableRow>
                   ) : configuredModels.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={11} className="h-24 text-center">
-                        暂无数据
+                        No data
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -1363,8 +1367,8 @@ export default function PricingPage() {
                             }`}
                           >
                             {model.price_type === 'fixed'
-                              ? '按次计费'
-                              : '按量计费'}
+                              ? 'Per-call'
+                              : 'Per-token'}
                           </span>
                         </TableCell>
                         <TableCell>
@@ -1401,7 +1405,7 @@ export default function PricingPage() {
             >
               <DialogContent className="max-w-xl">
                 <DialogHeader>
-                  <DialogTitle>编辑模型价格</DialogTitle>
+                  <DialogTitle>Edit model pricing</DialogTitle>
                   <DialogDescription>
                     <span className="font-mono">{editingRow?.model_name}</span>
                   </DialogDescription>
@@ -1410,7 +1414,7 @@ export default function PricingPage() {
                   <div className="space-y-5 py-2">
                     <div className="grid grid-cols-3 gap-4">
                       <div className="space-y-1.5">
-                        <Label className="text-sm">输入价格($/1M)</Label>
+                        <Label className="text-sm">Input ($/1M)</Label>
                         <Input
                           type="number"
                           step="0.001"
@@ -1421,7 +1425,7 @@ export default function PricingPage() {
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <Label className="text-sm">输出价格($/1M)</Label>
+                        <Label className="text-sm">Output ($/1M)</Label>
                         <Input
                           type="number"
                           step="0.001"
@@ -1432,7 +1436,7 @@ export default function PricingPage() {
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <Label className="text-sm">按次计费(元)</Label>
+                        <Label className="text-sm">Per-call (¥)</Label>
                         <Input
                           type="number"
                           step="0.001"
@@ -1448,11 +1452,11 @@ export default function PricingPage() {
 
                     <div className="space-y-3">
                       <p className="text-sm font-medium text-muted-foreground">
-                        扩展价格($/1M)
+                        Extended price ($/1M)
                       </p>
                       <div className="grid grid-cols-3 gap-4">
                         <div className="space-y-1.5">
-                          <Label className="text-sm">缓存价格</Label>
+                          <Label className="text-sm">Cache price</Label>
                           <Input
                             type="number"
                             step="0.001"
@@ -1460,11 +1464,11 @@ export default function PricingPage() {
                             onChange={(e) =>
                               updateEditingPrice('cache_price', e.target.value)
                             }
-                            placeholder="默认=输出价"
+                            placeholder="Default = output"
                           />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-sm">图片输入价格</Label>
+                          <Label className="text-sm">Image input price</Label>
                           <Input
                             type="number"
                             step="0.001"
@@ -1475,11 +1479,11 @@ export default function PricingPage() {
                                 e.target.value
                               )
                             }
-                            placeholder="默认=输入价"
+                            placeholder="Default = input"
                           />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-sm">图片输出价格</Label>
+                          <Label className="text-sm">Image output price</Label>
                           <Input
                             type="number"
                             step="0.001"
@@ -1490,11 +1494,11 @@ export default function PricingPage() {
                                 e.target.value
                               )
                             }
-                            placeholder="默认=输出价"
+                            placeholder="Default = output"
                           />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-sm">音频输入价格</Label>
+                          <Label className="text-sm">Audio input price</Label>
                           <Input
                             type="number"
                             step="0.001"
@@ -1505,11 +1509,11 @@ export default function PricingPage() {
                                 e.target.value
                               )
                             }
-                            placeholder="默认=输入价"
+                            placeholder="Default = input"
                           />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-sm">音频输出价格</Label>
+                          <Label className="text-sm">Audio output price</Label>
                           <Input
                             type="number"
                             step="0.001"
@@ -1520,7 +1524,7 @@ export default function PricingPage() {
                                 e.target.value
                               )
                             }
-                            placeholder="默认=输出价"
+                            placeholder="Default = output"
                           />
                         </div>
                       </div>
@@ -1528,22 +1532,22 @@ export default function PricingPage() {
 
                     {/* 过渡期：展示换算出的倍率，方便核对 */}
                     <div className="rounded bg-muted/50 p-2 font-mono text-xs text-muted-foreground">
-                      换算倍率：模型 {editingRow.model_ratio || '-'} · 补全{' '}
-                      {editingRow.completion_ratio || '-'} · 缓存{' '}
-                      {editingRow.cache_ratio || '-'} · 图入{' '}
-                      {editingRow.image_input_ratio || '-'} · 图出{' '}
-                      {editingRow.image_output_ratio || '-'} · 音入{' '}
-                      {editingRow.audio_input_ratio || '-'} · 音出{' '}
+                      Ratio: model {editingRow.model_ratio || '-'} · completion{' '}
+                      {editingRow.completion_ratio || '-'} · cache{' '}
+                      {editingRow.cache_ratio || '-'} · image in{' '}
+                      {editingRow.image_input_ratio || '-'} · image out{' '}
+                      {editingRow.image_output_ratio || '-'} · audio in{' '}
+                      {editingRow.audio_input_ratio || '-'} · audio out{' '}
                       {editingRow.audio_output_ratio || '-'}
                     </div>
                   </div>
                 )}
                 <DialogFooter>
                   <Button variant="outline" onClick={cancelEditing}>
-                    取消
+                    Cancel
                   </Button>
                   <Button onClick={saveEditing} disabled={isLoading}>
-                    {isLoading ? '保存中...' : '保存'}
+                    {isLoading ? 'Saving...' : 'Save'}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -1554,28 +1558,40 @@ export default function PricingPage() {
           <TabsContent value="unset-models" className="space-y-4">
             <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950">
               <p className="text-sm text-blue-800 dark:text-blue-200">
-                <strong>💡 提示：</strong>直接输入模型的官方价格（$/1M
-                tokens），系统将自动换算成倍率。所有倍率都相对于文字输入价格计算。
+                <strong>💡 Tip:</strong> Enter the model's official price ($/1M
+                tokens) and ratios will be calculated automatically. All ratios
+                are relative to the text input price.
               </p>
               <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-blue-600 dark:text-blue-400 md:grid-cols-3">
-                <span>• 模型倍率 = 文字输入价格 / 2</span>
-                <span>• 补全倍率 = 文字输出价格 / 文字输入价格</span>
-                <span>• 缓存倍率 = 缓存价格 / 文字输入价格</span>
-                <span>• 图片输入倍率 = 图片输入价格 / 文字输入价格</span>
-                <span>• 图片输出倍率 = 图片输出价格 / 文字输入价格</span>
-                <span>• 音频输入倍率 = 音频输入价格 / 文字输入价格</span>
-                <span>• 音频输出倍率 = 音频输出价格 / 文字输入价格</span>
+                <span>• Model ratio = text input price / 2</span>
+                <span>
+                  • Completion ratio = text output price / text input price
+                </span>
+                <span>• Cache ratio = cache price / text input price</span>
+                <span>
+                  • Image input ratio = image input price / text input price
+                </span>
+                <span>
+                  • Image output ratio = image output price / text input price
+                </span>
+                <span>
+                  • Audio input ratio = audio input price / text input price
+                </span>
+                <span>
+                  • Audio output ratio = audio output price / text input price
+                </span>
               </div>
             </div>
             <p className="text-sm text-muted-foreground">
-              此页面仅显示未设置默认价格或倍率的模型。设置后将自动从列表中移除。
+              This page only shows models without a default price or ratio set.
+              Models are removed from the list once configured.
             </p>
 
             <div className="flex items-center justify-between gap-4">
               <div className="relative max-w-sm flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="搜索模型名称..."
+                  placeholder="Search model name..."
                   value={unsetKeyword}
                   onChange={(e) => {
                     setUnsetKeyword(e.target.value);
@@ -1590,14 +1606,14 @@ export default function PricingPage() {
                   onClick={batchSetDefaultRatio}
                   disabled={isLoading || selectedModels.size === 0}
                 >
-                  批量设为1.0 ({selectedModels.size})
+                  Set to 1.0 ({selectedModels.size})
                 </Button>
                 <Button
                   onClick={saveAllUnsetModels}
                   disabled={isLoading || filledModelsCount === 0}
                 >
                   <Save className="mr-2 h-4 w-4" />
-                  保存已填写 ({filledModelsCount})
+                  Save filled ({filledModelsCount})
                 </Button>
               </div>
             </div>
@@ -1625,64 +1641,64 @@ export default function PricingPage() {
                         }}
                       />
                     </TableHead>
-                    <TableHead className="w-[160px] px-1">模型名称</TableHead>
+                    <TableHead className="w-[160px] px-1">Model name</TableHead>
                     <TableHead
                       colSpan={7}
                       className="border-l bg-blue-50/50 px-1 text-center text-xs dark:bg-blue-950/30"
                     >
-                      价格输入 ($/1M tokens)
+                      Price input ($/1M tokens)
                     </TableHead>
                     <TableHead
                       colSpan={7}
                       className="border-l bg-green-50/50 px-1 text-center text-xs dark:bg-green-950/30"
                     >
-                      倍率（自动计算）
+                      Ratio (auto-calculated)
                     </TableHead>
                   </TableRow>
                   <TableRow>
                     <TableHead className="w-8 px-1"></TableHead>
                     <TableHead className="w-[160px] px-1"></TableHead>
                     <TableHead className="w-[70px] border-l bg-blue-50/50 px-1 text-center text-xs dark:bg-blue-950/30">
-                      文字输入
+                      Text in
                     </TableHead>
                     <TableHead className="w-[70px] bg-blue-50/50 px-1 text-center text-xs dark:bg-blue-950/30">
-                      文字输出
+                      Text out
                     </TableHead>
                     <TableHead className="w-[70px] bg-blue-50/50 px-1 text-center text-xs dark:bg-blue-950/30">
-                      缓存
+                      Cache
                     </TableHead>
                     <TableHead className="w-[70px] bg-blue-50/50 px-1 text-center text-xs dark:bg-blue-950/30">
-                      图片输入
+                      Image in
                     </TableHead>
                     <TableHead className="w-[70px] bg-blue-50/50 px-1 text-center text-xs dark:bg-blue-950/30">
-                      图片输出
+                      Image out
                     </TableHead>
                     <TableHead className="w-[70px] bg-blue-50/50 px-1 text-center text-xs dark:bg-blue-950/30">
-                      音频输入
+                      Audio in
                     </TableHead>
                     <TableHead className="w-[70px] bg-blue-50/50 px-1 text-center text-xs dark:bg-blue-950/30">
-                      音频输出
+                      Audio out
                     </TableHead>
                     <TableHead className="w-[65px] border-l bg-green-50/50 px-1 text-center text-xs dark:bg-green-950/30">
-                      模型
+                      Model
                     </TableHead>
                     <TableHead className="w-[65px] bg-green-50/50 px-1 text-center text-xs dark:bg-green-950/30">
-                      补全
+                      Completion
                     </TableHead>
                     <TableHead className="w-[65px] bg-green-50/50 px-1 text-center text-xs dark:bg-green-950/30">
-                      缓存
+                      Cache
                     </TableHead>
                     <TableHead className="w-[65px] bg-green-50/50 px-1 text-center text-xs dark:bg-green-950/30">
-                      图片入
+                      Image in
                     </TableHead>
                     <TableHead className="w-[65px] bg-green-50/50 px-1 text-center text-xs dark:bg-green-950/30">
-                      图片出
+                      Image out
                     </TableHead>
                     <TableHead className="w-[65px] bg-green-50/50 px-1 text-center text-xs dark:bg-green-950/30">
-                      音频入
+                      Audio in
                     </TableHead>
                     <TableHead className="w-[65px] bg-green-50/50 px-1 text-center text-xs dark:bg-green-950/30">
-                      音频出
+                      Audio out
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -1690,13 +1706,13 @@ export default function PricingPage() {
                   {isUnsetLoading ? (
                     <TableRow>
                       <TableCell colSpan={16} className="h-24 text-center">
-                        加载中...
+                        Loading...
                       </TableCell>
                     </TableRow>
                   ) : unsetModels.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={16} className="h-24 text-center">
-                        🎉 太棒了！所有模型都已配置倍率
+                        🎉 All models are configured!
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -1851,7 +1867,7 @@ export default function PricingPage() {
                         <TableCell className="border-l bg-green-50/30 px-0.5 dark:bg-green-950/20">
                           <Input
                             type="text"
-                            placeholder="自动"
+                            placeholder="auto"
                             value={
                               unsetEditData[model.model_name]?.model_ratio || ''
                             }
@@ -1868,7 +1884,7 @@ export default function PricingPage() {
                         <TableCell className="bg-green-50/30 px-0.5 dark:bg-green-950/20">
                           <Input
                             type="text"
-                            placeholder="自动"
+                            placeholder="auto"
                             value={
                               unsetEditData[model.model_name]
                                 ?.completion_ratio || ''
@@ -1886,7 +1902,7 @@ export default function PricingPage() {
                         <TableCell className="bg-green-50/30 px-0.5 dark:bg-green-950/20">
                           <Input
                             type="text"
-                            placeholder="自动"
+                            placeholder="auto"
                             value={
                               unsetEditData[model.model_name]?.cache_ratio || ''
                             }
@@ -1903,7 +1919,7 @@ export default function PricingPage() {
                         <TableCell className="bg-green-50/30 px-0.5 dark:bg-green-950/20">
                           <Input
                             type="text"
-                            placeholder="自动"
+                            placeholder="auto"
                             value={
                               unsetEditData[model.model_name]
                                 ?.image_input_ratio || ''
@@ -1921,7 +1937,7 @@ export default function PricingPage() {
                         <TableCell className="bg-green-50/30 px-0.5 dark:bg-green-950/20">
                           <Input
                             type="text"
-                            placeholder="自动"
+                            placeholder="auto"
                             value={
                               unsetEditData[model.model_name]
                                 ?.image_output_ratio || ''
@@ -1939,7 +1955,7 @@ export default function PricingPage() {
                         <TableCell className="bg-green-50/30 px-0.5 dark:bg-green-950/20">
                           <Input
                             type="text"
-                            placeholder="自动"
+                            placeholder="auto"
                             value={
                               unsetEditData[model.model_name]
                                 ?.audio_input_ratio || ''
@@ -1957,7 +1973,7 @@ export default function PricingPage() {
                         <TableCell className="bg-green-50/30 px-0.5 dark:bg-green-950/20">
                           <Input
                             type="text"
-                            placeholder="自动"
+                            placeholder="auto"
                             value={
                               unsetEditData[model.model_name]
                                 ?.audio_output_ratio || ''
@@ -1992,27 +2008,29 @@ export default function PricingPage() {
           <TabsContent value="video-pricing" className="space-y-4">
             <div className="rounded-lg border border-purple-200 bg-purple-50 p-3 dark:border-purple-800 dark:bg-purple-950">
               <p className="text-sm text-purple-800 dark:text-purple-200">
-                <strong>💡 提示：</strong>配置视频生成模型的定价规则。
-                同一模型可以有多条规则（不同的 type/mode/duration/resolution
-                组合）。
+                <strong>💡 Tip:</strong> Configure pricing rules for video
+                generation models. A single model can have multiple rules
+                (different type/mode/duration/resolution combinations).
               </p>
               <ul className="mt-2 list-inside list-disc text-xs text-purple-700 dark:text-purple-300">
                 <li>
-                  <strong>通配符 *</strong>：匹配任意值（包括空值）
+                  <strong>Wildcard *</strong>: matches any value (including
+                  empty)
                 </li>
                 <li>
-                  <strong>前缀通配符 wan*</strong>：匹配以 wan 开头的所有模型
+                  <strong>Prefix wildcard wan*</strong>: matches all models
+                  starting with wan
                 </li>
                 <li>
-                  <strong>per_second</strong>：按秒计费，最终价格 = 价格 ×
-                  视频时长
+                  <strong>per_second</strong>: billed per second — final price =
+                  price × video duration
                 </li>
                 <li>
-                  <strong>fixed</strong>：固定价格，不论时长都按此价格计费
+                  <strong>fixed</strong>: fixed price regardless of duration
                 </li>
                 <li>
-                  <strong>priority</strong>
-                  ：优先级越高越优先匹配，精确规则应设置更高优先级（如20），兜底规则设置低优先级（如5）
+                  <strong>priority</strong>: higher priority matches first; set
+                  specific rules higher (e.g. 20), fallback rules lower (e.g. 5)
                 </li>
               </ul>
             </div>
@@ -2022,23 +2040,23 @@ export default function PricingPage() {
                 <div className="relative max-w-sm">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="搜索模型名称..."
+                    placeholder="Search model name..."
                     value={videoRuleKeyword}
                     onChange={(e) => setVideoRuleKeyword(e.target.value)}
                     className="w-64 pl-10"
                   />
                 </div>
                 <Button variant="outline" onClick={addVideoRule}>
-                  + 添加规则
+                  + Add rule
                 </Button>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">
-                  共 {videoPricingRules.length} 条规则
+                  {videoPricingRules.length} rule(s)
                 </span>
                 <Button onClick={saveVideoPricingRules} disabled={isLoading}>
                   <Save className="mr-2 h-4 w-4" />
-                  {isLoading ? '保存中...' : '保存规则'}
+                  {isLoading ? 'Saving...' : 'Save rule'}
                 </Button>
               </div>
             </div>
@@ -2047,23 +2065,23 @@ export default function PricingPage() {
               <Table className="w-full min-w-[1300px] table-fixed">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[150px]">模型 (model)</TableHead>
-                    <TableHead className="w-[100px]">类型 (type)</TableHead>
-                    <TableHead className="w-[100px]">模式 (mode)</TableHead>
-                    <TableHead className="w-[90px]">时长 (duration)</TableHead>
-                    <TableHead className="w-[100px]">分辨率</TableHead>
-                    <TableHead className="w-[110px]">计费类型</TableHead>
-                    <TableHead className="w-[90px]">价格</TableHead>
-                    <TableHead className="w-[80px]">货币</TableHead>
-                    <TableHead className="w-[70px]">优先级</TableHead>
-                    <TableHead className="w-[90px]">操作</TableHead>
+                    <TableHead className="w-[150px]">Model</TableHead>
+                    <TableHead className="w-[100px]">Type</TableHead>
+                    <TableHead className="w-[100px]">Mode</TableHead>
+                    <TableHead className="w-[90px]">Duration</TableHead>
+                    <TableHead className="w-[100px]">Resolution</TableHead>
+                    <TableHead className="w-[110px]">Billing type</TableHead>
+                    <TableHead className="w-[90px]">Price</TableHead>
+                    <TableHead className="w-[80px]">Currency</TableHead>
+                    <TableHead className="w-[70px]">Priority</TableHead>
+                    <TableHead className="w-[90px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isVideoLoading ? (
                     <TableRow>
                       <TableCell colSpan={10} className="py-10 text-center">
-                        加载中...
+                        Loading...
                       </TableCell>
                     </TableRow>
                   ) : filteredVideoRules.length === 0 ? (
@@ -2072,7 +2090,8 @@ export default function PricingPage() {
                         colSpan={10}
                         className="py-10 text-center text-muted-foreground"
                       >
-                        暂无定价规则，点击"添加规则"创建
+                        No pricing rules. Click &quot;Add rule&quot; to create
+                        one.
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -2091,7 +2110,7 @@ export default function PricingPage() {
                                   e.target.value
                                 )
                               }
-                              placeholder="wan* 或 kling-v1"
+                              placeholder="wan* or kling-v1"
                               className="h-8 text-xs"
                             />
                           </TableCell>
@@ -2233,7 +2252,7 @@ export default function PricingPage() {
                                 onClick={() =>
                                   duplicateVideoRule(originalIndex)
                                 }
-                                title="复制规则"
+                                title="Duplicate rule"
                               >
                                 <Copy className="h-4 w-4" />
                               </Button>
@@ -2242,7 +2261,7 @@ export default function PricingPage() {
                                 size="icon"
                                 className="h-8 w-8 text-destructive hover:bg-destructive/10"
                                 onClick={() => deleteVideoRule(originalIndex)}
-                                title="删除规则"
+                                title="Delete rule"
                               >
                                 <X className="h-4 w-4" />
                               </Button>
@@ -2257,18 +2276,18 @@ export default function PricingPage() {
             </div>
 
             <div className="text-xs text-muted-foreground">
-              <strong>配置示例：</strong>
+              <strong>Configuration examples:</strong>
               <ul className="mt-1 list-inside list-disc space-y-1">
                 <li>
-                  阿里云按秒计费：model=wan*, resolution=720P,
+                  Alibaba Cloud per-second: model=wan*, resolution=720P,
                   pricing_type=per_second, price=0.6, currency=CNY
                 </li>
                 <li>
-                  可灵固定价格：model=kling-v1, mode=standard, duration=5,
+                  Kling fixed price: model=kling-v1, mode=standard, duration=5,
                   pricing_type=fixed, price=3.5, currency=CNY, priority=20
                 </li>
                 <li>
-                  兜底规则：model=kling-v1, mode=*, duration=*,
+                  Fallback rule: model=kling-v1, mode=*, duration=*,
                   pricing_type=fixed, price=5.0, currency=CNY, priority=5
                 </li>
               </ul>
