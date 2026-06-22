@@ -49,7 +49,7 @@ export const columns: ColumnDef<VideoStat>[] = [
       );
       return (
         <div className="text-center">
-          <CopyableCell value={formattedTime} label="时间">
+          <CopyableCell value={formattedTime} label="Time">
             <div className="text-sm">{formattedTime}</div>
           </CopyableCell>
         </div>
@@ -67,7 +67,7 @@ export const columns: ColumnDef<VideoStat>[] = [
       const channelId = row.getValue('channel_id') as number;
       return (
         <div className="text-center">
-          <CopyableCell value={channelId} label="渠道ID">
+          <CopyableCell value={channelId} label="Channel ID">
             <div className="text-sm font-medium">{channelId}</div>
           </CopyableCell>
         </div>
@@ -84,7 +84,7 @@ export const columns: ColumnDef<VideoStat>[] = [
       const taskId = row.getValue('task_id') as string;
       return (
         <div className="text-center">
-          <CopyableCell value={taskId} label="任务ID">
+          <CopyableCell value={taskId} label="Task ID">
             <TooltipProvider>
               <Tooltip delayDuration={100}>
                 <TooltipTrigger>
@@ -112,7 +112,7 @@ export const columns: ColumnDef<VideoStat>[] = [
       const type = row.getValue('type') as string;
       return (
         <div className="text-center">
-          <CopyableCell value={type} label="类型">
+          <CopyableCell value={type} label="Type">
             <div className="text-sm">{type}</div>
           </CopyableCell>
         </div>
@@ -129,7 +129,7 @@ export const columns: ColumnDef<VideoStat>[] = [
       const provider = row.getValue('provider') as string;
       return (
         <div className="text-center">
-          <CopyableCell value={provider} label="提供商">
+          <CopyableCell value={provider} label="Provider">
             <div className="text-sm">{provider}</div>
           </CopyableCell>
         </div>
@@ -146,7 +146,7 @@ export const columns: ColumnDef<VideoStat>[] = [
       const mode = row.getValue('mode') as string;
       return (
         <div className="text-center">
-          <CopyableCell value={mode} label="模式">
+          <CopyableCell value={mode} label="Mode">
             <div className="text-sm">{mode}</div>
           </CopyableCell>
         </div>
@@ -163,7 +163,7 @@ export const columns: ColumnDef<VideoStat>[] = [
       const duration = row.getValue('duration') as number;
       return (
         <div className="text-center">
-          <CopyableCell value={duration} label="时长">
+          <CopyableCell value={duration} label="Duration">
             <div className="text-sm font-medium">{duration}s</div>
           </CopyableCell>
         </div>
@@ -204,7 +204,7 @@ export const columns: ColumnDef<VideoStat>[] = [
       const username = row.getValue('username') as string;
       return (
         <div className="text-center">
-          <CopyableCell value={username} label="用户名">
+          <CopyableCell value={username} label="Username">
             <div className="text-sm">{username}</div>
           </CopyableCell>
         </div>
@@ -222,7 +222,7 @@ export const columns: ColumnDef<VideoStat>[] = [
       const userId = row.getValue('user_id') as number;
       return (
         <div className="text-center">
-          <CopyableCell value={userId} label="用户ID">
+          <CopyableCell value={userId} label="User ID">
             <div className="text-sm font-medium">{userId}</div>
           </CopyableCell>
         </div>
@@ -239,7 +239,7 @@ export const columns: ColumnDef<VideoStat>[] = [
       const model = row.getValue('model') as string;
       return (
         <div className="text-center">
-          <CopyableCell value={model} label="模型">
+          <CopyableCell value={model} label="Model">
             <TooltipProvider>
               <Tooltip delayDuration={100}>
                 <TooltipTrigger>
@@ -267,7 +267,7 @@ export const columns: ColumnDef<VideoStat>[] = [
       const status = row.getValue('status') as string;
       return (
         <div className="text-center">
-          <CopyableCell value={status} label="状态">
+          <CopyableCell value={status} label="Status">
             <div
               className={`text-sm font-medium ${
                 status === 'success'
@@ -296,7 +296,7 @@ export const columns: ColumnDef<VideoStat>[] = [
       const failReason = row.getValue('fail_reason') as string;
       return (
         <div className="text-center">
-          <CopyableCell value={failReason} label="失败原因">
+          <CopyableCell value={failReason} label="Failure reason">
             <TooltipProvider>
               <Tooltip delayDuration={100}>
                 <TooltipTrigger>
@@ -306,7 +306,7 @@ export const columns: ColumnDef<VideoStat>[] = [
                 </TooltipTrigger>
                 <TooltipContent>
                   <div className="max-w-[400px] break-words">
-                    {failReason || '无失败原因'}
+                    {failReason || 'No failure reason'}
                   </div>
                 </TooltipContent>
               </Tooltip>
@@ -326,7 +326,7 @@ export const columns: ColumnDef<VideoStat>[] = [
       const storeUrl = row.getValue('store_url') as string;
       return (
         <div className="text-center">
-          <CopyableCell value={storeUrl} label="存储URL">
+          <CopyableCell value={storeUrl} label="Store URL">
             <TooltipProvider>
               <Tooltip delayDuration={100}>
                 <TooltipTrigger>
@@ -338,7 +338,7 @@ export const columns: ColumnDef<VideoStat>[] = [
                         rel="noopener noreferrer"
                         className="block truncate text-blue-600 underline hover:text-blue-800"
                       >
-                        查看链接
+                        View link
                       </a>
                     ) : (
                       '-'
@@ -347,7 +347,7 @@ export const columns: ColumnDef<VideoStat>[] = [
                 </TooltipTrigger>
                 <TooltipContent>
                   <div className="max-w-[400px] break-all">
-                    {storeUrl || '无存储URL'}
+                    {storeUrl || 'No store URL'}
                   </div>
                 </TooltipContent>
               </Tooltip>
@@ -367,7 +367,7 @@ export const columns: ColumnDef<VideoStat>[] = [
       const quota = row.getValue('quota') as number;
       return (
         <div className="text-center">
-          <CopyableCell value={quota} label="配额">
+          <CopyableCell value={quota} label="Quota">
             <div className="text-sm font-medium">{processQuota(quota)}</div>
           </CopyableCell>
         </div>
@@ -384,7 +384,7 @@ export const columns: ColumnDef<VideoStat>[] = [
       const n = row.getValue('n') as number;
       return (
         <div className="text-center">
-          <CopyableCell value={n} label="数量">
+          <CopyableCell value={n} label="Count">
             <div className="text-sm font-medium">{n || 1}</div>
           </CopyableCell>
         </div>

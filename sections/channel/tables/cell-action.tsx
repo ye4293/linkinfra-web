@@ -126,18 +126,18 @@ export const CellAction: React.FC<CellActionProps> = ({
       const { success, message, data } = await res.json();
       if (success) {
         toast.success(
-          `渠道 "${channel.name}" 复制成功！新渠道名称: ${
-            data?.name || channel.name + '_复制'
+          `Channel "${channel.name}" duplicated. New name: ${
+            data?.name || channel.name + '_copy'
           }`
         );
         setCopyConfirmOpen(false);
-        // 直接调用数据刷新回调
+        // trigger data refresh callback
         onDataChange?.();
       } else {
-        toast.error(message || '复制渠道失败');
+        toast.error(message || 'Failed to duplicate channel.');
       }
     } catch (error) {
-      toast.error('复制渠道时发生错误');
+      toast.error('An error occurred while duplicating the channel.');
     } finally {
       setCopyLoading(false);
     }
@@ -156,8 +156,8 @@ export const CellAction: React.FC<CellActionProps> = ({
         onClose={() => setCopyConfirmOpen(false)}
         onConfirm={() => copyChannel(data)}
         loading={copyLoading}
-        title="确认复制渠道"
-        description={`确定要复制渠道 "${data.name}" 吗？复制后的渠道将默认为禁用状态。`}
+        title="Duplicate channel"
+        description={`Duplicate channel "${data.name}"? The new channel will be disabled by default.`}
       />
       <ModelsModal
         channel={data}
@@ -180,7 +180,7 @@ export const CellAction: React.FC<CellActionProps> = ({
                 onManageKeys(data);
               }}
             >
-              <KeyRound className="mr-2 h-4 w-4" /> 多密钥管理
+              <KeyRound className="mr-2 h-4 w-4" /> Multi-key
             </DropdownMenuItem>
           )}
           <DropdownMenuItem
@@ -196,7 +196,7 @@ export const CellAction: React.FC<CellActionProps> = ({
             disabled={copyLoading}
           >
             <Copy className="mr-2 h-4 w-4" />{' '}
-            {copyLoading ? '复制中...' : '复制'}
+            {copyLoading ? 'Duplicating...' : 'Duplicate'}
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() =>

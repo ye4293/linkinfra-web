@@ -39,13 +39,13 @@ export default function ChannelTable({
         try {
           const response = await fetch('/api/channel/types');
           if (!response.ok) {
-            throw new Error(`API 请求失败: ${response.status}`);
+            throw new Error(`API request failed: ${response.status}`);
           }
           const result = await response.json();
           if (result.object === 'list' && Array.isArray(result.data)) {
             setChannelTypes(result.data);
           } else {
-            throw new Error('API 返回的数据格式不正确');
+            throw new Error('Unexpected API response format.');
           }
         } catch (error) {
           console.error('获取渠道类型失败:', error);
@@ -95,12 +95,12 @@ export default function ChannelTable({
         }
       });
       if (res.ok) {
-        toast.success('删除成功');
+        toast.success('Deleted.');
         setResetSelection((prev) => !prev);
         router.refresh();
       } else {
         const errorData = await res.json();
-        throw new Error(errorData.message || '删除失败');
+        throw new Error(errorData.message || 'Delete failed.');
       }
     } catch (error) {
       toast.error(`${error}`);
@@ -122,12 +122,12 @@ export default function ChannelTable({
         }
       });
       if (res.ok) {
-        toast.success('禁用成功');
+        toast.success('Disabled.');
         setResetSelection((prev) => !prev);
         router.refresh();
       } else {
         const errorData = await res.json();
-        throw new Error(errorData.message || '禁用失败');
+        throw new Error(errorData.message || 'Disable failed.');
       }
     } catch (error) {
       toast.error(`${error}`);
@@ -148,12 +148,12 @@ export default function ChannelTable({
         }
       });
       if (res.ok) {
-        toast.success('启用成功');
+        toast.success('Enabled.');
         setResetSelection((prev) => !prev);
         router.refresh();
       } else {
         const errorData = await res.json();
-        throw new Error(errorData.message || '启用失败');
+        throw new Error(errorData.message || 'Enable failed.');
       }
     } catch (error) {
       toast.error(`${error}`);

@@ -164,9 +164,9 @@ const ExpandedRowContent = ({ row }: { row: Row<LogStat> }) => {
             </span>
             {retryHistory ? (
               <p className="text-sm font-medium">
-                共 {retryHistory.length} 次尝试 ·{' '}
+                {retryHistory.length} attempts ·{' '}
                 <span className="font-mono text-xs text-muted-foreground">
-                  累计{' '}
+                  total{' '}
                   {retryHistory
                     .reduce((s, a) => s + (a.duration ?? 0), 0)
                     .toFixed(2)}
@@ -265,10 +265,10 @@ const ExpandedRowContent = ({ row }: { row: Row<LogStat> }) => {
         <div className="mt-4 space-y-2 border-t pt-4">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-muted-foreground">
-              渠道重试明细
+              Channel retry details
             </span>
             <span className="text-xs text-muted-foreground">
-              共 {retryHistory.length} 次 · 累计{' '}
+              {retryHistory.length} attempts · total{' '}
               {retryHistory
                 .reduce((s, a) => s + (a.duration ?? 0), 0)
                 .toFixed(2)}
@@ -280,10 +280,12 @@ const ExpandedRowContent = ({ row }: { row: Row<LogStat> }) => {
               <thead className="text-muted-foreground">
                 <tr className="border-b">
                   <th className="py-1.5 pr-3 text-left font-medium">#</th>
-                  <th className="py-1.5 pr-3 text-left font-medium">渠道</th>
-                  <th className="py-1.5 pr-3 text-right font-medium">耗时</th>
-                  <th className="py-1.5 pr-3 text-right font-medium">状态</th>
-                  <th className="py-1.5 text-left font-medium">报错</th>
+                  <th className="py-1.5 pr-3 text-left font-medium">Channel</th>
+                  <th className="py-1.5 pr-3 text-right font-medium">
+                    Duration
+                  </th>
+                  <th className="py-1.5 pr-3 text-right font-medium">Status</th>
+                  <th className="py-1.5 text-left font-medium">Error</th>
                 </tr>
               </thead>
               <tbody>
@@ -337,7 +339,7 @@ const ExpandedRowContent = ({ row }: { row: Row<LogStat> }) => {
                         {a.error
                           ? a.error
                           : isLast && isSuccess
-                          ? '✓ 成功'
+                          ? '✓ Success'
                           : '-'}
                       </td>
                     </tr>
@@ -1066,10 +1068,10 @@ export default function LogTable() {
       console.log(
         `✅ 成功导出 ${allLogData.length} 条日志记录（总计 ${total} 条）`
       );
-      alert(`✅ 导出完成！共导出 ${allLogData.length} 条记录`);
+      alert(`Export complete. ${allLogData.length} records exported.`);
     } catch (error) {
       console.error('❌ 导出失败:', error);
-      alert('导出失败，请查看控制台错误信息');
+      alert('Export failed. Check the console for details.');
     }
   }, [
     tokenName,
@@ -1175,24 +1177,24 @@ export default function LogTable() {
                     </DropdownMenuTrigger>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>导出数据</p>
+                    <p>Export data</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={exportCurrentPage}>
                   <div className="flex flex-col gap-1">
-                    <span>导出当前页数据</span>
+                    <span>Export current page</span>
                     <span className="text-xs text-muted-foreground">
-                      当前页 {logData.length} 条记录
+                      {logData.length} records on this page
                     </span>
                   </div>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={exportAllData}>
                   <div className="flex flex-col gap-1">
-                    <span>导出全部符合条件的数据</span>
+                    <span>Export all matching records</span>
                     <span className="text-xs text-muted-foreground">
-                      包含所有筛选条件的完整数据
+                      Full dataset with all active filters applied
                     </span>
                   </div>
                 </DropdownMenuItem>
@@ -1325,7 +1327,7 @@ export default function LogTable() {
           <div className="relative duration-200 animate-in zoom-in-50">
             <div className="flex items-center gap-3 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-3 text-white shadow-2xl">
               <Loader2 className="h-5 w-5 animate-spin" />
-              <span className="font-medium">正在查询...</span>
+              <span className="font-medium">Searching...</span>
             </div>
           </div>
         </div>

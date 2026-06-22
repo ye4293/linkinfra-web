@@ -1,63 +1,63 @@
-/** 渠道表单 */
+/** Channel form */
 export interface ChannelForm {
   id?: number;
-  /** 名称 */
+  /** Name */
   name: string;
-  /** 类型 */
+  /** Type */
   type: number;
-  /** 密钥 */
+  /** API key */
   key: string;
-  /** 代理 */
+  /** Proxy */
   base_url: string;
-  /** 其他 */
+  /** Other */
   other: string;
 
-  /** 模型重定向 */
+  /** Model redirect */
   model_mapping: string;
-  /** 自定义请求头覆盖 */
+  /** Custom request header override */
   header_override: string;
-  /** 模型 */
+  /** Models */
   models: Array<string>;
-  /** 分组 */
+  /** Group */
   groups: Array<string>;
-  /** 渠道折扣倍率 (0-1, 如 0.7 表示七折) */
+  /** Channel discount multiplier (0-1, e.g. 0.7 = 30% off) */
   discount?: number;
 }
 
-/** 渠道返回结果 */
+/** Channel response */
 export interface Channel {
   id?: number;
-  /** 状态 */
+  /** Status */
   status?: number;
-  /** 名称 */
+  /** Name */
   name?: string;
-  /** 类型 */
+  /** Type */
   type?: number;
-  /** 密钥 */
+  /** API key */
   key?: string;
-  /** 代理 */
+  /** Proxy */
   base_url?: string;
-  /** 其他 */
+  /** Other */
   other?: string;
-  /** 模型重定向 */
+  /** Model redirect */
   model_mapping?: string;
-  /** 自定义请求头覆盖 */
+  /** Custom request header override */
   header_override?: string;
-  /** 模型 */
+  /** Models */
   models?: string;
-  /** 分组 */
+  /** Group */
   group?: string;
-  /** 优先级 */
+  /** Priority */
   priority?: number;
-  /** 权重 */
+  /** Weight */
   weight?: number;
   response_time?: number;
   test_time?: number;
-  /** 已使用配额 */
+  /** Used quota */
   used_quota?: number;
-  /** 自动禁用 */
+  /** Auto-disabled */
   auto_disabled?: boolean;
-  /** 多密钥信息 */
+  /** Multi-key info */
   multi_key_info?: {
     is_multi_key: boolean;
     key_selection_mode?: number;
@@ -69,17 +69,17 @@ export interface Channel {
     polling_index?: number;
     last_batch_import_time?: number;
   };
-  /** 自动禁用原因 */
+  /** Auto-disable reason */
   auto_disabled_reason?: string;
-  /** 自动禁用时间 */
+  /** Auto-disable time */
   auto_disabled_time?: number;
-  /** 导致禁用的模型 */
+  /** Model that triggered the disable */
   auto_disabled_model?: string;
-  /** 余额 */
+  /** Balance */
   balance?: number;
-  /** 渠道折扣倍率 */
+  /** Channel discount multiplier */
   discount?: number;
-  /** 渠道扩展设置（JSON 字符串），含上游模型巡检配置 */
+  /** Channel extended settings (JSON string), includes upstream model inspection config */
   other_settings?: string;
 }
 
@@ -88,14 +88,14 @@ export type ModelResult = {
   data?: Array<any>;
 };
 
-/** 测试渠道返回结果 */
+/** Test channel response */
 export type TestResult = {
   success: boolean;
   message: string;
   time: number;
 };
 
-/** 更新单个channel返回结果 */
+/** Update single channel response */
 export type ChannelResult = {
   data?: number;
   message: string;

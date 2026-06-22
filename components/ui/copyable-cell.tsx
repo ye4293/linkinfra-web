@@ -30,7 +30,7 @@ export function CopyableCell({
         className
       )}
       onClick={handleClick}
-      title={`点击复制${label || '内容'}`}
+      title={`Click to copy${label ? ` ${label}` : ''}`}
     >
       {children}
     </div>

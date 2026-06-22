@@ -30,7 +30,7 @@ export const columns: ColumnDef<ImageStat>[] = [
       );
       return (
         <div className="text-center">
-          <CopyableCell value={formattedTime} label="时间">
+          <CopyableCell value={formattedTime} label="Time">
             <div className="text-sm">{formattedTime}</div>
           </CopyableCell>
         </div>
@@ -48,7 +48,7 @@ export const columns: ColumnDef<ImageStat>[] = [
       const channelId = row.getValue('channel_id') as number;
       return (
         <div className="text-center">
-          <CopyableCell value={channelId} label="渠道ID">
+          <CopyableCell value={channelId} label="Channel ID">
             <div className="text-sm font-medium">{channelId}</div>
           </CopyableCell>
         </div>
@@ -65,7 +65,7 @@ export const columns: ColumnDef<ImageStat>[] = [
       const taskId = row.getValue('task_id') as string;
       return (
         <div className="text-center">
-          <CopyableCell value={taskId} label="任务ID">
+          <CopyableCell value={taskId} label="Task ID">
             <TooltipProvider>
               <Tooltip delayDuration={100}>
                 <TooltipTrigger>
@@ -93,7 +93,7 @@ export const columns: ColumnDef<ImageStat>[] = [
       const provider = row.getValue('provider') as string;
       return (
         <div className="text-center">
-          <CopyableCell value={provider} label="提供商">
+          <CopyableCell value={provider} label="Provider">
             <div className="text-sm">{provider}</div>
           </CopyableCell>
         </div>
@@ -110,7 +110,7 @@ export const columns: ColumnDef<ImageStat>[] = [
       const model = row.getValue('model') as string;
       return (
         <div className="text-center">
-          <CopyableCell value={model} label="模型">
+          <CopyableCell value={model} label="Model">
             <div className="text-sm">{model}</div>
           </CopyableCell>
         </div>
@@ -127,7 +127,7 @@ export const columns: ColumnDef<ImageStat>[] = [
       const mode = row.getValue('mode') as string;
       return (
         <div className="text-center">
-          <CopyableCell value={mode} label="模式">
+          <CopyableCell value={mode} label="Mode">
             <div className="text-sm">{mode}</div>
           </CopyableCell>
         </div>
@@ -150,7 +150,7 @@ export const columns: ColumnDef<ImageStat>[] = [
           : 'text-red-600';
       return (
         <div className="text-center">
-          <CopyableCell value={status} label="状态">
+          <CopyableCell value={status} label="Status">
             <div className={`text-sm font-medium ${statusColor}`}>{status}</div>
           </CopyableCell>
         </div>
@@ -167,7 +167,7 @@ export const columns: ColumnDef<ImageStat>[] = [
       const count = row.getValue('n') as number;
       return (
         <div className="text-center">
-          <CopyableCell value={count} label="数量">
+          <CopyableCell value={count} label="Count">
             <div className="text-sm font-medium">{count}</div>
           </CopyableCell>
         </div>
@@ -185,7 +185,7 @@ export const columns: ColumnDef<ImageStat>[] = [
       const username = row.getValue('username') as string;
       return (
         <div className="text-center">
-          <CopyableCell value={username} label="用户名">
+          <CopyableCell value={username} label="Username">
             <div className="text-sm">{username}</div>
           </CopyableCell>
         </div>
@@ -203,7 +203,7 @@ export const columns: ColumnDef<ImageStat>[] = [
       const userId = row.getValue('user_id') as number;
       return (
         <div className="text-center">
-          <CopyableCell value={userId} label="用户ID">
+          <CopyableCell value={userId} label="User ID">
             <div className="text-sm font-medium">{userId}</div>
           </CopyableCell>
         </div>
@@ -222,29 +222,29 @@ export const columns: ColumnDef<ImageStat>[] = [
       if (!storeUrl) {
         return (
           <div className="flex justify-center">
-            <div className="px-2 text-sm text-gray-500">暂无图片</div>
+            <div className="px-2 text-sm text-gray-500">No image</div>
           </div>
         );
       }
 
-      // 尝试解析JSON格式的URL数组
+      // try to parse JSON array URL format
       let urls: string[] = [];
       try {
         const parsed = JSON.parse(storeUrl);
         if (Array.isArray(parsed)) {
           urls = parsed.filter((url) => url && typeof url === 'string');
         } else {
-          urls = [storeUrl]; // 如果不是数组，当作单个URL处理
+          urls = [storeUrl]; // if not an array, treat as single URL
         }
       } catch {
-        // JSON解析失败，当作单个URL处理
+        // JSON parse failed, treat as single URL
         urls = [storeUrl];
       }
 
       if (urls.length === 0) {
         return (
           <div className="flex justify-center">
-            <div className="px-2 text-sm text-gray-500">暂无图片</div>
+            <div className="px-2 text-sm text-gray-500">No image</div>
           </div>
         );
       }
@@ -255,7 +255,7 @@ export const columns: ColumnDef<ImageStat>[] = [
             <CopyableCell
               key={index}
               value={url}
-              label={`图片链接${index + 1}`}
+              label={`Image URL ${index + 1}`}
             >
               <TooltipProvider>
                 <Tooltip delayDuration={100}>
@@ -266,7 +266,7 @@ export const columns: ColumnDef<ImageStat>[] = [
                       rel="noopener noreferrer"
                       className="rounded border border-blue-200 px-1.5 py-0.5 text-xs text-blue-600 hover:bg-blue-50 hover:text-blue-800"
                     >
-                      图片{index + 1}
+                      Image {index + 1}
                     </a>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -290,7 +290,7 @@ export const columns: ColumnDef<ImageStat>[] = [
       const failReason = row.getValue('fail_reason') as string;
       return (
         <div className="flex justify-center gap-2">
-          <CopyableCell value={failReason || ''} label="失败原因">
+          <CopyableCell value={failReason || ''} label="Failure reason">
             <TooltipProvider>
               <Tooltip delayDuration={100}>
                 <TooltipTrigger>
@@ -300,7 +300,7 @@ export const columns: ColumnDef<ImageStat>[] = [
                 </TooltipTrigger>
                 <TooltipContent>
                   <div className="max-w-[400px] break-words">
-                    {failReason || '无失败原因'}
+                    {failReason || 'No failure reason'}
                   </div>
                 </TooltipContent>
               </Tooltip>
@@ -321,7 +321,7 @@ export const columns: ColumnDef<ImageStat>[] = [
       const processedQuota = processQuota(quota);
       return (
         <div className="text-center">
-          <CopyableCell value={processedQuota} label="价格">
+          <CopyableCell value={processedQuota} label="Price">
             <div className="text-sm font-medium text-green-600">
               {processedQuota}
             </div>

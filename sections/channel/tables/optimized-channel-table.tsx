@@ -54,9 +54,9 @@ const MobileChannelCard = memo(
 
     // 获取状态文本和颜色
     const statusMap = {
-      1: { text: '已启用', color: 'bg-green-100 text-green-800' },
-      2: { text: '手动禁用', color: 'bg-gray-100 text-gray-800' },
-      3: { text: '自动禁用', color: 'bg-orange-100 text-orange-800' }
+      1: { text: 'Enabled', color: 'bg-green-100 text-green-800' },
+      2: { text: 'Disabled', color: 'bg-gray-100 text-gray-800' },
+      3: { text: 'Auto-disabled', color: 'bg-orange-100 text-orange-800' }
     };
     const currentStatus =
       statusMap[channel.status as keyof typeof statusMap] || statusMap[2];
@@ -67,7 +67,7 @@ const MobileChannelCard = memo(
       const channelType = channelTypes.find((t) => t.value === typeValue);
       return channelType
         ? { text: channelType.text, color: channelType.color }
-        : { text: `未知类型 (${typeValue})`, color: 'gray' };
+        : { text: `Unknown type (${typeValue})`, color: 'gray' };
     }, [channelTypes, channel.type]);
 
     // 处理状态切换
@@ -79,13 +79,13 @@ const MobileChannelCard = memo(
           credentials: 'include'
         });
         if (res.ok) {
-          toast.success('状态更新成功');
+          toast.success('Status updated.');
           onDataChange();
         } else {
-          toast.error('状态更新失败');
+          toast.error('Failed to update status.');
         }
       } catch (error) {
-        toast.error('状态更新失败');
+        toast.error('Failed to update status.');
       }
     };
 
@@ -99,10 +99,10 @@ const MobileChannelCard = memo(
         });
         const { success, message, time } = await res.json();
         if (success) {
-          toast.success(`测试成功，耗时 ${time.toFixed(2)} 秒`);
+          toast.success(`Test passed in ${time.toFixed(2)}s.`);
           onDataChange();
         } else {
-          toast.error(message || '测试失败');
+          toast.error(message || 'Test failed.');
         }
       } finally {
         setTestLoading(false);
@@ -123,21 +123,21 @@ const MobileChannelCard = memo(
 
           <div className="grid w-full grid-cols-2 gap-x-4 gap-y-3 text-sm">
             <div className="flex flex-col gap-1">
-              <span className="text-xs text-muted-foreground">类型</span>
+              <span className="text-xs text-muted-foreground">Type</span>
               <Badge variant="secondary" className="w-fit font-normal">
                 {channelTypeInfo.text}
               </Badge>
             </div>
 
             <div className="flex flex-col gap-1">
-              <span className="text-xs text-muted-foreground">分组</span>
+              <span className="text-xs text-muted-foreground">Group</span>
               <div className="w-fit rounded bg-muted px-2 py-1 font-mono text-xs">
                 {channel.group || 'default'}
               </div>
             </div>
 
             <div className="flex flex-col gap-1">
-              <span className="text-xs text-muted-foreground">状态</span>
+              <span className="text-xs text-muted-foreground">Status</span>
               <div className="flex items-center gap-2">
                 <Switch
                   checked={channel.status === 1}
@@ -156,7 +156,9 @@ const MobileChannelCard = memo(
             </div>
 
             <div className="flex flex-col gap-1">
-              <span className="text-xs text-muted-foreground">响应时间</span>
+              <span className="text-xs text-muted-foreground">
+                Response time
+              </span>
               <span
                 className={`font-mono ${
                   !channel.response_time
@@ -170,12 +172,14 @@ const MobileChannelCard = memo(
               >
                 {channel.response_time
                   ? `${(channel.response_time / 1000).toFixed(2)}s`
-                  : '未测试'}
+                  : '—'}
               </span>
             </div>
 
             <div className="flex flex-col gap-1">
-              <span className="text-xs text-muted-foreground">已用/余额</span>
+              <span className="text-xs text-muted-foreground">
+                Used / Balance
+              </span>
               <div className="font-mono text-xs">
                 <div>${((channel.used_quota || 0) / 500000).toFixed(2)}</div>
                 <div className="text-muted-foreground">
@@ -188,7 +192,7 @@ const MobileChannelCard = memo(
 
             <div className="flex flex-col gap-1">
               <span className="text-xs text-muted-foreground">
-                优先级 / 权重
+                Priority / Weight
               </span>
               <div className="font-mono">
                 {channel.priority ?? 0} / {channel.weight ?? 0}
@@ -205,7 +209,7 @@ const MobileChannelCard = memo(
                 onClick={testChannel}
                 disabled={testLoading}
               >
-                {testLoading ? '测试中...' : '测试'}
+                {testLoading ? 'Testing...' : 'Test'}
               </button>
               <button
                 type="button"
@@ -213,7 +217,7 @@ const MobileChannelCard = memo(
                 translate="no"
                 onClick={() => handleStatusChange(channel.status === 1 ? 2 : 1)}
               >
-                {channel.status === 1 ? '禁用' : '启用'}
+                {channel.status === 1 ? 'Disable' : 'Enable'}
               </button>
               <button
                 type="button"
@@ -221,7 +225,7 @@ const MobileChannelCard = memo(
                 translate="no"
                 onClick={() => router.push(`/dashboard/channel/${channel.id}`)}
               >
-                编辑
+                Edit
               </button>
               <button
                 type="button"
@@ -229,7 +233,7 @@ const MobileChannelCard = memo(
                 translate="no"
                 onClick={() => setModelsModalOpen(true)}
               >
-                查看模型
+                View models
               </button>
               {channel.multi_key_info?.is_multi_key && (
                 <button
@@ -238,7 +242,7 @@ const MobileChannelCard = memo(
                   translate="no"
                   onClick={() => onManageKeys(channel)}
                 >
-                  多密钥管理
+                  Multi-key
                 </button>
               )}
             </div>
@@ -250,10 +254,10 @@ const MobileChannelCard = memo(
                 translate="no"
                 onClick={() => onDelete(channel)}
               >
-                删除渠道
+                Delete channel
               </button>
               <p className="mt-1 text-center text-[11px] text-muted-foreground">
-                删除后不可恢复
+                Deleted channels cannot be recovered.
               </p>
             </div>
           </div>
@@ -314,13 +318,13 @@ const OptimizedChannelTable = memo(
           try {
             const response = await fetch('/api/channel/types');
             if (!response.ok) {
-              throw new Error(`API 请求失败: ${response.status}`);
+              throw new Error(`API request failed: ${response.status}`);
             }
             const result = await response.json();
             if (result.object === 'list' && Array.isArray(result.data)) {
               setChannelTypes(result.data);
             } else {
-              throw new Error('API 返回的数据格式不正确');
+              throw new Error('Unexpected API response format.');
             }
           } catch (error) {
             console.error('获取渠道类型失败:', error);
@@ -400,13 +404,13 @@ const OptimizedChannelTable = memo(
           method: 'DELETE'
         });
         if (res.ok) {
-          toast.success('删除成功');
+          toast.success('Deleted.');
           refetch();
         } else {
-          toast.error('删除失败');
+          toast.error('Delete failed.');
         }
       } catch (error) {
-        toast.error('删除失败');
+        toast.error('Delete failed.');
       } finally {
         setOpen(false);
         setDeleteChannel(null);
@@ -428,18 +432,19 @@ const OptimizedChannelTable = memo(
         });
 
         if (res.ok) {
-          toast.success('删除成功');
+          toast.success('Deleted.');
           setResetSelection((prev) => !prev);
-          refetch(); // 使用 refetch 而不是 router.refresh
+          refetch(); // use refetch instead of router.refresh
         } else {
-          // 改进错误处理：检查响应是否为JSON格式
-          let errorMessage = '删除失败';
+          // improved error handling: check if response is JSON
+          let errorMessage = 'Delete failed.';
           try {
             const errorData = await res.json();
-            errorMessage = errorData.message || `删除失败 (HTTP ${res.status})`;
+            errorMessage =
+              errorData.message || `Delete failed (HTTP ${res.status})`;
           } catch (jsonError) {
-            // 如果响应不是JSON格式，使用HTTP状态码信息
-            errorMessage = `删除失败 (HTTP ${res.status}: ${res.statusText})`;
+            // response is not JSON
+            errorMessage = `Delete failed (HTTP ${res.status}: ${res.statusText})`;
           }
           throw new Error(errorMessage);
         }
@@ -467,18 +472,19 @@ const OptimizedChannelTable = memo(
         });
 
         if (res.ok) {
-          toast.success('禁用成功');
+          toast.success('Disabled.');
           setResetSelection((prev) => !prev);
-          refetch(); // 使用 refetch 而不是 router.refresh
+          refetch(); // use refetch instead of router.refresh
         } else {
-          // 改进错误处理：检查响应是否为JSON格式
-          let errorMessage = '禁用失败';
+          // improved error handling: check if response is JSON
+          let errorMessage = 'Disable failed.';
           try {
             const errorData = await res.json();
-            errorMessage = errorData.message || `禁用失败 (HTTP ${res.status})`;
+            errorMessage =
+              errorData.message || `Disable failed (HTTP ${res.status})`;
           } catch (jsonError) {
-            // 如果响应不是JSON格式，使用HTTP状态码信息
-            errorMessage = `禁用失败 (HTTP ${res.status}: ${res.statusText})`;
+            // response is not JSON
+            errorMessage = `Disable failed (HTTP ${res.status}: ${res.statusText})`;
           }
           throw new Error(errorMessage);
         }
@@ -505,18 +511,19 @@ const OptimizedChannelTable = memo(
         });
 
         if (res.ok) {
-          toast.success('启用成功');
+          toast.success('Enabled.');
           setResetSelection((prev) => !prev);
-          refetch(); // 使用 refetch 而不是 router.refresh
+          refetch(); // use refetch instead of router.refresh
         } else {
-          // 改进错误处理：检查响应是否为JSON格式
-          let errorMessage = '启用失败';
+          // improved error handling: check if response is JSON
+          let errorMessage = 'Enable failed.';
           try {
             const errorData = await res.json();
-            errorMessage = errorData.message || `启用失败 (HTTP ${res.status})`;
+            errorMessage =
+              errorData.message || `Enable failed (HTTP ${res.status})`;
           } catch (jsonError) {
-            // 如果响应不是JSON格式，使用HTTP状态码信息
-            errorMessage = `启用失败 (HTTP ${res.status}: ${res.statusText})`;
+            // response is not JSON
+            errorMessage = `Enable failed (HTTP ${res.status}: ${res.statusText})`;
           }
           throw new Error(errorMessage);
         }
@@ -545,12 +552,12 @@ const OptimizedChannelTable = memo(
         <Card>
           <CardContent className="p-6">
             <div className="text-center text-red-500">
-              <p>加载失败: {error}</p>
+              <p>Failed to load: {error}</p>
               <button
                 onClick={refetch}
                 className="mt-2 rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
               >
-                重试
+                Retry
               </button>
             </div>
           </CardContent>
@@ -611,7 +618,7 @@ const OptimizedChannelTable = memo(
                   : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
               }`}
             >
-              全部
+              All
               <span
                 className={`rounded-full px-1.5 py-0.5 text-xs font-normal ${
                   !typeFilter
@@ -763,7 +770,7 @@ const OptimizedChannelTable = memo(
           {/* 移动端分页控制 */}
           <div className="flex flex-wrap items-center justify-between gap-4 border-t pt-4">
             <span className="text-sm text-muted-foreground">
-              共 {displayTotal} 条
+              {displayTotal} total
             </span>
             <div className="flex items-center gap-2">
               <Button
@@ -772,7 +779,7 @@ const OptimizedChannelTable = memo(
                 onClick={() => setPage(Math.max(1, page - 1))}
                 disabled={page <= 1}
               >
-                上一页
+                Previous
               </Button>
               <span className="flex items-center px-2 text-sm">
                 {page} / {Math.max(1, pageCount)}
@@ -783,7 +790,7 @@ const OptimizedChannelTable = memo(
                 onClick={() => setPage(Math.min(pageCount, page + 1))}
                 disabled={page >= pageCount}
               >
-                下一页
+                Next
               </Button>
             </div>
           </div>

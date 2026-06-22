@@ -32,9 +32,9 @@ interface TopUpRecord {
   money: number;
   trade_no: string;
   payment_method: string;
-  /** 后端写入：易支付 CNY；Stripe 以 Checkout 回调 currency 为准（支持 USD/CNY 等） */
+  /** Stripe uses the currency from the Checkout callback (supports USD/CNY etc.) */
   currency?: string;
-  /** 扩展 JSON：补单时为 manual_complete 结构，支付回调通常为空 */
+  /** Extended JSON: manual_complete structure on admin completion, usually empty on payment callback */
   other?: string;
   create_time: number;
   complete_time: number;
@@ -50,13 +50,13 @@ const statusConfig: Record<
     variant: 'default' | 'secondary' | 'destructive' | 'outline';
   }
 > = {
-  success: { label: '成功', variant: 'default' },
-  pending: { label: '待支付', variant: 'secondary' },
-  failed: { label: '失败', variant: 'destructive' },
-  expired: { label: '已过期', variant: 'outline' }
+  success: { label: 'Paid', variant: 'default' },
+  pending: { label: 'Pending', variant: 'secondary' },
+  failed: { label: 'Failed', variant: 'destructive' },
+  expired: { label: 'Expired', variant: 'outline' }
 };
 
-/** 币种以接口返回的 currency 为准；Stripe 未支付完成前可能为空 */
+/** Currency badge — uses the currency from the API response; may be empty before Stripe payment completes */
 function currencyBadge(record: TopUpRecord): string {
   const c = (record.currency || '').trim().toUpperCase();
   if (c) return c;
@@ -82,14 +82,14 @@ function paymentMethodLabel(method: string): string {
   const m = (method || '').toLowerCase();
   const map: Record<string, string> = {
     stripe: 'Stripe',
-    alipay: '支付宝',
-    wxpay: '微信',
-    qqpay: 'QQ 钱包'
+    alipay: 'Alipay',
+    wxpay: 'WeChat Pay',
+    qqpay: 'QQ Wallet'
   };
   return map[m] || method || '-';
 }
 
-/** 解析 other 中补单 JSON，用于「入账方式」展示 */
+/** Parse manual_complete JSON from other field, used for "Entry type" display */
 function manualCompleteSummary(other?: string): string | null {
   const raw = (other || '').trim();
   if (!raw) return null;
@@ -102,20 +102,20 @@ function manualCompleteSummary(other?: string): string | null {
     };
     if (o.source === 'manual_complete') {
       if (o.operator_display_name && o.operator_username) {
-        return `管理员：${o.operator_display_name} (${o.operator_username})`;
+        return `Admin: ${o.operator_display_name} (${o.operator_username})`;
       }
       if (o.operator_username) {
-        return `管理员：${o.operator_username}`;
+        return `Admin: ${o.operator_username}`;
       }
       if (o.operator_display_name) {
-        return `管理员：${o.operator_display_name}`;
+        return `Admin: ${o.operator_display_name}`;
       }
       if (o.operator_user_id) {
-        return `管理员：用户 #${o.operator_user_id}`;
+        return `Admin: user #${o.operator_user_id}`;
       }
-      return '管理员补单';
+      return 'Admin (manual complete)';
     }
-    return `扩展：${raw.length > 80 ? `${raw.slice(0, 80)}…` : raw}`;
+    return `Extended: ${raw.length > 80 ? `${raw.slice(0, 80)}…` : raw}`;
   } catch {
     return raw.length > 80 ? `${raw.slice(0, 80)}…` : raw;
   }
@@ -151,13 +151,13 @@ export default function TransactionHistory() {
       const res = await fetch(`/api/user/topup/self?${params.toString()}`);
       const result = await res.json();
       if (!res.ok || !result?.success) {
-        throw new Error(result?.message || '获取充值记录失败');
+        throw new Error(result?.message || 'Failed to load top-up history.');
       }
       setRecords(result?.data?.list || []);
       setTotal(result?.data?.total || 0);
     } catch (err) {
       console.error('Failed to fetch transaction history:', err);
-      setError('获取充值记录失败');
+      setError('Failed to load top-up history.');
     } finally {
       setLoading(false);
     }
@@ -195,13 +195,15 @@ export default function TransactionHistory() {
       });
       const result = await res.json();
       if (!res.ok || !result?.success) {
-        throw new Error(result?.message || '补单失败');
+        throw new Error(result?.message || 'Order completion failed.');
       }
-      toast.success('补单成功');
+      toast.success('Order completed.');
       router.refresh();
       fetchRecords();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : '补单失败');
+      toast.error(
+        err instanceof Error ? err.message : 'Order completion failed.'
+      );
     } finally {
       setCompletingId(null);
     }
@@ -211,12 +213,14 @@ export default function TransactionHistory() {
     <Card className="mt-0">
       <CardHeader className="pb-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <CardTitle className="text-lg font-semibold">充值记录</CardTitle>
+          <CardTitle className="text-lg font-semibold">
+            Top-up history
+          </CardTitle>
           <div className="flex items-center gap-2">
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="搜索订单号..."
+                placeholder="Search by order ID..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 onKeyDown={handleKeyDown}
@@ -224,11 +228,11 @@ export default function TransactionHistory() {
               />
             </div>
             <Button size="sm" variant="outline" onClick={handleSearch}>
-              搜索
+              Search
             </Button>
             {tradeNoQuery && (
               <Button size="sm" variant="ghost" onClick={handleClearSearch}>
-                清除
+                Clear
               </Button>
             )}
           </div>
@@ -238,7 +242,7 @@ export default function TransactionHistory() {
         {loading ? (
           <div className="flex items-center justify-center gap-2 py-8 text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
-            加载中...
+            Loading...
           </div>
         ) : error ? (
           <div className="py-4 text-center text-sm text-destructive">
@@ -250,16 +254,16 @@ export default function TransactionHistory() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>时间</TableHead>
-                    <TableHead>订单号</TableHead>
-                    <TableHead>充值额度</TableHead>
-                    <TableHead>币种</TableHead>
-                    <TableHead>支付金额</TableHead>
-                    <TableHead>支付方式</TableHead>
-                    <TableHead>状态</TableHead>
-                    <TableHead>完成时间</TableHead>
-                    <TableHead>入账方式</TableHead>
-                    {isAdmin && <TableHead>操作</TableHead>}
+                    <TableHead>Date</TableHead>
+                    <TableHead>Order ID</TableHead>
+                    <TableHead>Credits</TableHead>
+                    <TableHead>Currency</TableHead>
+                    <TableHead>Amount paid</TableHead>
+                    <TableHead>Method</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Completed</TableHead>
+                    <TableHead>Entry type</TableHead>
+                    {isAdmin && <TableHead>Actions</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -314,7 +318,7 @@ export default function TransactionHistory() {
                           {entrySummary
                             ? entrySummary
                             : record.status === 'success'
-                            ? '支付回调'
+                            ? 'Payment callback'
                             : '-'}
                         </TableCell>
                         {isAdmin && (
@@ -332,7 +336,7 @@ export default function TransactionHistory() {
                                 ) : (
                                   <RotateCcw className="h-3 w-3" />
                                 )}
-                                补单
+                                Complete
                               </Button>
                             )}
                           </TableCell>
@@ -346,7 +350,9 @@ export default function TransactionHistory() {
 
             {/* Pagination */}
             <div className="mt-4 flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">共 {total} 条记录</p>
+              <p className="text-sm text-muted-foreground">
+                {total} records total
+              </p>
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
@@ -355,7 +361,7 @@ export default function TransactionHistory() {
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                 >
                   <ChevronLeft className="h-4 w-4" />
-                  上一页
+                  Previous
                 </Button>
                 <span className="text-sm text-muted-foreground">
                   {page} / {totalPages}
@@ -366,7 +372,7 @@ export default function TransactionHistory() {
                   disabled={page >= totalPages}
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 >
-                  下一页
+                  Next
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
@@ -374,7 +380,9 @@ export default function TransactionHistory() {
           </>
         ) : (
           <div className="py-8 text-center text-muted-foreground">
-            {tradeNoQuery ? '未找到匹配的订单' : '暂无充值记录'}
+            {tradeNoQuery
+              ? 'No matching orders found.'
+              : 'No top-up history yet.'}
           </div>
         )}
       </CardContent>

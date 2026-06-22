@@ -141,7 +141,7 @@ const TypeCell = memo(
     const channelTypeInfo = useMemo(() => {
       // 数据验证
       if (typeof typeValue !== 'number' || isNaN(typeValue)) {
-        return { text: '无效类型', color: 'gray' };
+        return { text: 'Invalid type', color: 'gray' };
       }
 
       // 直接查找对应的类型
@@ -155,7 +155,7 @@ const TypeCell = memo(
       }
 
       // 没找到就显示未知类型
-      return { text: `未知类型 (${typeValue})`, color: 'gray' };
+      return { text: `Unknown type (${typeValue})`, color: 'gray' };
     }, [channelTypes, typeValue]);
 
     const colorClasses =
@@ -166,7 +166,7 @@ const TypeCell = memo(
         <Badge
           variant="outline"
           className={cn('whitespace-nowrap font-medium', colorClasses)}
-          aria-label={`渠道类型: ${channelTypeInfo.text}`}
+          aria-label={`Channel type: ${channelTypeInfo.text}`}
         >
           {channelTypeInfo.text}
         </Badge>
@@ -277,12 +277,12 @@ const StatusCell = memo(
               >
                 <div className="space-y-3 p-3 text-xs">
                   <div className="text-sm font-semibold text-foreground">
-                    自动禁用详情
+                    Auto-disable details
                   </div>
                   <div className="space-y-1.5">
                     <div className="flex gap-3">
                       <span className="w-12 flex-shrink-0 text-muted-foreground">
-                        原因
+                        Reason
                       </span>
                       <span className="break-all font-medium text-rose-600 dark:text-rose-400">
                         {
@@ -294,7 +294,7 @@ const StatusCell = memo(
                     {channel.auto_disabled_model && (
                       <div className="flex gap-3">
                         <span className="w-12 flex-shrink-0 text-muted-foreground">
-                          模型
+                          Model
                         </span>
                         <span className="break-all font-medium text-foreground">
                           {channel.auto_disabled_model}
@@ -304,7 +304,7 @@ const StatusCell = memo(
                     {channel.auto_disabled_time && (
                       <div className="flex gap-3">
                         <span className="w-12 flex-shrink-0 text-muted-foreground">
-                          时间
+                          Time
                         </span>
                         <span className="font-medium tabular-nums text-foreground">
                           {dayjs
@@ -315,7 +315,7 @@ const StatusCell = memo(
                     )}
                   </div>
                   <div>
-                    <div className="mb-1 text-muted-foreground">原始错误</div>
+                    <div className="mb-1 text-muted-foreground">Raw error</div>
                     <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-all rounded-md border bg-muted/50 p-2 font-mono text-[11px] leading-relaxed text-foreground">
                       <code>
                         {
@@ -435,7 +435,7 @@ const UsedQuotaCell = memo(
     if (!isValidNumber(usedQuota)) {
       return (
         <div className="text-center">
-          <span className="font-mono text-sm text-gray-500">无效数据</span>
+          <span className="font-mono text-sm text-gray-500">Invalid data</span>
         </div>
       );
     }
@@ -449,11 +449,11 @@ const UsedQuotaCell = memo(
 
       // 自定义确认对话框内容
       const confirmMessage = [
-        `渠道: ${channel.name}`,
-        `当前配额: ${formattedQuota} (原始值: ${rawQuota})`,
+        `Channel: ${channel.name}`,
+        `Current usage: ${formattedQuota} (raw: ${rawQuota})`,
         '',
-        '确定要清空此渠道的使用配额吗？',
-        '此操作不可撤销！'
+        'Reset the usage quota for this channel?',
+        'This action cannot be undone!'
       ].join('\n');
 
       if (!window.confirm(confirmMessage)) {
@@ -470,15 +470,15 @@ const UsedQuotaCell = memo(
         );
 
         if (result.success) {
-          toast.success(`已清空渠道「${channel.name}」的使用配额`);
+          toast.success(`Usage quota cleared for "${channel.name}".`);
           onDataChange?.();
         } else {
-          throw new Error(result.message || '清空配额失败');
+          throw new Error(result.message || 'Failed to clear quota.');
         }
       } catch (error) {
         const errorMessage =
-          error instanceof Error ? error.message : '清空配额失败';
-        toast.error(`清空配额失败: ${errorMessage}`);
+          error instanceof Error ? error.message : 'Failed to clear quota.';
+        toast.error(`Failed to clear quota: ${errorMessage}`);
       } finally {
         setIsClearing(false);
       }
@@ -491,17 +491,17 @@ const UsedQuotaCell = memo(
             <TooltipTrigger asChild>
               <span
                 className="cursor-help font-mono text-sm"
-                aria-label={`使用配额: ${formattedQuota}, 原始值: ${rawQuota}`}
+                aria-label={`Used quota: ${formattedQuota}, raw: ${rawQuota}`}
               >
                 {formattedQuota}
               </span>
             </TooltipTrigger>
             <TooltipContent>
               <div className="text-sm">
-                <div>显示值: {formattedQuota}</div>
-                <div>原始值: {rawQuota}</div>
+                <div>Displayed: {formattedQuota}</div>
+                <div>Raw: {rawQuota}</div>
                 <div className="mt-1 text-xs text-muted-foreground">
-                  显示值 = 原始值 ÷ {QUOTA_DIVISOR.toLocaleString()}
+                  Displayed = raw ÷ {QUOTA_DIVISOR.toLocaleString()}
                 </div>
               </div>
             </TooltipContent>
@@ -520,7 +520,7 @@ const UsedQuotaCell = memo(
                   }`}
                   onClick={clearQuota}
                   disabled={isClearing}
-                  aria-label={`清空渠道 ${channel.name} 的使用配额`}
+                  aria-label={`Clear usage quota for ${channel.name}`}
                 >
                   <RotateCcw
                     className={`h-3 w-3 ${isClearing ? 'animate-spin' : ''}`}
@@ -528,7 +528,11 @@ const UsedQuotaCell = memo(
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>{isClearing ? '正在清空...' : '清空使用配额 (不可撤销)'}</p>
+                <p>
+                  {isClearing
+                    ? 'Clearing...'
+                    : 'Clear usage quota (irreversible)'}
+                </p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -545,7 +549,7 @@ const EditableNumberCell = memo(
     row,
     field,
     onDataChange,
-    placeholder = '点击编辑',
+    placeholder = 'Click to edit',
     min = 0,
     max = 999999,
     step = 1,
@@ -594,7 +598,7 @@ const EditableNumberCell = memo(
 
       // 验证输入
       if (isNaN(numValue) || numValue < min || numValue > max) {
-        toast.error(`请输入 ${min} 到 ${max} 之间的有效数字`);
+        toast.error(`Please enter a valid number between ${min} and ${max}.`);
         return;
       }
 
@@ -621,22 +625,22 @@ const EditableNumberCell = memo(
 
         if (result.success) {
           const fieldNames = {
-            priority: '优先级',
-            weight: '权重'
+            priority: 'Priority',
+            weight: 'Weight'
           };
           const fieldName =
             fieldNames[field as keyof typeof fieldNames] || field;
 
-          toast.success(`${fieldName}已更新为 ${formatValue(numValue)}`);
+          toast.success(`${fieldName} updated to ${formatValue(numValue)}.`);
           setIsEditing(false);
           onDataChange?.();
         } else {
-          throw new Error(result.message || '更新失败');
+          throw new Error(result.message || 'Update failed.');
         }
       } catch (error) {
         const errorMessage =
-          error instanceof Error ? error.message : '更新失败';
-        toast.error(`更新失败: ${errorMessage}`);
+          error instanceof Error ? error.message : 'Update failed.';
+        toast.error(`Update failed: ${errorMessage}`);
       } finally {
         setIsUpdating(false);
       }
@@ -678,7 +682,7 @@ const EditableNumberCell = memo(
       <div
         className="cursor-pointer rounded px-2 py-1 text-center transition-colors hover:bg-gray-50"
         onClick={startEditing}
-        title={`点击编辑 ${placeholder}`}
+        title={`Click to edit ${placeholder}`}
       >
         <span className="font-mono text-sm">
           {currentValue !== null && currentValue !== undefined
@@ -799,7 +803,7 @@ export const createColumns = ({
                   </Badge>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>管理聚合密钥 ({activeKeyCount}个可用)</p>
+                  <p>Manage aggregated keys ({activeKeyCount} active)</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -842,7 +846,7 @@ export const createColumns = ({
         row={row}
         field="priority"
         onDataChange={onDataChange}
-        placeholder="优先级"
+        placeholder="Priority"
         min={0}
         max={100}
         step={1}
@@ -861,7 +865,7 @@ export const createColumns = ({
         row={row}
         field="weight"
         onDataChange={onDataChange}
-        placeholder="权重"
+        placeholder="Weight"
         min={0}
         max={100}
         step={1}

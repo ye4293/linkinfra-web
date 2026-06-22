@@ -45,9 +45,9 @@ export default function JSONEditor({
   placeholder,
   extraText,
   template,
-  templateLabel = '填入模板',
-  keyPlaceholder = '键名（请求的模型）',
-  valuePlaceholder = '值（实际发送的模型）',
+  templateLabel = 'Use template',
+  keyPlaceholder = 'Key (requested model)',
+  valuePlaceholder = 'Value (forwarded model)',
   channelModels,
   onAddModels
 }: JSONEditorProps) {
@@ -312,10 +312,10 @@ export default function JSONEditor({
           >
             <TabsList className="h-8">
               <TabsTrigger value="visual" className="px-3 py-1 text-xs">
-                可视化
+                Visual
               </TabsTrigger>
               <TabsTrigger value="manual" className="px-3 py-1 text-xs">
-                手动编辑
+                Manual
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -337,7 +337,7 @@ export default function JSONEditor({
         {/* JSON错误提示 */}
         {jsonError && (
           <div className="mb-3 rounded-md bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
-            JSON 格式错误: {jsonError}
+            JSON format error: {jsonError}
           </div>
         )}
 
@@ -346,11 +346,11 @@ export default function JSONEditor({
           <div className="mb-3 rounded-md bg-yellow-50 p-3 text-sm text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-4 w-4" />
-              <span className="font-medium">存在重复的键名：</span>
+              <span className="font-medium">Duplicate keys found:</span>
               <span>{Array.from(duplicateKeys).join(', ')}</span>
             </div>
             <div className="mt-1 text-xs opacity-80">
-              注意：JSON中重复的键只会保留最后一个同名键的值
+              Note: duplicate keys in JSON keep only the last value.
             </div>
           </div>
         )}
@@ -363,7 +363,8 @@ export default function JSONEditor({
                 <div className="flex items-center gap-2">
                   <Plus className="h-4 w-4 shrink-0" />
                   <span className="font-medium">
-                    发现 {missingModels.length} 个模型未加入渠道：
+                    {missingModels.length} model
+                    {missingModels.length !== 1 ? 's' : ''} not in channel:
                   </span>
                 </div>
                 <div className="mt-1 flex flex-wrap gap-1">
@@ -384,7 +385,7 @@ export default function JSONEditor({
                 className="shrink-0 border-blue-300 text-blue-700 hover:bg-blue-100 dark:border-blue-600 dark:text-blue-400 dark:hover:bg-blue-900/40"
                 onClick={() => onAddModels(missingModels)}
               >
-                全部加入渠道
+                Add all to channel
               </Button>
             </div>
           </div>
@@ -395,7 +396,7 @@ export default function JSONEditor({
           <div className="space-y-2">
             {keyValuePairs.length === 0 && (
               <div className="py-6 text-center text-sm text-muted-foreground">
-                暂无数据，点击下方按钮添加键值对
+                No entries. Click the button below to add a key-value pair.
               </div>
             )}
 
@@ -418,7 +419,8 @@ export default function JSONEditor({
                             <AlertTriangle className="absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-yellow-500" />
                           </TooltipTrigger>
                           <TooltipContent>
-                            重复的键名，此值将被后面的同名键覆盖
+                            Duplicate key — this value will be overwritten by
+                            the later entry with the same key.
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -453,7 +455,7 @@ export default function JSONEditor({
                 className="gap-1"
               >
                 <Plus className="h-4 w-4" />
-                添加键值对
+                Add entry
               </Button>
             </div>
           </div>

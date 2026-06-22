@@ -1,8 +1,8 @@
 export type UserLoginResult = {
   data?: {
-    /** 用户名 */
+    /** Username */
     username: string;
-    /** 当前登陆用户的角色 */
+    /** Current user role */
     role: number;
   };
   success: boolean;
@@ -10,11 +10,11 @@ export type UserLoginResult = {
 };
 
 export interface UserInfo {
-  /** 用户名 */
+  /** Username */
   username?: string;
-  /** 当前登陆用户的角色 */
+  /** Current user role */
   roles?: Array<string>;
-  /** 是否是管理员 */
+  /** Is admin */
   isAdmin?: boolean;
 }
 

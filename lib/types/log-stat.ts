@@ -1,40 +1,40 @@
-// 请求耗时统计相关类型
+// Request latency statistics types
 
 export interface LogStatSummary {
-  /** 总请求数 */
+  /** Total requests */
   total_requests: number;
-  /** 平均耗时（秒） */
+  /** Average duration (seconds) */
   avg_duration: number;
-  /** P50 耗时（秒） */
+  /** P50 duration (seconds) */
   p50_duration: number;
-  /** P95 耗时（秒） */
+  /** P95 duration (seconds) */
   p95_duration: number;
-  /** P99 耗时（秒） */
+  /** P99 duration (seconds) */
   p99_duration: number;
-  /** 平均首字延迟（秒） */
+  /** Average first-word latency (seconds) */
   avg_first_word_latency: number;
-  /** P95 首字延迟（秒） */
+  /** P95 first-word latency (seconds) */
   p95_first_word_latency: number;
-  /** 平均生成速度（tokens/秒） */
+  /** Average generation speed (tokens/second) */
   avg_speed: number;
-  /** 成功请求数 */
+  /** Successful requests */
   success_count: number;
-  /** 错误请求数 */
+  /** Failed requests */
   error_count: number;
 }
 
 export interface LogStatTimeSeriesPoint {
-  /** 时间桶起始时间戳（unix秒） */
+  /** Time bucket start timestamp (unix seconds) */
   timestamp: number;
-  /** 该时间桶内的请求数 */
+  /** Requests in this time bucket */
   total_requests: number;
-  /** 平均耗时（秒） */
+  /** Average duration (seconds) */
   avg_duration: number;
-  /** 平均首字延迟（秒） */
+  /** Average first-word latency (seconds) */
   avg_first_word_latency: number;
-  /** 平均生成速度（tokens/秒） */
+  /** Average generation speed (tokens/second) */
   avg_speed: number;
-  /** 成功率 (0-1) */
+  /** Success rate (0-1) */
   success_rate: number;
 }
 

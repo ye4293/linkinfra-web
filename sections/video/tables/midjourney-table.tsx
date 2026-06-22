@@ -52,7 +52,7 @@ interface DataTableProps<TData, TValue> {
   };
 }
 
-// 移动端视频/Midjourney卡片
+// 移动端视频卡片
 const MobileVideoCard = ({ row }: { row: any }) => {
   const item = row.original as VideoStat;
 
@@ -138,7 +138,7 @@ const MobileVideoCard = ({ row }: { row: any }) => {
   );
 };
 
-export function MidjourneyTable<TData, TValue>({
+export function VideoStatTable<TData, TValue>({
   columns,
   data,
   pageNo,

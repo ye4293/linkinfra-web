@@ -1,37 +1,37 @@
-/** 令牌表单 */
+/** Token form */
 export interface TokenForm {
   id?: number;
-  /** 名称 */
+  /** Name */
   name: string;
-  /** 过期时间 */
+  /** Expiry time */
   expired_time: number;
-  /** 额度 */
+  /** Quota */
   remain_quota: number;
-  /** 是否是无限额度 */
+  /** Unlimited quota */
   unlimited_quota: boolean;
-  /** 预警额度 */
+  /** Warning quota threshold */
   token_remind_threshold: number;
 }
 
-/** 令牌返回结果 */
+/** Token response */
 export interface Token {
   id?: number;
-  /** 状态 */
+  /** Status */
   status?: number;
   status_only?: boolean;
-  /** 名称 */
+  /** Name */
   name?: string;
-  /** 过期时间 */
+  /** Expiry time */
   expired_time?: number;
-  /** 额度 */
+  /** Quota */
   remain_quota?: number;
-  /** 是否是无限额度 */
+  /** Unlimited quota */
   unlimited_quota?: boolean;
-  /** 预警额度 */
+  /** Warning quota threshold */
   token_remind_threshold?: number;
-  /** 已用额度 */
+  /** Used quota */
   used_quota?: number;
-  /** 创建时间 */
+  /** Created time */
   created_time?: number;
   key: string;
 }

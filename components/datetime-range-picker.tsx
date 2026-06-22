@@ -28,7 +28,7 @@ interface DateTimeRangePickerProps {
 // 快捷时间范围选项
 const TIME_PRESETS = [
   {
-    label: '今天',
+    label: 'Today',
     getValue: () => {
       const now = new Date();
       const startOfDay = new Date(now);
@@ -39,7 +39,7 @@ const TIME_PRESETS = [
     }
   },
   {
-    label: '昨天',
+    label: 'Yesterday',
     getValue: () => {
       const now = new Date();
       const yesterday = new Date(now);
@@ -52,7 +52,7 @@ const TIME_PRESETS = [
     }
   },
   {
-    label: '最近7天',
+    label: 'Last 7 days',
     getValue: () => {
       const now = new Date();
       const sevenDaysAgo = new Date(now);
@@ -64,7 +64,7 @@ const TIME_PRESETS = [
     }
   },
   {
-    label: '最近30天',
+    label: 'Last 30 days',
     getValue: () => {
       const now = new Date();
       const thirtyDaysAgo = new Date(now);
@@ -76,7 +76,7 @@ const TIME_PRESETS = [
     }
   },
   {
-    label: '本周',
+    label: 'This week',
     getValue: () => {
       const now = new Date();
       const startOfWeek = new Date(now);
@@ -90,7 +90,7 @@ const TIME_PRESETS = [
     }
   },
   {
-    label: '本月',
+    label: 'This month',
     getValue: () => {
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -255,11 +255,11 @@ export function DateTimeRangePicker({
     if (range.from && range.to) {
       return `${formatDateTime(range.from)} ~ ${formatDateTime(range.to)}`;
     } else if (range.from) {
-      return `从 ${formatDateTime(range.from)}`;
+      return `From ${formatDateTime(range.from)}`;
     } else if (range.to) {
-      return `到 ${formatDateTime(range.to)}`;
+      return `To ${formatDateTime(range.to)}`;
     }
-    return '选择时间范围';
+    return 'Select date range';
   };
 
   return (
@@ -285,7 +285,7 @@ export function DateTimeRangePicker({
             <div className="border-b p-3 sm:border-b-0 sm:border-r">
               <div className="space-y-1">
                 <h4 className="mb-2 text-sm font-medium leading-none">
-                  快捷选择
+                  Quick select
                 </h4>
                 <div className="grid grid-cols-2 gap-1 sm:grid-cols-1">
                   {TIME_PRESETS.map((preset) => (
@@ -307,20 +307,20 @@ export function DateTimeRangePicker({
                   className="w-full justify-start text-xs text-muted-foreground sm:text-sm"
                   onClick={handleClear}
                 >
-                  清除选择
+                  Clear
                 </Button>
               </div>
             </div>
 
             {/* 右侧：详细设置 */}
             <div className="min-w-0 space-y-3 p-3">
-              <h4 className="text-sm font-medium leading-none">精确设置</h4>
+              <h4 className="text-sm font-medium leading-none">Custom range</h4>
 
               {/* 手动输入时间 */}
               <div className="space-y-2">
                 <div>
                   <Label htmlFor="start-time" className="text-xs">
-                    开始时间
+                    Start
                   </Label>
                   <Input
                     id="start-time"
@@ -332,7 +332,7 @@ export function DateTimeRangePicker({
                 </div>
                 <div>
                   <Label htmlFor="end-time" className="text-xs">
-                    结束时间
+                    End
                   </Label>
                   <Input
                     id="end-time"
@@ -346,7 +346,7 @@ export function DateTimeRangePicker({
 
               {/* 日历辅助选择 - 在移动端隐藏或简化 */}
               <div className="hidden sm:block">
-                <Label className="text-xs">日历选择（辅助）</Label>
+                <Label className="text-xs">Calendar (optional)</Label>
                 <Calendar
                   mode="range"
                   selected={{
@@ -364,7 +364,7 @@ export function DateTimeRangePicker({
 
               {/* 移动端简化日历 */}
               <div className="sm:hidden">
-                <Label className="text-xs">日历选择</Label>
+                <Label className="text-xs">Calendar</Label>
                 <Calendar
                   mode="range"
                   selected={{

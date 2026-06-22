@@ -81,18 +81,18 @@ export const getUsageDetailsLabels = (
 
 // 保留静态导出用于向后兼容
 export const usageDetailsLabels: Record<string, string> = {
-  input_tokens: '输入 Tokens',
-  output_tokens: '输出 Tokens',
-  input_text: '文本输入',
-  input_image: '图片输入',
-  output_text: '文本输出',
-  output_image: '图片输出',
-  output_reasoning: '推理输出',
-  cache_read_input_tokens: '缓存读取',
-  cache_creation_input_tokens: '缓存创建',
-  claude_cache_creation_5_m_tokens: 'Claude 5分钟缓存创建',
-  claude_cache_creation_1_h_tokens: 'Claude 1小时缓存创建',
-  cached_tokens: '缓存 Token'
+  input_tokens: 'Input tokens',
+  output_tokens: 'Output tokens',
+  input_text: 'Text input',
+  input_image: 'Image input',
+  output_text: 'Text output',
+  output_image: 'Image output',
+  output_reasoning: 'Reasoning output',
+  cache_read_input_tokens: 'Cache read',
+  cache_creation_input_tokens: 'Cache creation',
+  claude_cache_creation_5_m_tokens: 'Claude 5-min cache creation',
+  claude_cache_creation_1_h_tokens: 'Claude 1-hour cache creation',
+  cached_tokens: 'Cached tokens'
 };
 
 // 解析 other 字段中的 usageDetails
@@ -411,7 +411,7 @@ export const columns: ColumnDef<LogStat>[] = [
       );
       return (
         <div className="text-left">
-          <CopyableCell value={formattedTime} label="时间">
+          <CopyableCell value={formattedTime} label="Time">
             {formattedTime}
           </CopyableCell>
         </div>
@@ -430,7 +430,7 @@ export const columns: ColumnDef<LogStat>[] = [
       const channel = row.getValue('channel') as number;
       return (
         <div className="text-center">
-          <CopyableCell value={channel} label="渠道ID">
+          <CopyableCell value={channel} label="Channel ID">
             {channel}
           </CopyableCell>
         </div>
@@ -447,7 +447,7 @@ export const columns: ColumnDef<LogStat>[] = [
       const username = row.getValue('username') as string;
       return (
         <div className="text-left">
-          <CopyableCell value={username} label="用户名">
+          <CopyableCell value={username} label="Username">
             {username}
           </CopyableCell>
         </div>
@@ -464,7 +464,7 @@ export const columns: ColumnDef<LogStat>[] = [
       const tokenName = row.getValue('token_name') as string;
       return (
         <div className="text-left">
-          <CopyableCell value={tokenName} label="Token名称">
+          <CopyableCell value={tokenName} label="Token name">
             {tokenName}
           </CopyableCell>
         </div>
@@ -479,7 +479,7 @@ export const columns: ColumnDef<LogStat>[] = [
       const type = row.getValue('type') as number;
       return (
         <div className="text-center">
-          <CopyableCell value={type} label="类型">
+          <CopyableCell value={type} label="Type">
             {renderType(type)}
           </CopyableCell>
         </div>
@@ -501,7 +501,7 @@ export const columns: ColumnDef<LogStat>[] = [
         const copyValue = `${modelName} → ${upstreamModelName}`;
         return (
           <div className="text-center">
-            <CopyableCell value={copyValue} label="模型名称">
+            <CopyableCell value={copyValue} label="Model name">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -519,13 +519,13 @@ export const columns: ColumnDef<LogStat>[] = [
                     <div className="space-y-1 text-xs">
                       <p>
                         <span className="text-muted-foreground">
-                          请求模型：
+                          Requested model:
                         </span>
                         {modelName}
                       </p>
                       <p>
                         <span className="text-muted-foreground">
-                          实际模型：
+                          Forwarded model:
                         </span>
                         {upstreamModelName}
                       </p>
@@ -541,7 +541,7 @@ export const columns: ColumnDef<LogStat>[] = [
       // 无重定向：正常显示
       return (
         <div className="text-center">
-          <CopyableCell value={modelName} label="模型名称">
+          <CopyableCell value={modelName} label="Model name">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -567,7 +567,7 @@ export const columns: ColumnDef<LogStat>[] = [
       const promptTokens = row.getValue('prompt_tokens') as number;
       return (
         <div className="text-center">
-          <CopyableCell value={promptTokens} label="输入Token">
+          <CopyableCell value={promptTokens} label="Prompt tokens">
             {promptTokens}
           </CopyableCell>
         </div>
@@ -584,7 +584,7 @@ export const columns: ColumnDef<LogStat>[] = [
       const completionTokens = row.getValue('completion_tokens') as number;
       return (
         <div className="text-center">
-          <CopyableCell value={completionTokens} label="输出Token">
+          <CopyableCell value={completionTokens} label="Completion tokens">
             {completionTokens}
           </CopyableCell>
         </div>
@@ -607,7 +607,7 @@ export const columns: ColumnDef<LogStat>[] = [
 
       return (
         <div className="text-center">
-          <CopyableCell value={formattedSpeed} label="Token生成速率">
+          <CopyableCell value={formattedSpeed} label="Token generation speed">
             <span
               className={`inline-flex items-center rounded-md px-1.5 py-0.5 font-mono text-xs font-medium ring-1 ring-inset ${getSpeedTier(
                 speedValue
@@ -624,7 +624,7 @@ export const columns: ColumnDef<LogStat>[] = [
   {
     id: 'retry',
     accessorKey: 'other',
-    header: () => <div className="w-20 text-center">重试</div>,
+    header: () => <div className="w-20 text-center">Retries</div>,
     size: 100,
     cell: ({ row }) => {
       const parsed = parseRetrySequence(row.original);
@@ -660,7 +660,7 @@ export const columns: ColumnDef<LogStat>[] = [
             <PopoverTrigger asChild>
               <button
                 type="button"
-                aria-label={`查看 ${attemptCount} 次重试明细`}
+                aria-label={`View ${attemptCount} retry details`}
                 onClick={(e) => e.stopPropagation()}
                 className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-mono text-xs font-medium ring-1 ring-inset transition-colors ${badgeColor}`}
               >
@@ -675,11 +675,11 @@ export const columns: ColumnDef<LogStat>[] = [
               className="w-[28rem] max-w-[90vw] p-0"
             >
               <div className="flex items-center justify-between border-b px-4 py-2.5">
-                <p className="text-sm font-semibold">重试明细</p>
+                <p className="text-sm font-semibold">Retry details</p>
                 <span className="text-xs text-muted-foreground">
-                  {`共 ${attemptCount} 次`}
+                  {`${attemptCount} attempts`}
                   {typeof totalDuration === 'number' && totalDuration > 0
-                    ? ` · 累计 ${totalDuration.toFixed(2)}s`
+                    ? ` · total ${totalDuration.toFixed(2)}s`
                     : ''}
                 </span>
               </div>
@@ -740,7 +740,7 @@ export const columns: ColumnDef<LogStat>[] = [
                             </p>
                           ) : isLast && isSuccess ? (
                             <p className="text-emerald-600 dark:text-emerald-400">
-                              ✓ 成功
+                              ✓ Success
                             </p>
                           ) : null}
                         </div>
@@ -750,7 +750,9 @@ export const columns: ColumnDef<LogStat>[] = [
                 </div>
               ) : (
                 <div className="space-y-1.5 px-4 py-3">
-                  <p className="text-xs text-muted-foreground">渠道序列</p>
+                  <p className="text-xs text-muted-foreground">
+                    Channel sequence
+                  </p>
                   <p className="break-all font-mono text-xs">
                     {parsed!.channelIds.join(' → ')}
                   </p>
@@ -771,7 +773,7 @@ export const columns: ColumnDef<LogStat>[] = [
       const processedQuota = processQuota(quota);
       return (
         <div className="text-center">
-          <CopyableCell value={processedQuota} label="配额">
+          <CopyableCell value={processedQuota} label="Quota">
             {processedQuota}
           </CopyableCell>
         </div>
@@ -916,7 +918,7 @@ export const columns: ColumnDef<LogStat>[] = [
 
       return (
         <div className="text-left">
-          <CopyableCell value={content} label="详细信息">
+          <CopyableCell value={content} label="Details">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>

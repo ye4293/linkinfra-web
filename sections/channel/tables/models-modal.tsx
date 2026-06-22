@@ -73,7 +73,7 @@ const MobileModelRow = ({
           variant="outline"
           className="animate-pulse border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300"
         >
-          测试中
+          Testing...
         </Badge>
       );
     }
@@ -83,7 +83,7 @@ const MobileModelRow = ({
           variant="outline"
           className="border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300"
         >
-          成功
+          Passed
         </Badge>
       );
     }
@@ -93,11 +93,11 @@ const MobileModelRow = ({
           variant="outline"
           className="border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300"
         >
-          失败
+          Failed
         </Badge>
       );
     }
-    return <Badge variant="secondary">未开始</Badge>;
+    return <Badge variant="secondary">Not tested</Badge>;
   };
 
   return (
@@ -132,7 +132,7 @@ const MobileModelRow = ({
           disabled={model.testStatus === 'testing'}
           className="h-7 px-2 text-xs"
         >
-          测试
+          Test
         </Button>
       </div>
     </div>
@@ -171,11 +171,11 @@ export const ModelsModal: React.FC<ModelsModalProps> = ({
               }))
             );
           } else {
-            toast.error(data.message || '获取模型列表失败');
+            toast.error(data.message || 'Failed to load model list.');
           }
         } catch (error) {
           console.error(error);
-          toast.error('获取模型列表失败');
+          toast.error('Failed to load model list.');
         } finally {
           setLoading(false);
         }
@@ -226,7 +226,7 @@ export const ModelsModal: React.FC<ModelsModalProps> = ({
               : m
           )
         );
-        toast.success(result.message || `模型 ${modelName} 测试成功`);
+        toast.success(result.message || `Model ${modelName} passed.`);
       } else {
         throw new Error(result.message);
       }
@@ -242,13 +242,13 @@ export const ModelsModal: React.FC<ModelsModalProps> = ({
             : m
         )
       );
-      toast.error(error.message || `模型 ${modelName} 测试失败`);
+      toast.error(error.message || `Model ${modelName} failed.`);
     }
   };
 
   const onBatchTest = async () => {
     if (selectedModels.length === 0) return;
-    toast.info(`开始批量测试 ${selectedModels.length} 个模型...`);
+    toast.info(`Starting batch test for ${selectedModels.length} models...`);
     for (const model of selectedModels) {
       await testModel(model.id);
     }
@@ -295,7 +295,7 @@ export const ModelsModal: React.FC<ModelsModalProps> = ({
     if (selectedModels.length === 0) return;
     const text = selectedModels.map((m) => m.id).join('\n');
     navigator.clipboard.writeText(text);
-    toast.success('已复制选中模型名称');
+    toast.success('Selected model names copied.');
   };
 
   const handleSelectSuccessful = () => {
@@ -307,7 +307,7 @@ export const ModelsModal: React.FC<ModelsModalProps> = ({
       if (!newSelected.some((s) => s.id === m.id)) newSelected.push(m);
     });
     setSelectedModels(newSelected);
-    toast.success(`已选择 ${successModels.length} 个测试成功的模型`);
+    toast.success(`${successModels.length} passed models selected.`);
   };
 
   return (
@@ -321,10 +321,10 @@ export const ModelsModal: React.FC<ModelsModalProps> = ({
         <DialogHeader className="flex flex-shrink-0 flex-row items-center justify-between border-b px-4 py-3 pr-12 sm:pr-6">
           <div className="flex items-center gap-2">
             <DialogTitle className="text-base font-semibold">
-              {channel.name} 渠道的模型测试
+              Model test — {channel.name}
             </DialogTitle>
             <Badge variant="secondary" className="h-5 px-1.5 text-xs">
-              共 {models.length} 个模型
+              {models.length} models
             </Badge>
           </div>
         </DialogHeader>
@@ -335,7 +335,7 @@ export const ModelsModal: React.FC<ModelsModalProps> = ({
             <div className="relative flex-1">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="搜索..."
+                placeholder="Search..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="h-9 bg-background pl-9 text-sm"
@@ -356,11 +356,11 @@ export const ModelsModal: React.FC<ModelsModalProps> = ({
                     disabled={selectedModels.length === 0}
                   >
                     <Copy className="mr-2 h-4 w-4" />
-                    复制选中 ({selectedModels.length})
+                    Copy selected ({selectedModels.length})
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleSelectSuccessful}>
                     <CheckCircle2 className="mr-2 h-4 w-4" />
-                    选中成功模型
+                    Select passed models
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -375,7 +375,7 @@ export const ModelsModal: React.FC<ModelsModalProps> = ({
                 disabled={selectedModels.length === 0}
               >
                 <Copy className="mr-2 h-4 w-4" />
-                复制选中
+                Copy selected
               </Button>
               <Button
                 variant="outline"
@@ -383,7 +383,7 @@ export const ModelsModal: React.FC<ModelsModalProps> = ({
                 onClick={handleSelectSuccessful}
               >
                 <CheckCircle2 className="mr-2 h-4 w-4" />
-                选择成功
+                Select passed
               </Button>
             </div>
           </div>
@@ -400,12 +400,12 @@ export const ModelsModal: React.FC<ModelsModalProps> = ({
                 htmlFor="select-all-page"
                 className="text-sm text-muted-foreground"
               >
-                全选本页
+                Select all on this page
               </label>
             </div>
             {selectedModels.length > 0 && (
               <span className="text-sm font-medium text-primary">
-                已选 {selectedModels.length} 项
+                {selectedModels.length} selected
               </span>
             )}
           </div>
@@ -416,15 +416,15 @@ export const ModelsModal: React.FC<ModelsModalProps> = ({
           {loading ? (
             <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
               <RotateCw className="h-8 w-8 animate-spin" />
-              <p className="text-sm">加载中...</p>
+              <p className="text-sm">Loading...</p>
             </div>
           ) : models.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
-              <p className="text-sm">暂无模型</p>
+              <p className="text-sm">No models available.</p>
             </div>
           ) : paginatedModels.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
-              <p className="text-sm">未找到相关模型</p>
+              <p className="text-sm">No matching models found.</p>
             </div>
           ) : (
             <>
@@ -433,8 +433,8 @@ export const ModelsModal: React.FC<ModelsModalProps> = ({
                 {/* 移动端表头 */}
                 <div className="flex items-center gap-3 border-b bg-muted/30 px-4 py-2 text-xs font-medium text-muted-foreground">
                   <div className="w-4 shrink-0"></div>
-                  <div className="flex-1">模型信息</div>
-                  <div className="shrink-0 text-right">状态/操作</div>
+                  <div className="flex-1">Model</div>
+                  <div className="shrink-0 text-right">Status / Actions</div>
                 </div>
                 {paginatedModels.map((model) => (
                   <MobileModelRow
@@ -455,15 +455,15 @@ export const ModelsModal: React.FC<ModelsModalProps> = ({
                       <TableHead className="w-[40px] text-center">
                         {/* Checkbox managed in toolbar for simplicity, or we can add back here */}
                       </TableHead>
-                      <TableHead>模型名称</TableHead>
+                      <TableHead>Model name</TableHead>
                       <TableHead className="w-[100px] text-center">
-                        状态
+                        Status
                       </TableHead>
                       <TableHead className="w-[100px] text-center">
-                        响应时间
+                        Response time
                       </TableHead>
                       <TableHead className="w-[80px] text-center">
-                        操作
+                        Actions
                       </TableHead>
                     </TableRow>
                   </TableHeader>
@@ -492,24 +492,24 @@ export const ModelsModal: React.FC<ModelsModalProps> = ({
                               variant="outline"
                               className="animate-pulse border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300"
                             >
-                              测试中
+                              Testing...
                             </Badge>
                           ) : model.testStatus === 'success' ? (
                             <Badge
                               variant="outline"
                               className="border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300"
                             >
-                              成功
+                              Passed
                             </Badge>
                           ) : model.testStatus === 'failed' ? (
                             <Badge
                               variant="outline"
                               className="border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300"
                             >
-                              失败
+                              Failed
                             </Badge>
                           ) : (
-                            <Badge variant="secondary">未测试</Badge>
+                            <Badge variant="secondary">Untested</Badge>
                           )}
                         </TableCell>
                         <TableCell className="text-center font-mono text-sm">
@@ -524,7 +524,7 @@ export const ModelsModal: React.FC<ModelsModalProps> = ({
                             onClick={() => testModel(model.id)}
                             disabled={model.testStatus === 'testing'}
                           >
-                            测试
+                            Test
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -567,11 +567,11 @@ export const ModelsModal: React.FC<ModelsModalProps> = ({
             {selectedModels.length > 0 && (
               <Button onClick={onBatchTest} className="h-9 px-4">
                 <Play className="mr-2 h-4 w-4" />
-                测试 ({selectedModels.length})
+                Test ({selectedModels.length})
               </Button>
             )}
             <Button variant="secondary" onClick={onClose} className="h-9">
-              关闭
+              Close
             </Button>
           </div>
         </div>

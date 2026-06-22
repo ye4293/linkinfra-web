@@ -33,13 +33,13 @@ export type PayResult = {
 
 export type ListResult = {
   data?: {
-    /** 当前页 */
+    /** Current page */
     currentPage: number;
-    /** 列表数据 */
+    /** List data */
     list: Array<any>;
-    // 每页条数
+    // items per page
     pageSize: number;
-    // 总条数
+    // total count
     total: number;
   };
   success: boolean;
@@ -47,11 +47,11 @@ export type ListResult = {
 };
 
 export interface ListParams {
-  /** 当前页 */
+  /** Current page */
   page?: number;
-  /** 每页条数 */
+  /** Items per page */
   pagesize?: number;
-  /** 关键字 */
+  /** Keyword */
   keyword?: string | number;
 }
 
@@ -68,9 +68,9 @@ export type SettingParams = {
 
 export interface ChargeAmountResult {
   data: {
-    /** 当前页 */
+    /** Current page */
     app_order_id: string;
-    /** 列表数据 */
+    /** List data */
     charge_url: string;
   };
   success: boolean;

@@ -4,20 +4,10 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
-import { CreditCard, Wallet, QrCode } from 'lucide-react';
 import { toast } from 'sonner';
 
 const FIXED_AMOUNTS = [10, 20, 50, 100, 200, 500];
-
-interface TopupInfo {
-  enable_online_topup: boolean;
-  enable_reason?: string;
-  min_topup: number;
-  price: number;
-  quota_per_unit: number;
-}
 
 const extractApiErrorMessage = (result: any, fallback: string) => {
   if (typeof result?.message === 'string' && result.message) {
@@ -41,65 +31,10 @@ const extractApiErrorMessage = (result: any, fallback: string) => {
   return fallback;
 };
 
-const submitEpayForm = (
-  actionUrl: string,
-  params: Record<string, string>,
-  useSameWindow: boolean
-) => {
-  const form = document.createElement('form');
-  form.action = actionUrl;
-  form.method = 'POST';
-  form.target = useSameWindow ? '_self' : '_blank';
-
-  Object.entries(params).forEach(([key, value]) => {
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = key;
-    input.value = value;
-    form.appendChild(input);
-  });
-
-  document.body.appendChild(form);
-  form.submit();
-  document.body.removeChild(form);
-};
-
 export default function PaymentSection() {
   const [amount, setAmount] = useState<number | ''>('');
-  const [paymentMethod, setPaymentMethod] = useState('wxpay');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [topupInfo, setTopupInfo] = useState<TopupInfo | null>(null);
-  const [topupInfoError, setTopupInfoError] = useState('');
   const [payAmount, setPayAmount] = useState('');
-
-  const isEpayMethod = paymentMethod === 'wxpay' || paymentMethod === 'alipay';
-  const isStripeMethod = paymentMethod === 'stripe';
-
-  useEffect(() => {
-    const fetchTopupInfo = async () => {
-      try {
-        const res = await fetch('/api/user/topup/info', {
-          credentials: 'include'
-        });
-        const result = await res.json().catch(() => null);
-        if (res.ok && result?.success && result.data) {
-          setTopupInfo(result.data);
-          setTopupInfoError('');
-          return;
-        }
-        setTopupInfo(null);
-        setTopupInfoError(
-          extractApiErrorMessage(result, '充值配置获取失败，请稍后重试')
-        );
-      } catch (error) {
-        setTopupInfo(null);
-        setTopupInfoError('充值配置获取失败，请稍后重试');
-        console.error('Failed to fetch topup info', error);
-      }
-    };
-
-    fetchTopupInfo();
-  }, []);
 
   useEffect(() => {
     if (!amount || amount <= 0) {
@@ -107,29 +42,18 @@ export default function PaymentSection() {
       return;
     }
 
-    if (!isEpayMethod && !isStripeMethod) {
-      setPayAmount('');
-      return;
-    }
-
     let cancelled = false;
 
     const fetchPayAmount = async () => {
-      const endpoint = isStripeMethod
-        ? '/api/user/stripe/amount'
-        : '/api/user/amount';
-      const body = isStripeMethod
-        ? { amount: Number(amount), payment_method: 'stripe' }
-        : { amount: Number(amount) };
-
       try {
-        const res = await fetch(endpoint, {
+        const res = await fetch('/api/user/stripe/amount', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
-          body: JSON.stringify(body)
+          body: JSON.stringify({
+            amount: Number(amount),
+            payment_method: 'stripe'
+          })
         });
         const result = await res.json().catch(() => null);
         if (!cancelled) {
@@ -139,121 +63,59 @@ export default function PaymentSection() {
             setPayAmount('');
           }
         }
-      } catch (error) {
-        if (!cancelled) {
-          setPayAmount('');
-        }
+      } catch {
+        if (!cancelled) setPayAmount('');
       }
     };
 
     fetchPayAmount();
-
     return () => {
       cancelled = true;
     };
-  }, [amount, isEpayMethod, isStripeMethod]);
+  }, [amount]);
 
   const handlePay = async () => {
     if (!amount || amount <= 0) {
-      toast.error('请选择或输入正确的充值数量');
+      toast.error('Please select or enter a valid amount.');
       return;
     }
 
     setIsSubmitting(true);
-
-    if (paymentMethod === 'stripe') {
-      try {
-        const res = await fetch('/api/user/stripe/pay', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            amount: Number(amount),
-            payment_method: 'stripe',
-            success_url: `${window.location.origin}/dashboard/log`,
-            cancel_url: `${window.location.origin}/dashboard/topup`
-          })
-        });
-        const result = await res.json().catch(() => null);
-        if (res.ok && result?.success && result.data?.pay_link) {
-          window.open(result.data.pay_link, '_blank');
-        } else {
-          toast.error(extractApiErrorMessage(result, '创建 Stripe 订单失败'));
-        }
-      } catch (e) {
-        toast.error('创建 Stripe 订单时出错');
-      } finally {
-        setIsSubmitting(false);
-      }
-    } else {
-      if (topupInfo && !topupInfo.enable_online_topup) {
-        toast.error(topupInfo.enable_reason || '管理员尚未开启易支付');
-        setIsSubmitting(false);
-        return;
-      }
-
-      if (topupInfo?.min_topup && Number(amount) < topupInfo.min_topup) {
-        toast.error(`充值数量不能小于 ${topupInfo.min_topup}`);
-        setIsSubmitting(false);
-        return;
-      }
-
-      try {
-        const res = await fetch('/api/user/pay', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            amount: Number(amount),
-            payment_method: paymentMethod,
-            return_url: `${window.location.origin}/dashboard/topup`
-          })
-        });
-
-        const result = await res.json().catch(() => null);
-        if (!res.ok || !result?.success) {
-          toast.error(extractApiErrorMessage(result, '创建易支付订单失败'));
-          return;
-        }
-
-        if (!result.url || !result.data) {
-          toast.error('易支付返回参数不完整');
-          return;
-        }
-
-        const useSameWindow = window.matchMedia('(max-width: 768px)').matches;
-        submitEpayForm(
-          result.url,
-          result.data as Record<string, string>,
-          useSameWindow
+    try {
+      const res = await fetch('/api/user/stripe/pay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          amount: Number(amount),
+          payment_method: 'stripe',
+          success_url: `${window.location.origin}/dashboard/log`,
+          cancel_url: `${window.location.origin}/dashboard/topup`
+        })
+      });
+      const result = await res.json().catch(() => null);
+      if (res.ok && result?.success && result.data?.pay_link) {
+        window.open(result.data.pay_link, '_blank');
+      } else {
+        toast.error(
+          extractApiErrorMessage(result, 'Failed to create Stripe order.')
         );
-      } catch (error) {
-        console.error('Create epay order failed', error);
-        toast.error('发起易支付订单失败');
-      } finally {
-        setIsSubmitting(false);
       }
+    } catch {
+      toast.error('An error occurred while creating the Stripe order.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <Card className="h-full">
       <CardHeader>
-        <CardTitle>账户充值</CardTitle>
+        <CardTitle>Top up</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-3">
-          <Label>
-            {isEpayMethod
-              ? '充值数量'
-              : isStripeMethod
-              ? '充值数量'
-              : '选择金额 ($)'}
-          </Label>
+          <Label>Amount</Label>
           <div className="grid grid-cols-3 gap-3 sm:grid-cols-3">
             {FIXED_AMOUNTS.map((val) => (
               <Button
@@ -262,24 +124,16 @@ export default function PaymentSection() {
                 className="w-full"
                 onClick={() => setAmount(val)}
               >
-                {isEpayMethod || isStripeMethod ? val : `$${val}`}
+                {val}
               </Button>
             ))}
           </div>
           <div className="mt-4 flex items-center gap-3">
-            <Label className="w-32 whitespace-nowrap">
-              {isStripeMethod
-                ? '充值数量:'
-                : isEpayMethod
-                ? '自定义数量:'
-                : '自定义金额:'}
-            </Label>
+            <Label className="w-32 whitespace-nowrap">Custom amount:</Label>
             <Input
               type="number"
               min="1"
-              placeholder={
-                isEpayMethod || isStripeMethod ? '输入充值数量' : '输入金额'
-              }
+              placeholder="Enter amount"
               value={amount}
               onChange={(e) =>
                 setAmount(e.target.value ? Number(e.target.value) : '')
@@ -287,90 +141,13 @@ export default function PaymentSection() {
               className="flex-1"
             />
           </div>
-          {isEpayMethod && (
-            <div className="rounded-lg border bg-muted/20 p-4 text-sm text-muted-foreground">
-              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                <span>最低充值：{topupInfo?.min_topup ?? '-'}</span>
-                <span>
-                  单价：
-                  {typeof topupInfo?.price === 'number'
-                    ? `¥${topupInfo.price}`
-                    : '-'}
-                </span>
-              </div>
-              {topupInfoError && (
-                <div className="mt-2 text-xs text-destructive">
-                  {topupInfoError}
-                </div>
-              )}
-              {topupInfo?.enable_reason && !topupInfo.enable_online_topup && (
-                <div className="mt-2 text-xs text-destructive">
-                  {topupInfo.enable_reason}
-                </div>
-              )}
-              <div className="mt-2 font-medium text-foreground">
-                应付金额：{payAmount ? `¥${payAmount}` : '--'}
-              </div>
-            </div>
-          )}
-          {isStripeMethod && (
+          {!!amount && (
             <div className="rounded-lg border bg-muted/20 p-4 text-sm text-muted-foreground">
               <div className="mt-0 font-medium text-foreground">
-                应付金额：{payAmount ? `$${payAmount}` : '--'}
+                You pay: {payAmount ? `$${payAmount}` : '--'}
               </div>
             </div>
           )}
-        </div>
-
-        <div className="space-y-3">
-          <Label>支付方式</Label>
-          <Tabs
-            value={paymentMethod}
-            onValueChange={setPaymentMethod}
-            className="w-full"
-          >
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="stripe" className="flex items-center gap-2">
-                <CreditCard className="h-4 w-4 text-blue-500" />
-                <span className="hidden sm:inline">Stripe</span>
-              </TabsTrigger>
-              <TabsTrigger value="wxpay" className="flex items-center gap-2">
-                <QrCode className="h-4 w-4 text-green-500" />
-                <span className="hidden sm:inline">微信</span>
-              </TabsTrigger>
-              <TabsTrigger value="alipay" className="flex items-center gap-2">
-                <Wallet className="h-4 w-4 text-blue-400" />
-                <span className="hidden sm:inline">支付宝</span>
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent
-              value="stripe"
-              className="mt-4 rounded-lg border bg-muted/20 p-4"
-            >
-              <p className="text-center text-sm text-muted-foreground">
-                使用 Stripe 进行信用卡支付。
-              </p>
-            </TabsContent>
-
-            <TabsContent
-              value="wxpay"
-              className="mt-4 rounded-lg border bg-muted/20 p-4"
-            >
-              <p className="text-center text-sm text-muted-foreground">
-                通过易支付拉起微信支付。
-              </p>
-            </TabsContent>
-
-            <TabsContent
-              value="alipay"
-              className="mt-4 rounded-lg border bg-muted/20 p-4"
-            >
-              <p className="text-center text-sm text-muted-foreground">
-                通过易支付拉起支付宝支付。
-              </p>
-            </TabsContent>
-          </Tabs>
         </div>
 
         <Button
@@ -380,12 +157,8 @@ export default function PaymentSection() {
           disabled={isSubmitting}
         >
           {isSubmitting
-            ? '提交中...'
-            : isStripeMethod
-            ? `Pay Now${payAmount ? ` ($${payAmount})` : ''}`
-            : isEpayMethod
-            ? `立即支付${payAmount ? ` (¥${payAmount})` : ''}`
-            : `Pay Now${amount ? ` ($${amount})` : ''}`}
+            ? 'Processing...'
+            : `Pay Now${payAmount ? ` ($${payAmount})` : ''}`}
         </Button>
       </CardContent>
     </Card>

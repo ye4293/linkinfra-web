@@ -372,10 +372,10 @@ export default function ImageTable({
       console.log(
         `✅ 成功导出 ${allImageData.length} 条图像记录（总计 ${total} 条）`
       );
-      alert(`✅ 导出完成！共导出 ${allImageData.length} 条图像记录`);
+      alert(`Export complete. ${allImageData.length} image records exported.`);
     } catch (error) {
       console.error('❌ 导出失败:', error);
-      alert('导出失败，请查看控制台错误信息');
+      alert('Export failed. Check the console for details.');
     }
   }, [
     searchQuery,
@@ -565,23 +565,23 @@ export default function ImageTable({
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="flex-1 gap-2 sm:flex-none">
                 <Download className="h-4 w-4" />
-                导出
+                Export
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={exportCurrentPage}>
                 <div className="flex flex-col gap-1">
-                  <span>导出当前页数据</span>
+                  <span>Export current page</span>
                   <span className="text-xs text-muted-foreground">
-                    当前页 {data.length} 条记录
+                    {data.length} records on this page
                   </span>
                 </div>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={exportAllData}>
                 <div className="flex flex-col gap-1">
-                  <span>导出全部符合条件的数据</span>
+                  <span>Export all matching records</span>
                   <span className="text-xs text-muted-foreground">
-                    包含所有筛选条件的完整数据
+                    Full dataset with all active filters applied
                   </span>
                 </div>
               </DropdownMenuItem>
@@ -615,7 +615,7 @@ export default function ImageTable({
           <div className="relative duration-200 animate-in zoom-in-50">
             <div className="flex items-center gap-3 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-3 text-white shadow-2xl">
               <Loader2 className="h-5 w-5 animate-spin" />
-              <span className="font-medium">正在查询...</span>
+              <span className="font-medium">Searching...</span>
             </div>
           </div>
         </div>

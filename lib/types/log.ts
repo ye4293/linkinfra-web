@@ -1,42 +1,42 @@
 export interface LogStat {
   id: number;
-  /** 类型 */
+  /** Type */
   type: number;
-  /** 用户名 */
+  /** Username */
   username?: string;
-  /** 令牌名称 */
+  /** Token name */
   token_name: string;
-  /** 模型名称 */
+  /** Model name */
   model_name: string;
-  /** 起始时间 */
+  /** Start timestamp */
   start_timestamp: number;
-  /** 结束时间 */
+  /** End timestamp */
   end_timestamp: number;
-  /** 渠道ID */
+  /** Channel ID */
   channel?: number;
-  /** 创建时间 */
+  /** Created at */
   created_at: number;
-  /** 内容 */
+  /** Content */
   content: string;
-  /** 提示词令牌数 */
+  /** Prompt tokens */
   prompt_tokens: number;
-  /** 完成令牌数 */
+  /** Completion tokens */
   completion_tokens: number;
-  /** 配额 */
+  /** Quota */
   quota: number;
-  /** 持续时间 */
+  /** Duration */
   duration: number;
-  /** 是否为流式请求 */
-  is_stream: boolean | number; // 支持数据库中的 0/1 格式
-  /** 首字延迟 */
+  /** Is streaming request */
+  is_stream: boolean | number; // supports 0/1 from database
+  /** First word latency */
   first_word_latency: number;
-  /** 速度 */
+  /** Speed */
   speed?: number;
-  /** HTTP 引用 */
+  /** HTTP referer */
   http_referer?: string;
-  /** 标题 */
+  /** Title */
   title?: string;
-  /** 其他信息 */
+  /** Other info */
   other?: string;
   /** X-Request-ID */
   x_request_id?: string;
