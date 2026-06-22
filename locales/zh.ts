@@ -95,7 +95,7 @@ const zh = {
     tokenBasedShort: 'Per use',
     input: 'Input',
     output: 'Output',
-    perUnit: 'Per call',
+    perUnit: 'Per request',
     inputPrice: 'Input price/M',
     outputPrice: 'Output price/M',
     modelName: 'Model name',
@@ -469,7 +469,7 @@ const zh = {
     },
     status: {
       enabled: 'Enabled',
-      manuallyDisabled: 'Disabled',
+      manuallyDisabled: 'Manually disabled',
       autoDisabled: 'Auto-disabled',
       unknown: 'Unknown',
       updating: 'Updating…'
