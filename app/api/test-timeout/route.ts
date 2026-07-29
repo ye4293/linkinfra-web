@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Vercel Pro 计划允许 Serverless Functions 最大运行 60 秒
+// Vercel Pro 计划允许 Serverless Functions 最大运行 300 秒
 // 为这个测试路由明确设置最大执行时间
 export const dynamic = 'force-dynamic'; // 确保路由始终是动态的
-export const maxDuration = 60; // 设置最大执行时间为 60 秒
+export const maxDuration = 300; // 设置最大执行时间为 300 秒
 
 /**
  * 用于测试 Vercel 函数超时的 API 路由
@@ -19,12 +19,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const delay = parseInt(body.delay, 10) || 0;
 
-    // 验证延迟时间不超过安全限制（留2秒缓冲时间）
-    if (delay > 58000) {
+    // 验证延迟时间不超过安全限制（留5秒缓冲时间，与 clientFetch 的 295s 超时对齐）
+    if (delay > 295000) {
       return NextResponse.json(
         {
-          error: `Delay cannot exceed 58000 ms (Vercel Pro limit).`,
-          maxAllowed: 58000,
+          error: `Delay cannot exceed 295000 ms (Vercel Pro limit).`,
+          maxAllowed: 295000,
           requested: delay
         },
         { status: 400 }
@@ -58,8 +58,8 @@ export async function POST(request: NextRequest) {
       requestedDelay: delay,
       actualDuration: actualDuration,
       timestamp: new Date().toISOString(),
-      maxDuration: 60000,
-      remainingTime: 60000 - actualDuration
+      maxDuration: 300000,
+      remainingTime: 300000 - actualDuration
     });
   } catch (error) {
     const endTime = Date.now();
@@ -95,14 +95,14 @@ export async function GET() {
     info: 'Vercel timeout test API',
     usage: {
       method: 'POST',
-      body: { delay: 'number (0-58000)' },
+      body: { delay: 'number (0-295000)' },
       description:
         'Send a delay in milliseconds to test how long a Vercel function can run.'
     },
     limits: {
-      maxDuration: 60000,
-      recommendedTestDelay: 50000,
-      safeMaxDelay: 58000
+      maxDuration: 300000,
+      recommendedTestDelay: 280000,
+      safeMaxDelay: 295000
     },
     examples: [
       {
@@ -110,8 +110,8 @@ export async function GET() {
         body: { delay: 10000 }
       },
       {
-        description: 'Test 50 seconds (recommended)',
-        body: { delay: 50000 }
+        description: 'Test 280 seconds (recommended)',
+        body: { delay: 280000 }
       }
     ]
   });

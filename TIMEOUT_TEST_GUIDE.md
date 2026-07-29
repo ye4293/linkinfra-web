@@ -59,18 +59,18 @@ fetch('/api/test-timeout', {
   });
 ```
 
-#### 测试 B: 50秒测试 (完整验证)
+#### 测试 B: 280秒测试 (完整验证)
 
 ```javascript
-console.log('🚀 开始 50 秒超时测试...');
-console.log('⏰ 请耐心等待约 50 秒...');
+console.log('🚀 开始 280 秒超时测试...');
+console.log('⏰ 请耐心等待约 280 秒...');
 
 const startTime = Date.now();
 
 fetch('/api/test-timeout', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ delay: 50000 })
+  body: JSON.stringify({ delay: 280000 })
 })
   .then((response) => {
     const endTime = Date.now();
@@ -86,12 +86,12 @@ fetch('/api/test-timeout', {
     return response.json();
   })
   .then((data) => {
-    console.log('✅ 50秒测试成功! Vercel Pro 超时配置生效:', data);
+    console.log('✅ 280秒测试成功! Vercel Pro 超时配置生效:', data);
     console.log(`📈 服务器实际执行时间: ${data.actualDuration}ms`);
     console.log(`⏱️ 剩余可用时间: ${data.remainingTime}ms`);
   })
   .catch((error) => {
-    console.error('❌ 50秒测试失败:', error);
+    console.error('❌ 280秒测试失败:', error);
     console.log('💡 如果在10-15秒内失败，说明超时配置未生效');
   });
 ```
@@ -101,7 +101,7 @@ fetch('/api/test-timeout', {
 ### ✅ **配置成功的表现**
 
 - 10秒测试：立即成功，响应包含 `success: true`
-- 50秒测试：约50秒后成功，显示详细的执行时间统计
+- 280秒测试：约280秒后成功，显示详细的执行时间统计
 
 ### ❌ **配置失败的表现**
 
@@ -118,7 +118,7 @@ fetch('/api/test-timeout', {
 {
   "functions": {
     "app/api/**/*.ts": {
-      "maxDuration": 60
+      "maxDuration": 300
     }
   }
 }
@@ -128,7 +128,7 @@ fetch('/api/test-timeout', {
 
 - 进入 **Functions** 标签
 - 找到 `api/test-timeout` 函数
-- 确认 **Timeout** 显示为 **60s**
+- 确认 **Timeout** 显示为 **300s**
 
 ### 3. 查看 Vercel 日志
 
@@ -139,10 +139,10 @@ fetch('/api/test-timeout', {
 
 当以下条件都满足时，说明配置完全成功：
 
-- [ ] ✅ 50秒测试成功完成
+- [ ] ✅ 280秒测试成功完成
 - [ ] ✅ 返回数据包含 `success: true`
-- [ ] ✅ `actualDuration` 接近 50000ms
-- [ ] ✅ `remainingTime` 约为 10000ms
-- [ ] ✅ Vercel Dashboard 显示函数超时为 60s
+- [ ] ✅ `actualDuration` 接近 280000ms
+- [ ] ✅ `remainingTime` 约为 20000ms
+- [ ] ✅ Vercel Dashboard 显示函数超时为 300s
 
 完成这些测试后，你的 Vercel Pro 超时配置就得到了完全验证！
