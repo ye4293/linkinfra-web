@@ -18,6 +18,33 @@ import * as z from 'zod';
 import GithubSignInButton from './github-auth-button';
 import GoogleSignInButton from './google-auth-button';
 import { toast } from 'sonner';
+import {
+  AFF_URL_PARAM,
+  persistAffCode,
+  readAffCodeCookie,
+  sanitizeAffCode
+} from '@/lib/aff-code';
+
+/**
+ * 邮箱注册提交给后端的字段。
+ *
+ * 后端 controller/user.go 的 Register 读的是 body 里的 `aff_code`（不看 query），
+ * 漏掉这个字段会让接口照样返回成功，但 users.inviter_id 是 0 —— 邀请人
+ * 既拿不到注册奖励，也拿不到后续所有充值的返现。
+ *
+ * 除 aff_code 外全部可选，是为了与 formSchema 保持一致：那份 schema 按
+ * isRegister / isResetPassword 动态生成，字段推断出来就是 string | undefined。
+ * 不在这里用 ?? '' 兜成空串，是为了不改变发给后端的 JSON —— undefined 会被
+ * JSON.stringify 省略 key，空串则会真的传过去，两者在后端的校验路径不同。
+ */
+interface RegisterParams {
+  username?: string;
+  email?: string;
+  password?: string;
+  password2?: string;
+  verification_code?: string;
+  aff_code?: string;
+}
 
 export default function UserAuthForm() {
   const { data: session, status } = useSession();
@@ -25,6 +52,7 @@ export default function UserAuthForm() {
 
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl');
+  const affCodeFromUrl = sanitizeAffCode(searchParams.get(AFF_URL_PARAM));
   const [loading, startTransition] = useTransition();
   const [isRegister, setIsRegister] = useState(false);
   const [isResetPassword, setIsResetPassword] = useState(false);
@@ -38,6 +66,20 @@ export default function UserAuthForm() {
       router.replace(callbackUrl ?? '/dashboard');
     }
   }, [status, router]);
+
+  // 邀请链接落地（/sign-in?aff=XXXX）时把邀请码存进 cookie。
+  //
+  // 这一步只为 OAuth 服务：next-auth 接管了跳转，signIn 回调在服务端的
+  // /api/auth/callback/{provider} 里执行，那时 URL 上的 ?aff= 已经没了。
+  // 邮箱注册不依赖 cookie，直接从 URL 取（见 onSubmit）。
+  //
+  // 放在这一层是因为本组件同时承载三种注册入口 —— 邮箱表单，以及
+  // 下方渲染的 GithubSignInButton / GoogleSignInButton。
+  useEffect(() => {
+    if (affCodeFromUrl) {
+      persistAffCode(affCodeFromUrl);
+    }
+  }, [affCodeFromUrl]);
 
   const defaultValues = {
     username: '',
@@ -127,7 +169,7 @@ export default function UserAuthForm() {
     defaultValues
   });
 
-  const handleUserRegister = async (params: z.infer<typeof formSchema>) => {
+  const handleUserRegister = async (params: RegisterParams) => {
     const res = await fetch(`/api/user/register`, {
       method: 'POST',
       body: JSON.stringify(params),
@@ -220,13 +262,20 @@ export default function UserAuthForm() {
       if (isResetPassword) {
         handleResetPassword();
       } else if (isRegister) {
-        const params = {
+        // 邀请码取值：URL 参数优先、cookie 兜底 —— 与后端 readAffCode
+        // （controller/aff.go）的优先级保持一致。用户可能先带 aff 落地、
+        // 切到注册 Tab 后 URL 参数仍在，兜底主要覆盖参数被后续导航抹掉的情况。
+        const affCode = affCodeFromUrl || readAffCodeCookie();
+        const params: RegisterParams = {
           username: data.username,
           email: data.email,
           password: data.password,
           password2: data.confirmPassword,
           verification_code: data.verificationCode
         };
+        if (affCode) {
+          params.aff_code = affCode;
+        }
         handleUserRegister(params);
       } else {
         signIn('credentials', {

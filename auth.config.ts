@@ -4,6 +4,25 @@ import GithubProvider from 'next-auth/providers/github';
 import GoogleProvider from 'next-auth/providers/google';
 import { cookies } from 'next/headers';
 import { Account, Session, User as NextAuthUser } from 'next-auth';
+import { AFF_COOKIE_NAME, sanitizeAffCode } from '@/lib/aff-code';
+
+/**
+ * 取出落地页存下的邀请码，拼成后端登录接口要的 query。
+ *
+ * 后端 readAffCode（controller/aff.go）从 query 参数 `aff_code` 读；
+ * 这里必须用 cookie 中转，因为 signIn 回调运行在服务端的 OAuth 回调请求里，
+ * 邀请链接 URL 上的 ?aff= 早已丢失。
+ *
+ * 只能在回调函数体内调用，绝不能提到模块顶层 —— middleware.ts 也 import
+ * 这份 config 并跑在 Edge runtime，顶层调 cookies() 会炸掉整个中间件。
+ *
+ * 再 sanitize 一遍是因为 cookie 可以被用户手工改写，而这个值要拼进 URL。
+ */
+function withAffCode(endpoint: string): string {
+  const affCode = sanitizeAffCode(cookies().get(AFF_COOKIE_NAME)?.value);
+  const url = process.env.NEXT_PUBLIC_API_BASE_URL + endpoint;
+  return affCode ? `${url}?aff_code=${encodeURIComponent(affCode)}` : url;
+}
 // import { JWT } from 'next-auth/jwt';
 
 // 首先在文件顶部添加类型定义
@@ -187,14 +206,11 @@ const authConfig = {
         const params = {
           ...user
         };
-        const res = await fetch(
-          process.env.NEXT_PUBLIC_API_BASE_URL + '/api/github/login',
-          {
-            method: 'POST',
-            body: JSON.stringify(params),
-            headers: { 'Content-Type': 'application/json' }
-          }
-        );
+        const res = await fetch(withAffCode('/api/github/login'), {
+          method: 'POST',
+          body: JSON.stringify(params),
+          headers: { 'Content-Type': 'application/json' }
+        });
 
         console.log('GitHub login', res, res.headers.get('set-cookie'));
 
@@ -250,14 +266,11 @@ const authConfig = {
         const params = {
           ...user
         };
-        const res = await fetch(
-          process.env.NEXT_PUBLIC_API_BASE_URL + '/api/google/login',
-          {
-            method: 'POST',
-            body: JSON.stringify(params),
-            headers: { 'Content-Type': 'application/json' }
-          }
-        );
+        const res = await fetch(withAffCode('/api/google/login'), {
+          method: 'POST',
+          body: JSON.stringify(params),
+          headers: { 'Content-Type': 'application/json' }
+        });
 
         console.log('Google login', res, res.headers.get('set-cookie'));
 

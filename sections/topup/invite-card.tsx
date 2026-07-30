@@ -6,35 +6,39 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Copy } from 'lucide-react';
 import { toast } from 'sonner';
-
-function getServerAddress(): string {
-  if (typeof window === 'undefined') return '';
-  try {
-    const status = localStorage.getItem('status');
-    if (status) {
-      const parsed = JSON.parse(status);
-      if (parsed.server_address) {
-        return parsed.server_address.replace(/\/+$/, '');
-      }
-    }
-  } catch {}
-  return window.location.origin;
-}
+import { useSystemConfig } from '@/hooks/use-system-config';
 
 export default function InviteCard({ user }: { user?: any }) {
-  const [serverAddress, setServerAddress] = useState(
-    typeof window !== 'undefined' ? getServerAddress() : ''
-  );
+  // serverAddress 来自后台配置（/api/public/option）。
+  //
+  // 这里原先读 localStorage 的 'status'，那是上游老 React 前端的约定，
+  // 本仓库从没写入过这个 key —— 所以后台配了 server_address 也不生效，
+  // 永远落到 window.location.origin 兜底。
+  const { serverAddress } = useSystemConfig();
+  const [origin, setOrigin] = useState('');
 
   useEffect(() => {
-    setServerAddress(getServerAddress());
+    setOrigin(window.location.origin);
   }, []);
 
-  const referralLink = `${serverAddress}/register?aff=${
-    user?.aff_code || 'CODE'
-  }`;
+  const baseUrl = (serverAddress || origin).replace(/\/+$/, '');
+  const affCode = user?.aff_code || '';
+
+  // 落地页是 /sign-in（本应用没有 /register 路由；next.config.js 里为
+  // 已发出的旧链接留了 /register → /sign-in 重定向）。参数名 aff 与后端
+  // 约定一致，见 lib/aff-code.ts。
+  const referralLink =
+    baseUrl && affCode
+      ? `${baseUrl}/sign-in?aff=${encodeURIComponent(affCode)}`
+      : '';
 
   const handleCopy = () => {
+    // 邀请码还没拿到时不能复制 —— 原实现会把 aff_code 占位成字面量
+    // 'CODE'，用户复制到的是一条必然失效的链接。
+    if (!referralLink) {
+      toast.error('Referral link is not ready yet.');
+      return;
+    }
     navigator.clipboard.writeText(referralLink);
     toast.success('Referral link copied to clipboard!');
   };
@@ -74,11 +78,17 @@ export default function InviteCard({ user }: { user?: any }) {
         <div className="space-y-2">
           <label className="text-sm font-medium">Referral Link</label>
           <div className="flex gap-2">
-            <Input value={referralLink} readOnly className="bg-muted" />
+            <Input
+              value={referralLink}
+              readOnly
+              className="bg-muted"
+              placeholder="Loading referral link..."
+            />
             <Button
               onClick={handleCopy}
               variant="secondary"
               className="shrink-0"
+              disabled={!referralLink}
             >
               <Copy className="mr-2 h-4 w-4" />
               Copy
