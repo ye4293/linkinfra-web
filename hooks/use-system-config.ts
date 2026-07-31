@@ -4,7 +4,10 @@ import { useState, useEffect } from 'react';
 
 interface SystemConfig {
   systemName: string;
+  /** 后端自身地址（server_address），用于拼 API/回调，不要用它拼前端路由。 */
   serverAddress: string;
+  /** 前端地址（frontend_server_address），用于拼 /sign-in 这类前端路由。 */
+  frontendServerAddress: string;
   docsAddress: string;
   loading: boolean;
 }
@@ -12,6 +15,7 @@ interface SystemConfig {
 const DEFAULTS = {
   systemName: '',
   serverAddress: '',
+  frontendServerAddress: '',
   docsAddress: ''
 };
 
@@ -34,6 +38,8 @@ function fetchSystemConfig(): Promise<Omit<SystemConfig, 'loading'>> {
         cachedConfig = {
           systemName: data.system_name || DEFAULTS.systemName,
           serverAddress: data.server_address || DEFAULTS.serverAddress,
+          frontendServerAddress:
+            data.frontend_server_address || DEFAULTS.frontendServerAddress,
           docsAddress: data.docs_address || DEFAULTS.docsAddress
         };
       } else {

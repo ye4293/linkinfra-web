@@ -53,11 +53,37 @@ export function persistAffCode(code: string): void {
   document.cookie = `${AFF_COOKIE_NAME}=${safe}; path=/; max-age=${AFF_COOKIE_MAX_AGE_SECONDS}; SameSite=Lax`;
 }
 
-/** 客户端读回 cookie 里的邀请码；读不到或不合法时返回空串。 */
+/**
+ * 匹配 cookie 里的邀请码。提到模块级避免每次调用重编译，也与上面的
+ * AFF_CODE_PATTERN 保持同一种写法。
+ */
+const AFF_COOKIE_PATTERN = new RegExp(`(?:^|; )${AFF_COOKIE_NAME}=([^;]*)`);
+
+/**
+ * 客户端读回 cookie 里的邀请码；读不到或不合法时返回空串。
+ *
+ * 不做 decodeURIComponent：persistAffCode 写入时也没有 encode（邀请码
+ * 限定在 [A-Za-z0-9_-]，encode 是恒等的）。而 decodeURIComponent 对畸形
+ * 百分号编码会抛 URIError —— 一旦有别的东西往同域写了 `aff_code=100%off`
+ * 这类值，异常会从 onSubmit 里冒出去，让注册请求根本发不出、用户点按钮
+ * 毫无反应。读写两侧保持同一种表示，就没有这个失败模式。
+ */
 export function readAffCodeCookie(): string {
   if (typeof document === 'undefined') return '';
-  const match = document.cookie.match(
-    new RegExp(`(?:^|; )${AFF_COOKIE_NAME}=([^;]*)`)
-  );
-  return match ? sanitizeAffCode(decodeURIComponent(match[1])) : '';
+  const match = document.cookie.match(AFF_COOKIE_PATTERN);
+  return match ? sanitizeAffCode(match[1]) : '';
+}
+
+/**
+ * 清除邀请码 cookie。注册成功后必须调 —— 否则这个 30 分钟的 cookie 会
+ * 把邀请归因粘在浏览器上：共享设备场景下，前一个人从邀请链接落地并注册后，
+ * 后一个人直接访问 /sign-in 注册也会被计入同一个邀请人（邀请人白拿奖励，
+ * 且该账号后续所有充值返现都归他）。
+ *
+ * 老后端的 clearAffCodeSession 就是干这件事的，session 通道下线后这个
+ * 职责一度没人接。
+ */
+export function clearAffCode(): void {
+  if (typeof document === 'undefined') return;
+  document.cookie = `${AFF_COOKIE_NAME}=; path=/; max-age=0; SameSite=Lax`;
 }

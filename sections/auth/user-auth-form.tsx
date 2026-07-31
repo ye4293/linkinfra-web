@@ -20,6 +20,7 @@ import GoogleSignInButton from './google-auth-button';
 import { toast } from 'sonner';
 import {
   AFF_URL_PARAM,
+  clearAffCode,
   persistAffCode,
   readAffCodeCookie,
   sanitizeAffCode
@@ -175,8 +176,20 @@ export default function UserAuthForm() {
       body: JSON.stringify(params),
       credentials: 'include'
     });
-    const { data } = await res.json();
-    // console.log('---data---', data);
+    const { success, message } = await res.json();
+
+    // 原实现不看返回值，注册失败也照样往下调 signIn —— 用户看到的是一次
+    // 静默失败的登录，而不是"注册失败"的原因。
+    if (!success) {
+      toast.error(message || 'Registration failed');
+      return;
+    }
+
+    // 邀请码已经兑现，立刻清掉 cookie。留着的话这 30 分钟的 cookie 会把
+    // 邀请归因粘在浏览器上：共享设备下，后一个人直接访问 /sign-in 注册
+    // 也会被计入同一个邀请人。
+    clearAffCode();
+
     signIn('credentials', {
       username: params.username,
       password: params.password,
@@ -262,9 +275,9 @@ export default function UserAuthForm() {
       if (isResetPassword) {
         handleResetPassword();
       } else if (isRegister) {
-        // 邀请码取值：URL 参数优先、cookie 兜底 —— 与后端 readAffCode
-        // （controller/aff.go）的优先级保持一致。用户可能先带 aff 落地、
-        // 切到注册 Tab 后 URL 参数仍在，兜底主要覆盖参数被后续导航抹掉的情况。
+        // 邀请码取值：URL 参数优先、cookie 兜底。cookie 这一层覆盖的是
+        // 「带 aff 落地后又发生过导航、URL 参数被抹掉」的情况。
+        // （后端只从 query 读，不再有 session 通道。）
         const affCode = affCodeFromUrl || readAffCodeCookie();
         const params: RegisterParams = {
           username: data.username,

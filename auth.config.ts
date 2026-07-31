@@ -19,9 +19,45 @@ import { AFF_COOKIE_NAME, sanitizeAffCode } from '@/lib/aff-code';
  * 再 sanitize 一遍是因为 cookie 可以被用户手工改写，而这个值要拼进 URL。
  */
 function withAffCode(endpoint: string): string {
-  const affCode = sanitizeAffCode(cookies().get(AFF_COOKIE_NAME)?.value);
+  const store = cookies();
+  const affCode = sanitizeAffCode(store.get(AFF_COOKIE_NAME)?.value);
   const url = process.env.NEXT_PUBLIC_API_BASE_URL + endpoint;
-  return affCode ? `${url}?aff_code=${encodeURIComponent(affCode)}` : url;
+  if (!affCode) return url;
+
+  // 读到即消费：OAuth 登录完成后用户落在 /dashboard 而不是登录页，客户端
+  // 的 clearAffCode() 不会被执行，所以必须在这里清。否则这 30 分钟的 cookie
+  // 会把邀请归因粘在浏览器上（共享设备下后一个注册者会被计入同一邀请人）。
+  //
+  // best-effort：Route Handler 里改 cookie 通常是允许的，但 next-auth 自己
+  // 构造重定向响应，不保证一定生效 —— 失败也绝不能影响登录，所以吞掉异常。
+  try {
+    store.delete(AFF_COOKIE_NAME);
+  } catch {
+    // 清不掉就靠 max-age 到期，不阻断登录
+  }
+
+  return `${url}?aff_code=${encodeURIComponent(affCode)}`;
+}
+
+/**
+ * 调后端登录接口时带的请求头。
+ *
+ * 后端的 /api/{github,google}/login 接收的是「用户已通过 OAuth 认证」这个
+ * 断言，而 code 交换发生在这里（我们持有 client secret），后端无法自证
+ * 断言真伪，只能验证说话的人是谁。共享密钥就是那个身份证明。
+ *
+ * 必须用不带 NEXT_PUBLIC_ 前缀的环境变量 —— 带前缀的会被内联进客户端
+ * bundle，等于把密钥公开发布。signIn 回调是服务端代码，读得到非 public 的 env。
+ */
+function oauthLoginHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  };
+  const secret = process.env.OAUTH_LOGIN_SECRET;
+  if (secret) {
+    headers['X-OAuth-Login-Secret'] = secret;
+  }
+  return headers;
 }
 // import { JWT } from 'next-auth/jwt';
 
@@ -209,7 +245,7 @@ const authConfig = {
         const res = await fetch(withAffCode('/api/github/login'), {
           method: 'POST',
           body: JSON.stringify(params),
-          headers: { 'Content-Type': 'application/json' }
+          headers: oauthLoginHeaders()
         });
 
         console.log('GitHub login', res, res.headers.get('set-cookie'));
@@ -269,7 +305,7 @@ const authConfig = {
         const res = await fetch(withAffCode('/api/google/login'), {
           method: 'POST',
           body: JSON.stringify(params),
-          headers: { 'Content-Type': 'application/json' }
+          headers: oauthLoginHeaders()
         });
 
         console.log('Google login', res, res.headers.get('set-cookie'));

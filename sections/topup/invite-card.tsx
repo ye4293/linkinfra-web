@@ -9,19 +9,22 @@ import { toast } from 'sonner';
 import { useSystemConfig } from '@/hooks/use-system-config';
 
 export default function InviteCard({ user }: { user?: any }) {
-  // serverAddress 来自后台配置（/api/public/option）。
+  // 邀请链接落在 /sign-in，那是**前端**路由，所以必须用
+  // frontend_server_address 而不是 server_address —— 后者是后端自身地址
+  // （被用来拼 provider 回调），前后端分域部署时用它会拼出
+  // https://api.example.com/sign-in，打到 Go 服务上直接 404。
   //
   // 这里原先读 localStorage 的 'status'，那是上游老 React 前端的约定，
-  // 本仓库从没写入过这个 key —— 所以后台配了 server_address 也不生效，
-  // 永远落到 window.location.origin 兜底。
-  const { serverAddress } = useSystemConfig();
+  // 本仓库从没写入过这个 key，所以永远落到 window.location.origin 兜底 ——
+  // 兜底恰好是对的，改成读配置时才暴露出选错了字段。
+  const { frontendServerAddress } = useSystemConfig();
   const [origin, setOrigin] = useState('');
 
   useEffect(() => {
     setOrigin(window.location.origin);
   }, []);
 
-  const baseUrl = (serverAddress || origin).replace(/\/+$/, '');
+  const baseUrl = (frontendServerAddress || origin).replace(/\/+$/, '');
   const affCode = user?.aff_code || '';
 
   // 落地页是 /sign-in（本应用没有 /register 路由；next.config.js 里为
