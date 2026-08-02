@@ -47,7 +47,7 @@ Kumo 的 peer dependencies 与现状对比：
 
 | Kumo 要求               | 现状           | 全量迁移影响                           | 本试点是否涉及         |
 | ----------------------- | -------------- | -------------------------------------- | ---------------------- |
-| `@phosphor-icons/react` | `lucide-react` | 71 文件                                | 是，仅概览页 4 个图标  |
+| `@phosphor-icons/react` | `lucide-react` | 71 文件                                | 是，仅概览页 3 个图标  |
 | `echarts` ^6            | `recharts`     | 6 文件（其中 2 个是死代码）            | 是                     |
 | `zod` ^4                | `zod` ^3.24    | 9 文件 + `@hookform/resolvers` 需升 v5 | **否**（概览页无表单） |
 | `react` 18/19           | 18.3.1         | 无                                     | 兼容                   |
@@ -88,7 +88,7 @@ Kumo 导出 48 个组件。经核对 `ai/component-registry.json` 与 `dist/inde
 
 | 文件                    | 行数              | 迁移内容                                                                                                                                                                             |
 | ----------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `view/overview.tsx`     | 277               | 4 个卡片（3 个统计卡 + 热门模型卡）Card→Surface + Text 手工组合、`Tabs`、内联进度条 `<div>`→`Meter`、`Skeleton`→`SkeletonLine`、4 个 lucide 图标（Wallet/Zap/CalendarDays）→Phosphor |
+| `view/overview.tsx`     | 277               | 4 个卡片（3 个统计卡 + 热门模型卡）Card→Surface + Text 手工组合、`Tabs`、内联进度条 `<div>`→`Meter`、`Skeleton`→`SkeletonLine`、3 个 lucide 图标（Wallet/Zap/CalendarDays）→Phosphor |
 | `analytics-content.tsx` | 266               | Card、`Table`、内联 recharts BarChart→`TimeseriesChart`、`SkeletonLine`                                                                                                              |
 | `bar-graph.tsx`         | 192               | recharts BarChart→`TimeseriesChart`                                                                                                                                                  |
 | `recent-sales.tsx`      | 83（有效仅约 35） | 列表 + 头像（**Kumo 无 Avatar**，本试点保留现有实现）                                                                                                                                |
