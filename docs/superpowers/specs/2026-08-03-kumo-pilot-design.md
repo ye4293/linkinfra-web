@@ -69,7 +69,19 @@ Kumo 导出 48 个组件。经核对 `ai/component-registry.json` 与 `dist/inde
 - `Chart`：低层 ECharts 包装，`options: KumoChartOption` 直通 `setOption()`，另有 `isDarkMode`、`height`（默认 350）、`aspectRatio`
 - `TimeseriesChart`：`data: TimeseriesData[]`、`type: "line" | "bar"`、`xAxisTickFormat`、`yAxisTickFormat`、`markers`、`thresholds`
 
-现有两处图表都是时序柱状图，`TimeseriesChart` 比通用 `Chart` 更贴合。
+**试点决定用通用 `Chart` + ECharts 类目轴，不用 `TimeseriesChart`。** 原因是 `TimeseriesData` 的确切定义为：
+
+```ts
+interface TimeseriesData {
+  name: string;
+  data: [number, number][]; // [timestamp_ms, value]
+  color: string; // hex
+}
+```
+
+它**强制要求毫秒时间戳**，而项目的 `GraphData` 是 `{ hour: string; amount: number }`——`hour` 是小时字符串（现有 tooltip 用 `${value}:00` 渲染）。用 `TimeseriesChart` 就必须凭该字段合成时间戳，而其确切格式尚未核实。
+
+改用 `Chart` + 类目轴可 1:1 保留现有 x 轴语义，使「数值与原图一致」这条验收标准真正可验，同时仍能获得 Kumo 样式与 `isDarkMode`。若后续确认数据确为当日逐时，可再切换到 `TimeseriesChart`。
 
 ## 试点范围
 
@@ -89,8 +101,8 @@ Kumo 导出 48 个组件。经核对 `ai/component-registry.json` 与 `dist/inde
 | 文件                    | 行数              | 迁移内容                                                                                                                                                                             |
 | ----------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `view/overview.tsx`     | 277               | 4 个卡片（3 个统计卡 + 热门模型卡）Card→Surface + Text 手工组合、`Tabs`、内联进度条 `<div>`→`Meter`、`Skeleton`→`SkeletonLine`、3 个 lucide 图标（Wallet/Zap/CalendarDays）→Phosphor |
-| `analytics-content.tsx` | 266               | Card、`Table`、内联 recharts BarChart→`TimeseriesChart`、`SkeletonLine`                                                                                                              |
-| `bar-graph.tsx`         | 192               | recharts BarChart→`TimeseriesChart`                                                                                                                                                  |
+| `analytics-content.tsx` | 266               | Card、`Table`、内联 recharts BarChart→`Chart`（类目轴）、`SkeletonLine`                                                                                                              |
+| `bar-graph.tsx`         | 192               | recharts BarChart→`Chart`（类目轴）                                                                                                                                                  |
 | `recent-sales.tsx`      | 83（有效仅约 35） | 列表 + 头像（**Kumo 无 Avatar**，本试点保留现有实现）                                                                                                                                |
 
 `recent-sales.tsx` 的 83 行中有 46 行（第 35–80 行）是注释掉的 shadcn 模板残留（Jackson Lee、Sofia Davis 等假数据），迁移时不带过去。另外现有实现有两处应顺手修正：
@@ -145,7 +157,7 @@ app/dashboard/overview-kumo/
 
 1. **Next 14 能否消费 ESM-only 的 Kumo** — `exports` 只提供 `import`、无 `require`，可能需要 `next.config.js` 加 `transpilePackages: ['@cloudflare/kumo']`。**第一步就要试通**，不通则整个方案需重估
 2. **preflight 冲突的实际破坏范围** — 继承来的侧边栏、`PageContainer` 是否塌陷。这是试点的头号观测目标
-3. **`TimeseriesChart` 是否覆盖现有图表需求** — 双系列、tooltip 数值格式化、i18n 轴标签
+3. **`Chart` + 类目轴是否覆盖现有图表需求** — tooltip 数值格式化（`${hour}:00`）、三种指标切换、i18n 轴标签
 4. **`light-dark()` 浏览器支持** — 需确认目标用户浏览器分布
 
 ## 验收标准
