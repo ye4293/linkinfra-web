@@ -33,7 +33,7 @@
 
 - Modify: `package.json`
 - Modify: `next.config.js`
-- Create: `app/dashboard/kumo-smoke/page.tsx`（临时冒烟页，Task 8 删除）
+- Create: `app/dashboard/kumo-smoke/page.tsx`（临时冒烟页，Task 9 删除）
 
 - [ ] **Step 1: 安装三个 peer dependency**
 
@@ -113,7 +113,7 @@ pnpm dev
 
 预期：按钮和 Surface 带 Kumo 样式（不是浏览器默认样式）。
 
-**这一步要记录三件事，写入 Task 8 的结论：**
+**这一步要记录三件事，写入 Task 9 的结论：**
 
 1. 是否需要 `transpilePackages`
 2. 继承的侧边栏是否被 standalone CSS 的 preflight 破坏（**风险 2 的首次观测**）
