@@ -41,7 +41,10 @@ import {
   Edit2,
   X,
   RefreshCcw,
-  Copy
+  Copy,
+  Calculator,
+  Info,
+  Layers3
 } from 'lucide-react';
 import { useLocale } from '@/components/providers/locale-provider';
 
@@ -1556,39 +1559,57 @@ export default function PricingPage() {
 
           {/* ==================== 未设置倍率模型 Tab ==================== */}
           <TabsContent value="unset-models" className="space-y-4">
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950">
-              <p className="text-sm text-blue-800 dark:text-blue-200">
-                <strong>💡 Tip:</strong> Enter the model's official price ($/1M
-                tokens) and ratios will be calculated automatically. All ratios
-                are relative to the text input price.
-              </p>
-              <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-blue-600 dark:text-blue-400 md:grid-cols-3">
-                <span>• Model ratio = text input price / 2</span>
-                <span>
-                  • Completion ratio = text output price / text input price
-                </span>
-                <span>• Cache ratio = cache price / text input price</span>
-                <span>
-                  • Image input ratio = image input price / text input price
-                </span>
-                <span>
-                  • Image output ratio = image output price / text input price
-                </span>
-                <span>
-                  • Audio input ratio = audio input price / text input price
-                </span>
-                <span>
-                  • Audio output ratio = audio output price / text input price
-                </span>
+            <div className="rounded-xl border bg-card p-5 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="rounded-lg bg-blue-100 p-2 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                  <Calculator className="h-5 w-5" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="font-semibold">
+                    Configure official model pricing
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Enter prices in USD per 1M tokens. Billing ratios are
+                    calculated instantly and can still be adjusted manually.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 grid gap-3 text-sm md:grid-cols-3">
+                <div className="rounded-lg border bg-muted/30 p-3">
+                  <p className="font-medium">1. Base price</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Model ratio = text input price / 2
+                  </p>
+                </div>
+                <div className="rounded-lg border bg-muted/30 p-3">
+                  <p className="font-medium">2. Output & cache</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Each ratio = its price / text input price
+                  </p>
+                </div>
+                <div className="rounded-lg border bg-muted/30 p-3">
+                  <p className="font-medium">3. Optional modalities</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Leave image or audio fields blank when unsupported
+                  </p>
+                </div>
               </div>
             </div>
-            <p className="text-sm text-muted-foreground">
-              This page only shows models without a default price or ratio set.
-              Models are removed from the list once configured.
-            </p>
 
-            <div className="flex items-center justify-between gap-4">
-              <div className="relative max-w-sm flex-1">
+            <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+              <Layers3 className="mt-0.5 h-4 w-4 shrink-0" />
+              <p>
+                <span className="font-medium">
+                  Tiered pricing is not available yet.
+                </span>{' '}
+                The current backend only accepts one static price set per model.
+                Tier conditions and billing expressions must be supported before
+                segmented pricing can be enabled safely.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-3 rounded-lg border bg-card p-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="relative w-full sm:max-w-md">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="Search model name..."
@@ -1600,7 +1621,7 @@ export default function PricingPage() {
                   className="pl-10"
                 />
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Button
                   variant="outline"
                   onClick={batchSetDefaultRatio}
@@ -1618,390 +1639,403 @@ export default function PricingPage() {
               </div>
             </div>
 
-            <div className="overflow-x-auto rounded-md border">
-              <Table className="w-full min-w-[1550px] table-fixed">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-8 px-1">
-                      <Checkbox
-                        checked={
-                          unsetModels.length > 0 &&
-                          unsetModels.every((m) =>
-                            selectedModels.has(m.model_name)
-                          )
-                        }
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setSelectedModels(
-                              new Set(unsetModels.map((m) => m.model_name))
-                            );
-                          } else {
-                            setSelectedModels(new Set());
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 px-1 text-xs text-muted-foreground">
+                <Info className="h-3.5 w-3.5" />
+                Scroll horizontally to configure optional modalities and review
+                calculated ratios.
+              </div>
+              <div className="overflow-x-auto rounded-xl border bg-card shadow-sm [&_input]:h-9 [&_input]:min-w-[92px] [&_td]:py-2">
+                <Table className="w-full min-w-[2050px] table-fixed">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12 px-3">
+                        <Checkbox
+                          checked={
+                            unsetModels.length > 0 &&
+                            unsetModels.every((m) =>
+                              selectedModels.has(m.model_name)
+                            )
                           }
-                        }}
-                      />
-                    </TableHead>
-                    <TableHead className="w-[160px] px-1">Model name</TableHead>
-                    <TableHead
-                      colSpan={7}
-                      className="border-l bg-blue-50/50 px-1 text-center text-xs dark:bg-blue-950/30"
-                    >
-                      Price input ($/1M tokens)
-                    </TableHead>
-                    <TableHead
-                      colSpan={7}
-                      className="border-l bg-green-50/50 px-1 text-center text-xs dark:bg-green-950/30"
-                    >
-                      Ratio (auto-calculated)
-                    </TableHead>
-                  </TableRow>
-                  <TableRow>
-                    <TableHead className="w-8 px-1"></TableHead>
-                    <TableHead className="w-[160px] px-1"></TableHead>
-                    <TableHead className="w-[70px] border-l bg-blue-50/50 px-1 text-center text-xs dark:bg-blue-950/30">
-                      Text in
-                    </TableHead>
-                    <TableHead className="w-[70px] bg-blue-50/50 px-1 text-center text-xs dark:bg-blue-950/30">
-                      Text out
-                    </TableHead>
-                    <TableHead className="w-[70px] bg-blue-50/50 px-1 text-center text-xs dark:bg-blue-950/30">
-                      Cache
-                    </TableHead>
-                    <TableHead className="w-[70px] bg-blue-50/50 px-1 text-center text-xs dark:bg-blue-950/30">
-                      Image in
-                    </TableHead>
-                    <TableHead className="w-[70px] bg-blue-50/50 px-1 text-center text-xs dark:bg-blue-950/30">
-                      Image out
-                    </TableHead>
-                    <TableHead className="w-[70px] bg-blue-50/50 px-1 text-center text-xs dark:bg-blue-950/30">
-                      Audio in
-                    </TableHead>
-                    <TableHead className="w-[70px] bg-blue-50/50 px-1 text-center text-xs dark:bg-blue-950/30">
-                      Audio out
-                    </TableHead>
-                    <TableHead className="w-[65px] border-l bg-green-50/50 px-1 text-center text-xs dark:bg-green-950/30">
-                      Model
-                    </TableHead>
-                    <TableHead className="w-[65px] bg-green-50/50 px-1 text-center text-xs dark:bg-green-950/30">
-                      Completion
-                    </TableHead>
-                    <TableHead className="w-[65px] bg-green-50/50 px-1 text-center text-xs dark:bg-green-950/30">
-                      Cache
-                    </TableHead>
-                    <TableHead className="w-[65px] bg-green-50/50 px-1 text-center text-xs dark:bg-green-950/30">
-                      Image in
-                    </TableHead>
-                    <TableHead className="w-[65px] bg-green-50/50 px-1 text-center text-xs dark:bg-green-950/30">
-                      Image out
-                    </TableHead>
-                    <TableHead className="w-[65px] bg-green-50/50 px-1 text-center text-xs dark:bg-green-950/30">
-                      Audio in
-                    </TableHead>
-                    <TableHead className="w-[65px] bg-green-50/50 px-1 text-center text-xs dark:bg-green-950/30">
-                      Audio out
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isUnsetLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={16} className="h-24 text-center">
-                        Loading...
-                      </TableCell>
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedModels(
+                                new Set(unsetModels.map((m) => m.model_name))
+                              );
+                            } else {
+                              setSelectedModels(new Set());
+                            }
+                          }}
+                        />
+                      </TableHead>
+                      <TableHead className="sticky left-0 z-20 w-[240px] border-r bg-background px-4">
+                        Model name
+                      </TableHead>
+                      <TableHead
+                        colSpan={7}
+                        className="border-l bg-blue-50/60 px-3 py-3 text-center text-sm font-semibold text-blue-900 dark:bg-blue-950/30 dark:text-blue-200"
+                      >
+                        Price input ($/1M tokens)
+                      </TableHead>
+                      <TableHead
+                        colSpan={7}
+                        className="border-l bg-green-50/60 px-3 py-3 text-center text-sm font-semibold text-green-900 dark:bg-green-950/30 dark:text-green-200"
+                      >
+                        Ratio (auto-calculated)
+                      </TableHead>
                     </TableRow>
-                  ) : unsetModels.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={16} className="h-24 text-center">
-                        🎉 All models are configured!
-                      </TableCell>
+                      <TableHead className="w-12 px-3"></TableHead>
+                      <TableHead className="sticky left-0 z-20 w-[240px] border-r bg-background px-4"></TableHead>
+                      <TableHead className="w-[105px] border-l bg-blue-50/50 px-2 text-center text-xs dark:bg-blue-950/30">
+                        Text in
+                      </TableHead>
+                      <TableHead className="w-[105px] bg-blue-50/50 px-2 text-center text-xs dark:bg-blue-950/30">
+                        Text out
+                      </TableHead>
+                      <TableHead className="w-[70px] bg-blue-50/50 px-1 text-center text-xs dark:bg-blue-950/30">
+                        Cache
+                      </TableHead>
+                      <TableHead className="w-[70px] bg-blue-50/50 px-1 text-center text-xs dark:bg-blue-950/30">
+                        Image in
+                      </TableHead>
+                      <TableHead className="w-[70px] bg-blue-50/50 px-1 text-center text-xs dark:bg-blue-950/30">
+                        Image out
+                      </TableHead>
+                      <TableHead className="w-[70px] bg-blue-50/50 px-1 text-center text-xs dark:bg-blue-950/30">
+                        Audio in
+                      </TableHead>
+                      <TableHead className="w-[70px] bg-blue-50/50 px-1 text-center text-xs dark:bg-blue-950/30">
+                        Audio out
+                      </TableHead>
+                      <TableHead className="w-[100px] border-l bg-green-50/50 px-2 text-center text-xs dark:bg-green-950/30">
+                        Model
+                      </TableHead>
+                      <TableHead className="w-[65px] bg-green-50/50 px-1 text-center text-xs dark:bg-green-950/30">
+                        Completion
+                      </TableHead>
+                      <TableHead className="w-[65px] bg-green-50/50 px-1 text-center text-xs dark:bg-green-950/30">
+                        Cache
+                      </TableHead>
+                      <TableHead className="w-[65px] bg-green-50/50 px-1 text-center text-xs dark:bg-green-950/30">
+                        Image in
+                      </TableHead>
+                      <TableHead className="w-[65px] bg-green-50/50 px-1 text-center text-xs dark:bg-green-950/30">
+                        Image out
+                      </TableHead>
+                      <TableHead className="w-[65px] bg-green-50/50 px-1 text-center text-xs dark:bg-green-950/30">
+                        Audio in
+                      </TableHead>
+                      <TableHead className="w-[65px] bg-green-50/50 px-1 text-center text-xs dark:bg-green-950/30">
+                        Audio out
+                      </TableHead>
                     </TableRow>
-                  ) : (
-                    unsetModels.map((model) => (
-                      <TableRow key={model.model_name}>
-                        <TableCell className="px-1">
-                          <Checkbox
-                            checked={selectedModels.has(model.model_name)}
-                            onCheckedChange={(checked) => {
-                              const newSet = new Set(selectedModels);
-                              if (checked) {
-                                newSet.add(model.model_name);
-                              } else {
-                                newSet.delete(model.model_name);
-                              }
-                              setSelectedModels(newSet);
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell
-                          className="truncate px-1 font-mono text-xs"
-                          title={model.model_name}
-                        >
-                          {model.model_name}
-                        </TableCell>
-                        {/* 价格输入区域 */}
-                        <TableCell className="border-l bg-blue-50/30 px-0.5 dark:bg-blue-950/20">
-                          <Input
-                            type="text"
-                            placeholder="0.1"
-                            value={
-                              unsetEditData[model.model_name]?.input_price || ''
-                            }
-                            onChange={(e) =>
-                              updateUnsetEditData(
-                                model.model_name,
-                                'input_price',
-                                e.target.value
-                              )
-                            }
-                            className="h-7 px-1 text-center text-xs"
-                          />
-                        </TableCell>
-                        <TableCell className="bg-blue-50/30 px-0.5 dark:bg-blue-950/20">
-                          <Input
-                            type="text"
-                            placeholder="0.4"
-                            value={
-                              unsetEditData[model.model_name]?.output_price ||
-                              ''
-                            }
-                            onChange={(e) =>
-                              updateUnsetEditData(
-                                model.model_name,
-                                'output_price',
-                                e.target.value
-                              )
-                            }
-                            className="h-7 px-1 text-center text-xs"
-                          />
-                        </TableCell>
-                        <TableCell className="bg-blue-50/30 px-0.5 dark:bg-blue-950/20">
-                          <Input
-                            type="text"
-                            placeholder="-"
-                            value={
-                              unsetEditData[model.model_name]?.cache_price || ''
-                            }
-                            onChange={(e) =>
-                              updateUnsetEditData(
-                                model.model_name,
-                                'cache_price',
-                                e.target.value
-                              )
-                            }
-                            className="h-7 px-1 text-center text-xs"
-                          />
-                        </TableCell>
-                        <TableCell className="bg-blue-50/30 px-0.5 dark:bg-blue-950/20">
-                          <Input
-                            type="text"
-                            placeholder="-"
-                            value={
-                              unsetEditData[model.model_name]
-                                ?.image_input_price || ''
-                            }
-                            onChange={(e) =>
-                              updateUnsetEditData(
-                                model.model_name,
-                                'image_input_price',
-                                e.target.value
-                              )
-                            }
-                            className="h-7 px-1 text-center text-xs"
-                          />
-                        </TableCell>
-                        <TableCell className="bg-blue-50/30 px-0.5 dark:bg-blue-950/20">
-                          <Input
-                            type="text"
-                            placeholder="-"
-                            value={
-                              unsetEditData[model.model_name]
-                                ?.image_output_price || ''
-                            }
-                            onChange={(e) =>
-                              updateUnsetEditData(
-                                model.model_name,
-                                'image_output_price',
-                                e.target.value
-                              )
-                            }
-                            className="h-7 px-1 text-center text-xs"
-                          />
-                        </TableCell>
-                        <TableCell className="bg-blue-50/30 px-0.5 dark:bg-blue-950/20">
-                          <Input
-                            type="text"
-                            placeholder="-"
-                            value={
-                              unsetEditData[model.model_name]
-                                ?.audio_input_price || ''
-                            }
-                            onChange={(e) =>
-                              updateUnsetEditData(
-                                model.model_name,
-                                'audio_input_price',
-                                e.target.value
-                              )
-                            }
-                            className="h-7 px-1 text-center text-xs"
-                          />
-                        </TableCell>
-                        <TableCell className="bg-blue-50/30 px-0.5 dark:bg-blue-950/20">
-                          <Input
-                            type="text"
-                            placeholder="-"
-                            value={
-                              unsetEditData[model.model_name]
-                                ?.audio_output_price || ''
-                            }
-                            onChange={(e) =>
-                              updateUnsetEditData(
-                                model.model_name,
-                                'audio_output_price',
-                                e.target.value
-                              )
-                            }
-                            className="h-7 px-1 text-center text-xs"
-                          />
-                        </TableCell>
-                        {/* 倍率显示区域（自动计算，也可手动修改） */}
-                        <TableCell className="border-l bg-green-50/30 px-0.5 dark:bg-green-950/20">
-                          <Input
-                            type="text"
-                            placeholder="auto"
-                            value={
-                              unsetEditData[model.model_name]?.model_ratio || ''
-                            }
-                            onChange={(e) =>
-                              updateUnsetEditData(
-                                model.model_name,
-                                'model_ratio',
-                                e.target.value
-                              )
-                            }
-                            className="h-7 bg-muted/30 px-1 text-center text-xs"
-                          />
-                        </TableCell>
-                        <TableCell className="bg-green-50/30 px-0.5 dark:bg-green-950/20">
-                          <Input
-                            type="text"
-                            placeholder="auto"
-                            value={
-                              unsetEditData[model.model_name]
-                                ?.completion_ratio || ''
-                            }
-                            onChange={(e) =>
-                              updateUnsetEditData(
-                                model.model_name,
-                                'completion_ratio',
-                                e.target.value
-                              )
-                            }
-                            className="h-7 bg-muted/30 px-1 text-center text-xs"
-                          />
-                        </TableCell>
-                        <TableCell className="bg-green-50/30 px-0.5 dark:bg-green-950/20">
-                          <Input
-                            type="text"
-                            placeholder="auto"
-                            value={
-                              unsetEditData[model.model_name]?.cache_ratio || ''
-                            }
-                            onChange={(e) =>
-                              updateUnsetEditData(
-                                model.model_name,
-                                'cache_ratio',
-                                e.target.value
-                              )
-                            }
-                            className="h-7 bg-muted/30 px-1 text-center text-xs"
-                          />
-                        </TableCell>
-                        <TableCell className="bg-green-50/30 px-0.5 dark:bg-green-950/20">
-                          <Input
-                            type="text"
-                            placeholder="auto"
-                            value={
-                              unsetEditData[model.model_name]
-                                ?.image_input_ratio || ''
-                            }
-                            onChange={(e) =>
-                              updateUnsetEditData(
-                                model.model_name,
-                                'image_input_ratio',
-                                e.target.value
-                              )
-                            }
-                            className="h-7 bg-muted/30 px-1 text-center text-xs"
-                          />
-                        </TableCell>
-                        <TableCell className="bg-green-50/30 px-0.5 dark:bg-green-950/20">
-                          <Input
-                            type="text"
-                            placeholder="auto"
-                            value={
-                              unsetEditData[model.model_name]
-                                ?.image_output_ratio || ''
-                            }
-                            onChange={(e) =>
-                              updateUnsetEditData(
-                                model.model_name,
-                                'image_output_ratio',
-                                e.target.value
-                              )
-                            }
-                            className="h-7 bg-muted/30 px-1 text-center text-xs"
-                          />
-                        </TableCell>
-                        <TableCell className="bg-green-50/30 px-0.5 dark:bg-green-950/20">
-                          <Input
-                            type="text"
-                            placeholder="auto"
-                            value={
-                              unsetEditData[model.model_name]
-                                ?.audio_input_ratio || ''
-                            }
-                            onChange={(e) =>
-                              updateUnsetEditData(
-                                model.model_name,
-                                'audio_input_ratio',
-                                e.target.value
-                              )
-                            }
-                            className="h-7 bg-muted/30 px-1 text-center text-xs"
-                          />
-                        </TableCell>
-                        <TableCell className="bg-green-50/30 px-0.5 dark:bg-green-950/20">
-                          <Input
-                            type="text"
-                            placeholder="auto"
-                            value={
-                              unsetEditData[model.model_name]
-                                ?.audio_output_ratio || ''
-                            }
-                            onChange={(e) =>
-                              updateUnsetEditData(
-                                model.model_name,
-                                'audio_output_ratio',
-                                e.target.value
-                              )
-                            }
-                            className="h-7 bg-muted/30 px-1 text-center text-xs"
-                          />
+                  </TableHeader>
+                  <TableBody>
+                    {isUnsetLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={16} className="h-24 text-center">
+                          Loading...
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                    ) : unsetModels.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={16} className="h-24 text-center">
+                          🎉 All models are configured!
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      unsetModels.map((model) => (
+                        <TableRow key={model.model_name}>
+                          <TableCell className="px-3 py-2">
+                            <Checkbox
+                              checked={selectedModels.has(model.model_name)}
+                              onCheckedChange={(checked) => {
+                                const newSet = new Set(selectedModels);
+                                if (checked) {
+                                  newSet.add(model.model_name);
+                                } else {
+                                  newSet.delete(model.model_name);
+                                }
+                                setSelectedModels(newSet);
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell
+                            className="sticky left-0 z-10 truncate border-r bg-background px-4 py-2 font-mono text-sm font-medium"
+                            title={model.model_name}
+                          >
+                            {model.model_name}
+                          </TableCell>
+                          {/* 价格输入区域 */}
+                          <TableCell className="border-l bg-blue-50/30 px-0.5 dark:bg-blue-950/20">
+                            <Input
+                              type="text"
+                              placeholder="0.1"
+                              value={
+                                unsetEditData[model.model_name]?.input_price ||
+                                ''
+                              }
+                              onChange={(e) =>
+                                updateUnsetEditData(
+                                  model.model_name,
+                                  'input_price',
+                                  e.target.value
+                                )
+                              }
+                              className="h-7 px-1 text-center text-xs"
+                            />
+                          </TableCell>
+                          <TableCell className="bg-blue-50/30 px-0.5 dark:bg-blue-950/20">
+                            <Input
+                              type="text"
+                              placeholder="0.4"
+                              value={
+                                unsetEditData[model.model_name]?.output_price ||
+                                ''
+                              }
+                              onChange={(e) =>
+                                updateUnsetEditData(
+                                  model.model_name,
+                                  'output_price',
+                                  e.target.value
+                                )
+                              }
+                              className="h-7 px-1 text-center text-xs"
+                            />
+                          </TableCell>
+                          <TableCell className="bg-blue-50/30 px-0.5 dark:bg-blue-950/20">
+                            <Input
+                              type="text"
+                              placeholder="-"
+                              value={
+                                unsetEditData[model.model_name]?.cache_price ||
+                                ''
+                              }
+                              onChange={(e) =>
+                                updateUnsetEditData(
+                                  model.model_name,
+                                  'cache_price',
+                                  e.target.value
+                                )
+                              }
+                              className="h-7 px-1 text-center text-xs"
+                            />
+                          </TableCell>
+                          <TableCell className="bg-blue-50/30 px-0.5 dark:bg-blue-950/20">
+                            <Input
+                              type="text"
+                              placeholder="-"
+                              value={
+                                unsetEditData[model.model_name]
+                                  ?.image_input_price || ''
+                              }
+                              onChange={(e) =>
+                                updateUnsetEditData(
+                                  model.model_name,
+                                  'image_input_price',
+                                  e.target.value
+                                )
+                              }
+                              className="h-7 px-1 text-center text-xs"
+                            />
+                          </TableCell>
+                          <TableCell className="bg-blue-50/30 px-0.5 dark:bg-blue-950/20">
+                            <Input
+                              type="text"
+                              placeholder="-"
+                              value={
+                                unsetEditData[model.model_name]
+                                  ?.image_output_price || ''
+                              }
+                              onChange={(e) =>
+                                updateUnsetEditData(
+                                  model.model_name,
+                                  'image_output_price',
+                                  e.target.value
+                                )
+                              }
+                              className="h-7 px-1 text-center text-xs"
+                            />
+                          </TableCell>
+                          <TableCell className="bg-blue-50/30 px-0.5 dark:bg-blue-950/20">
+                            <Input
+                              type="text"
+                              placeholder="-"
+                              value={
+                                unsetEditData[model.model_name]
+                                  ?.audio_input_price || ''
+                              }
+                              onChange={(e) =>
+                                updateUnsetEditData(
+                                  model.model_name,
+                                  'audio_input_price',
+                                  e.target.value
+                                )
+                              }
+                              className="h-7 px-1 text-center text-xs"
+                            />
+                          </TableCell>
+                          <TableCell className="bg-blue-50/30 px-0.5 dark:bg-blue-950/20">
+                            <Input
+                              type="text"
+                              placeholder="-"
+                              value={
+                                unsetEditData[model.model_name]
+                                  ?.audio_output_price || ''
+                              }
+                              onChange={(e) =>
+                                updateUnsetEditData(
+                                  model.model_name,
+                                  'audio_output_price',
+                                  e.target.value
+                                )
+                              }
+                              className="h-7 px-1 text-center text-xs"
+                            />
+                          </TableCell>
+                          {/* 倍率显示区域（自动计算，也可手动修改） */}
+                          <TableCell className="border-l bg-green-50/30 px-0.5 dark:bg-green-950/20">
+                            <Input
+                              type="text"
+                              placeholder="auto"
+                              value={
+                                unsetEditData[model.model_name]?.model_ratio ||
+                                ''
+                              }
+                              onChange={(e) =>
+                                updateUnsetEditData(
+                                  model.model_name,
+                                  'model_ratio',
+                                  e.target.value
+                                )
+                              }
+                              className="h-7 bg-muted/30 px-1 text-center text-xs"
+                            />
+                          </TableCell>
+                          <TableCell className="bg-green-50/30 px-0.5 dark:bg-green-950/20">
+                            <Input
+                              type="text"
+                              placeholder="auto"
+                              value={
+                                unsetEditData[model.model_name]
+                                  ?.completion_ratio || ''
+                              }
+                              onChange={(e) =>
+                                updateUnsetEditData(
+                                  model.model_name,
+                                  'completion_ratio',
+                                  e.target.value
+                                )
+                              }
+                              className="h-7 bg-muted/30 px-1 text-center text-xs"
+                            />
+                          </TableCell>
+                          <TableCell className="bg-green-50/30 px-0.5 dark:bg-green-950/20">
+                            <Input
+                              type="text"
+                              placeholder="auto"
+                              value={
+                                unsetEditData[model.model_name]?.cache_ratio ||
+                                ''
+                              }
+                              onChange={(e) =>
+                                updateUnsetEditData(
+                                  model.model_name,
+                                  'cache_ratio',
+                                  e.target.value
+                                )
+                              }
+                              className="h-7 bg-muted/30 px-1 text-center text-xs"
+                            />
+                          </TableCell>
+                          <TableCell className="bg-green-50/30 px-0.5 dark:bg-green-950/20">
+                            <Input
+                              type="text"
+                              placeholder="auto"
+                              value={
+                                unsetEditData[model.model_name]
+                                  ?.image_input_ratio || ''
+                              }
+                              onChange={(e) =>
+                                updateUnsetEditData(
+                                  model.model_name,
+                                  'image_input_ratio',
+                                  e.target.value
+                                )
+                              }
+                              className="h-7 bg-muted/30 px-1 text-center text-xs"
+                            />
+                          </TableCell>
+                          <TableCell className="bg-green-50/30 px-0.5 dark:bg-green-950/20">
+                            <Input
+                              type="text"
+                              placeholder="auto"
+                              value={
+                                unsetEditData[model.model_name]
+                                  ?.image_output_ratio || ''
+                              }
+                              onChange={(e) =>
+                                updateUnsetEditData(
+                                  model.model_name,
+                                  'image_output_ratio',
+                                  e.target.value
+                                )
+                              }
+                              className="h-7 bg-muted/30 px-1 text-center text-xs"
+                            />
+                          </TableCell>
+                          <TableCell className="bg-green-50/30 px-0.5 dark:bg-green-950/20">
+                            <Input
+                              type="text"
+                              placeholder="auto"
+                              value={
+                                unsetEditData[model.model_name]
+                                  ?.audio_input_ratio || ''
+                              }
+                              onChange={(e) =>
+                                updateUnsetEditData(
+                                  model.model_name,
+                                  'audio_input_ratio',
+                                  e.target.value
+                                )
+                              }
+                              className="h-7 bg-muted/30 px-1 text-center text-xs"
+                            />
+                          </TableCell>
+                          <TableCell className="bg-green-50/30 px-0.5 dark:bg-green-950/20">
+                            <Input
+                              type="text"
+                              placeholder="auto"
+                              value={
+                                unsetEditData[model.model_name]
+                                  ?.audio_output_ratio || ''
+                              }
+                              onChange={(e) =>
+                                updateUnsetEditData(
+                                  model.model_name,
+                                  'audio_output_ratio',
+                                  e.target.value
+                                )
+                              }
+                              className="h-7 bg-muted/30 px-1 text-center text-xs"
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
 
-            {renderPagination(
-              unsetPage,
-              unsetPageSize,
-              unsetTotal,
-              setUnsetPage,
-              setUnsetPageSize
-            )}
+              {renderPagination(
+                unsetPage,
+                unsetPageSize,
+                unsetTotal,
+                setUnsetPage,
+                setUnsetPageSize
+              )}
+            </div>
           </TabsContent>
 
           {/* ==================== 视频模型定价 Tab ==================== */}
