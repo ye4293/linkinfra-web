@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { renderQuota } from '@/utils/render';
 import TopupForm from '../topup-form';
 import PaymentSection from '../payment-section';
+import PaymentSuccessIndicator from '../payment-success-indicator';
 import InviteCard from '../invite-card';
 import TransactionHistory from '../transaction-history';
 import { Wallet } from 'lucide-react';
@@ -15,7 +16,7 @@ const breadcrumbItems = [
   { title: 'Topup', link: '/dashboard/topup' }
 ];
 
-export default async function TopupPage() {
+export default async function TopupPage({ paid }: { paid?: string }) {
   const session = await auth();
 
   // Fetch user info (balance, etc.)
@@ -37,6 +38,8 @@ export default async function TopupPage() {
           <Breadcrumbs items={breadcrumbItems} />
           <Separator />
         </div>
+
+        {paid && <PaymentSuccessIndicator paid={paid} />}
 
         {/* Account Balance Card */}
         <Card className="border-none bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md">

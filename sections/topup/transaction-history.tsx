@@ -39,6 +39,8 @@ interface TopUpRecord {
   create_time: number;
   complete_time: number;
   status: string;
+  /** Stripe 收据链接，支付回调写入（charge.receipt_url） */
+  receipt_url?: string;
 }
 
 const PAGE_SIZE = 10;
@@ -259,6 +261,7 @@ export default function TransactionHistory() {
                     <TableHead>Credits</TableHead>
                     <TableHead>Currency</TableHead>
                     <TableHead>Amount paid</TableHead>
+                    <TableHead>Receipt</TableHead>
                     <TableHead>Method</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Completed</TableHead>
@@ -294,6 +297,20 @@ export default function TransactionHistory() {
                         </TableCell>
                         <TableCell className="font-medium tabular-nums">
                           {formatPayMoney(record)}
+                        </TableCell>
+                        <TableCell>
+                          {record.receipt_url ? (
+                            <a
+                              href={record.receipt_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-blue-600 hover:underline"
+                            >
+                              View receipt
+                            </a>
+                          ) : (
+                            '-'
+                          )}
                         </TableCell>
                         <TableCell>
                           {paymentMethodLabel(record.payment_method)}

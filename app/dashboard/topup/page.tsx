@@ -4,6 +4,10 @@ export const metadata = {
   title: 'Billing'
 };
 
-export default function page() {
-  return <TopupPageView />;
+export default function page({
+  searchParams
+}: {
+  searchParams: { paid?: string };
+}) {
+  return <TopupPageView paid={searchParams.paid} />;
 }
