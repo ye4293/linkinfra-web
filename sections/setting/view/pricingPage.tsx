@@ -1230,7 +1230,7 @@ export default function PricingPage() {
 
             <div className="space-y-2">
               <Label className="text-base font-semibold">
-                Cache creation ratio
+                Cache write ratio (OpenAI / Claude 5m)
               </Label>
               <Textarea
                 value={createCacheRatio}
@@ -1239,7 +1239,10 @@ export default function PricingPage() {
                 className="h-32 font-mono text-sm"
               />
               <p className="text-sm text-muted-foreground">
-                Per-model cache write multiplier, independent of API/provider.
+                Used for OpenAI cache writes and Claude 5-minute cache writes.
+                Claude 1-hour writes are automatically billed at 2× the input
+                price (1.6× the configured 5-minute write price when set to the
+                standard 1.25× rate).
               </p>
             </div>
 
@@ -1544,9 +1547,7 @@ export default function PricingPage() {
                           />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-sm">
-                            Cache creation price
-                          </Label>
+                          <Label className="text-sm">Cache write / 5m</Label>
                           <Input
                             type="number"
                             step="0.001"
@@ -1787,7 +1788,7 @@ export default function PricingPage() {
                         Cache read
                       </TableHead>
                       <TableHead className="w-[80px] bg-blue-50/50 px-1 text-center text-xs dark:bg-blue-950/30">
-                        Cache write
+                        Cache write / 5m
                       </TableHead>
                       <TableHead className="w-[70px] bg-blue-50/50 px-1 text-center text-xs dark:bg-blue-950/30">
                         Image in
@@ -1811,7 +1812,7 @@ export default function PricingPage() {
                         Cache read
                       </TableHead>
                       <TableHead className="w-[75px] bg-green-50/50 px-1 text-center text-xs dark:bg-green-950/30">
-                        Cache write
+                        Cache write / 5m
                       </TableHead>
                       <TableHead className="w-[65px] bg-green-50/50 px-1 text-center text-xs dark:bg-green-950/30">
                         Image in
