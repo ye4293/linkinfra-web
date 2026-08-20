@@ -1,6 +1,5 @@
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import PageContainer from '@/components/layout/page-container';
-import ProfileCreateForm from '../profile-create-form';
 import { SystemTokenCard } from '../system-token-card';
 
 const breadcrumbItems = [
@@ -14,7 +13,6 @@ export default function ProfileViewPage() {
       <div className="space-y-6">
         <Breadcrumbs items={breadcrumbItems} />
         <SystemTokenCard />
-        <ProfileCreateForm categories={[]} initialData={null} />
       </div>
     </PageContainer>
   );
