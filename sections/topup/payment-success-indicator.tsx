@@ -12,7 +12,7 @@ export default function PaymentSuccessIndicator({ paid }: { paid?: string }) {
 
   useEffect(() => {
     if (!paid) return;
-    toast.success('充值成功，额度已到账');
+    toast.success('Top-up successful. Credits added.');
     router.refresh();
     const url = new URL(window.location.href);
     url.searchParams.delete('paid');
