@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import { getUnixTime } from 'date-fns';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -18,13 +17,15 @@ import {
   ChartTooltip,
   ChartTooltipContent
 } from '@/components/ui/chart';
-import { Skeleton } from '@/components/ui/skeleton';
-import request from '@/app/lib/clientFetch';
-import { GraphData, GraphResult, ModelStat } from '@/lib/types/dashboard';
+import {
+  DashboardHourlyStat,
+  GraphData,
+  ModelStat
+} from '@/lib/types/dashboard';
 import { renderQuota } from '@/utils/render';
 
 interface AnalyticsContentProps {
-  session: any;
+  hourly: DashboardHourlyStat[];
   modelStats: ModelStat[];
 }
 
@@ -56,58 +57,30 @@ function formatTotal(key: string, total: number): string {
 }
 
 export function AnalyticsContent({
-  session,
+  hourly,
   modelStats
 }: AnalyticsContentProps) {
-  const userRole = session?.user?.role;
-  const isAdmin = [10, 100].includes(Number(userRole));
-  const [chartsData, setChartsData] = React.useState<
-    Record<string, GraphData[]>
-  >({
-    quota: [],
-    token: [],
-    count: []
-  });
-  const [loading, setLoading] = React.useState(true);
-
-  React.useEffect(() => {
-    const fetchAllCharts = async () => {
-      setLoading(true);
-      const graphApi = isAdmin
-        ? '/api/dashboard/graph'
-        : '/api/dashboard/graph/self';
-      const timestamp = String(Math.trunc(getUnixTime(new Date())));
-      const quotaPerUnit = getQuotaPerUnit();
-
-      const results: Record<string, GraphData[]> = {
-        quota: [],
-        token: [],
-        count: []
-      };
-
-      await Promise.all(
-        ['quota', 'token', 'count'].map(async (target) => {
-          const params = new URLSearchParams({ time: timestamp, target });
-          const res: GraphResult = await request.get(`${graphApi}?${params}`);
-          if (res?.data && Array.isArray(res.data)) {
-            if (target === 'quota') {
-              results[target] = res.data.map((item) => ({
-                ...item,
-                amount: parseFloat((item.amount / quotaPerUnit).toFixed(3))
-              }));
-            } else {
-              results[target] = res.data;
-            }
-          }
-        })
-      );
-
-      setChartsData(results);
-      setLoading(false);
+  const chartsData = React.useMemo<Record<string, GraphData[]>>(() => {
+    const quotaPerUnit = getQuotaPerUnit();
+    const toGraphData = (
+      getAmount: (item: DashboardHourlyStat) => number
+    ): GraphData[] =>
+      hourly.map((item) => ({
+        hour: new Date(item.timestamp * 1000).toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit'
+        }),
+        timestamp: item.timestamp,
+        amount: getAmount(item)
+      }));
+    return {
+      quota: toGraphData((item) =>
+        Number((item.consumption / quotaPerUnit).toFixed(3))
+      ),
+      token: toGraphData((item) => item.tokens),
+      count: toGraphData((item) => item.times)
     };
-
-    fetchAllCharts();
-  }, [isAdmin]);
+  }, [hourly]);
 
   const totals = React.useMemo(() => {
     const result: Record<string, number> = {};
@@ -138,53 +111,45 @@ export function AnalyticsContent({
                 <CardTitle className="text-sm font-medium">
                   {config.label}
                 </CardTitle>
-                {loading ? (
-                  <Skeleton className="h-7 w-24" />
-                ) : (
-                  <p className="text-2xl font-bold">
-                    {formatTotal(key, totals[key])}
-                  </p>
-                )}
+                <p className="text-2xl font-bold">
+                  {formatTotal(key, totals[key])}
+                </p>
               </CardHeader>
               <CardContent className="pb-4">
-                {loading ? (
-                  <Skeleton className="h-[160px] w-full" />
-                ) : (
-                  <ChartContainer
-                    config={chartConfig}
-                    className="h-[160px] w-full"
+                <ChartContainer
+                  config={chartConfig}
+                  className="h-[160px] w-full"
+                >
+                  <BarChart
+                    data={chartsData[key]}
+                    margin={{ left: 0, right: 0, top: 5, bottom: 0 }}
                   >
-                    <BarChart
-                      data={chartsData[key]}
-                      margin={{ left: 0, right: 0, top: 5, bottom: 0 }}
-                    >
-                      <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                      <XAxis
-                        dataKey="hour"
-                        tickLine={false}
-                        axisLine={false}
-                        tickMargin={4}
-                        tick={{ fontSize: 10 }}
-                        interval="preserveStartEnd"
-                      />
-                      <YAxis hide />
-                      <ChartTooltip
-                        content={
-                          <ChartTooltipContent
-                            className="w-[120px]"
-                            nameKey="amount"
-                            labelFormatter={(value) => `${value}:00`}
-                          />
-                        }
-                      />
-                      <Bar
-                        dataKey="amount"
-                        fill={config.color}
-                        radius={[2, 2, 0, 0]}
-                      />
-                    </BarChart>
-                  </ChartContainer>
-                )}
+                    <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="hour"
+                      tickLine={false}
+                      axisLine={false}
+                      tickMargin={4}
+                      tick={{ fontSize: 10 }}
+                      interval="preserveStartEnd"
+                    />
+                    <YAxis hide />
+                    <ChartTooltip
+                      content={
+                        <ChartTooltipContent
+                          className="w-[120px]"
+                          nameKey="amount"
+                          labelFormatter={(value) => String(value)}
+                        />
+                      }
+                    />
+                    <Bar
+                      dataKey="amount"
+                      fill={config.color}
+                      radius={[2, 2, 0, 0]}
+                    />
+                  </BarChart>
+                </ChartContainer>
               </CardContent>
             </Card>
           );
@@ -199,14 +164,10 @@ export function AnalyticsContent({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-8 w-full" />
-              ))}
-            </div>
-          ) : !modelStats?.length ? (
-            <p className="text-sm text-muted-foreground">No model data today</p>
+          {!modelStats?.length ? (
+            <p className="text-sm text-muted-foreground">
+              No model data in the last 24 hours
+            </p>
           ) : (
             <Table>
               <TableHeader>

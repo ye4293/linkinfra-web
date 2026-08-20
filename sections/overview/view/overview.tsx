@@ -2,7 +2,7 @@
 
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
-import { Wallet, Zap, CalendarDays } from 'lucide-react';
+import { Wallet, Zap, CalendarDays, CreditCard, Users } from 'lucide-react';
 import { BarGraph } from '../bar-graph';
 import { AnalyticsContent } from '../analytics-content';
 import PageContainer from '@/components/layout/page-container';
@@ -18,7 +18,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { renderQuota } from '@/utils/render';
 import { Skeleton } from '@/components/ui/skeleton';
 import request from '@/app/lib/clientFetch';
-import { Dashboard, DashboardResult } from '@/lib/types/dashboard';
+import {
+  Dashboard,
+  DashboardResult,
+  DashboardStatsResult
+} from '@/lib/types/dashboard';
 import { useLocale } from '@/components/providers/locale-provider';
 import { cn } from '@/lib/utils';
 
@@ -50,10 +54,29 @@ export default function OverViewPage() {
           ? '/api/dashboard'
           : '/api/dashboard/self';
 
-        const res: DashboardResult = await request.get(userApi);
+        const statsApi = isAdmin(userRole)
+          ? '/api/dashboard/stats'
+          : '/api/dashboard/stats/self';
+        const [dashboardResponse, statsResponse] = await Promise.all([
+          request.get(userApi),
+          request.get(statsApi)
+        ]);
+        const res = dashboardResponse as unknown as DashboardResult;
+        const statsRes = statsResponse as unknown as DashboardStatsResult;
 
-        if (res?.success && res?.data) {
-          setDashboardData(res.data);
+        if (res?.success && res?.data && statsRes?.success && statsRes?.data) {
+          setDashboardData({
+            ...res.data,
+            hourly: statsRes?.data?.hourly || [],
+            model_stats: statsRes?.data?.model_stats || [],
+            user_stats: statsRes?.data?.user_stats || [],
+            recharge_amount: statsRes?.data?.recharge_amount || 0,
+            cached_until: statsRes?.data?.cached_until
+          });
+        } else {
+          throw new Error(
+            statsRes?.message || res?.message || 'Dashboard data unavailable'
+          );
         }
       } catch (error) {
         console.error('Dashboard data fetch failed:', error);
@@ -74,8 +97,8 @@ export default function OverViewPage() {
   return (
     <PageContainer scrollable>
       <div className="space-y-2">
-        <div className="flex items-center justify-between space-y-2">
-          <h2 className="text-2xl font-bold tracking-tight">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold tracking-tight sm:text-2xl">
             {t.dashboard.welcome}
             {userName ? `, ${userName}` : ''} 👋
             <span className="ml-2 text-base font-normal text-muted-foreground">
@@ -93,7 +116,12 @@ export default function OverViewPage() {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="overview" className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div
+              className={cn(
+                'grid gap-3 sm:grid-cols-2 lg:gap-4',
+                isAdmin(userRole) ? 'xl:grid-cols-4' : 'lg:grid-cols-3'
+              )}
+            >
               {/* Balance card */}
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -228,10 +256,38 @@ export default function OverViewPage() {
                   )}
                 </CardContent>
               </Card>
+
+              {isAdmin(userRole) && (
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      Recharge · 24h
+                    </CardTitle>
+                    <CreditCard className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    {loading ? (
+                      <div className="space-y-3">
+                        <Skeleton className="h-9 w-24" />
+                        <Skeleton className="h-3 w-40" />
+                      </div>
+                    ) : (
+                      <>
+                        <div className="text-3xl font-semibold tabular-nums tracking-tight">
+                          ${(dashboardData.recharge_amount || 0).toFixed(2)}
+                        </div>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Successful payments · 10 min cache
+                        </p>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
             </div>
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-7">
               <div className="lg:col-span-4">
-                <BarGraph session={session} />
+                <BarGraph data={dashboardData.hourly || []} />
               </div>
               <Card className="lg:col-span-3">
                 <CardHeader>
@@ -263,10 +319,51 @@ export default function OverViewPage() {
                 </CardContent>
               </Card>
             </div>
+            {isAdmin(userRole) && (
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div className="space-y-1">
+                    <CardTitle>Top customers</CardTitle>
+                    <CardDescription>
+                      Consumption in the last 24 hours
+                    </CardDescription>
+                  </div>
+                  <Users className="h-5 w-5 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  {(dashboardData.user_stats || []).length ? (
+                    <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-5">
+                      {(dashboardData.user_stats || []).map((user, index) => (
+                        <div
+                          key={user.user_id}
+                          className="flex min-w-0 items-center gap-3 rounded-lg border bg-muted/20 px-3 py-2.5"
+                        >
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                            {index + 1}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium">
+                              {user.username || `User ${user.user_id}`}
+                            </p>
+                            <p className="text-xs tabular-nums text-muted-foreground">
+                              {renderQuota(user.quota_sum)}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="py-6 text-center text-sm text-muted-foreground">
+                      No customer usage in the last 24 hours
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
           <TabsContent value="analytics" className="space-y-4">
             <AnalyticsContent
-              session={session}
+              hourly={dashboardData.hourly || []}
               modelStats={dashboardData.model_stats || []}
             />
           </TabsContent>
