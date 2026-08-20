@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,45 +34,9 @@ const extractApiErrorMessage = (result: any, fallback: string) => {
 export default function PaymentSection() {
   const [amount, setAmount] = useState<number | ''>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [payAmount, setPayAmount] = useState('');
 
-  useEffect(() => {
-    if (!amount || amount <= 0) {
-      setPayAmount('');
-      return;
-    }
-
-    let cancelled = false;
-
-    const fetchPayAmount = async () => {
-      try {
-        const res = await fetch('/api/user/stripe/amount', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({
-            amount: Number(amount),
-            payment_method: 'stripe'
-          })
-        });
-        const result = await res.json().catch(() => null);
-        if (!cancelled) {
-          if (res.ok && result?.success) {
-            setPayAmount(String(result.data || ''));
-          } else {
-            setPayAmount('');
-          }
-        }
-      } catch {
-        if (!cancelled) setPayAmount('');
-      }
-    };
-
-    fetchPayAmount();
-    return () => {
-      cancelled = true;
-    };
-  }, [amount]);
+  // StripePriceId 单价为 $1/unit，amount 即美金数量，直接展示无需后端预算。
+  const payAmount = amount ? String(amount) : '';
 
   const handlePay = async () => {
     if (!amount || amount <= 0) {
@@ -146,6 +110,11 @@ export default function PaymentSection() {
               <div className="mt-0 font-medium text-foreground">
                 You pay: {payAmount ? `$${payAmount}` : '--'}
               </div>
+              <p className="mt-1 text-xs">
+                Credited balance is based on the net amount Stripe receives
+                after processing fees, so it may be slightly less than the
+                amount paid.
+              </p>
             </div>
           )}
         </div>

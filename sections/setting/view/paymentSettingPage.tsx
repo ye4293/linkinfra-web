@@ -46,7 +46,6 @@ export default function PaymentSettingPage() {
   const [stripeApiSecret, setStripeApiSecret] = useState('');
   const [stripeWebhookSecret, setStripeWebhookSecret] = useState('');
   const [stripePriceId, setStripePriceId] = useState('');
-  const [stripeUnitPrice, setStripeUnitPrice] = useState('7.3');
   const [stripeMinTopUp, setStripeMinTopUp] = useState('1');
   const [stripePromotionCodesEnabled, setStripePromotionCodesEnabled] =
     useState(false);
@@ -73,9 +72,6 @@ export default function PaymentSettingPage() {
         );
         setStripePriceId(
           String(getOptionValue(options, 'StripePriceId') || '')
-        );
-        setStripeUnitPrice(
-          String(getOptionValue(options, 'StripeUnitPrice') || '7.3')
         );
         setStripeMinTopUp(
           String(getOptionValue(options, 'StripeMinTopUp') || '1')
@@ -123,7 +119,6 @@ export default function PaymentSettingPage() {
           value: stripePaymentEnabled.toString()
         },
         { key: 'StripePriceId', value: stripePriceId.trim() },
-        { key: 'StripeUnitPrice', value: stripeUnitPrice.trim() || '7.3' },
         { key: 'StripeMinTopUp', value: stripeMinTopUp.trim() || '1' },
         {
           key: 'StripePromotionCodesEnabled',
@@ -300,23 +295,6 @@ export default function PaymentSettingPage() {
                   <p className="text-xs text-muted-foreground">
                     The price ID obtained after creating a Product → Price in
                     the Stripe Dashboard.
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="stripe-unit-price">Unit price (USD)</Label>
-                  <Input
-                    id="stripe-unit-price"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={stripeUnitPrice}
-                    onChange={(e) => setStripeUnitPrice(e.target.value)}
-                    placeholder="e.g. 7.3"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Dollar amount per top-up unit — used for frontend display
-                    and backend validation.
                   </p>
                 </div>
 
