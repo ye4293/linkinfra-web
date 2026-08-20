@@ -63,6 +63,7 @@ interface ModelPriceInfo {
   price_type: string;
   has_ratio: boolean;
   cache_ratio: number;
+  create_cache_ratio: number;
   image_input_ratio: number;
   image_output_ratio: number;
   audio_input_ratio: number;
@@ -75,6 +76,7 @@ interface EditingRow {
   input_price: string;
   output_price: string;
   cache_price: string;
+  create_cache_price: string;
   image_input_price: string;
   image_output_price: string;
   audio_input_price: string;
@@ -85,6 +87,7 @@ interface EditingRow {
   model_ratio: string;
   completion_ratio: string;
   cache_ratio: string;
+  create_cache_ratio: string;
   image_input_ratio: string;
   image_output_ratio: string;
   audio_input_ratio: string;
@@ -97,6 +100,7 @@ interface UnsetModelEditData {
   input_price: string; // 文字输入价格
   output_price: string; // 文字输出价格
   cache_price: string; // 缓存价格
+  create_cache_price: string; // 缓存创建价格
   image_input_price: string; // 图片输入价格
   image_output_price: string; // 图片输出价格
   audio_input_price: string; // 音频输入价格
@@ -105,6 +109,7 @@ interface UnsetModelEditData {
   model_ratio: string;
   completion_ratio: string;
   cache_ratio: string;
+  create_cache_ratio: string;
   image_input_ratio: string;
   image_output_ratio: string;
   audio_input_ratio: string;
@@ -180,6 +185,7 @@ export default function PricingPage() {
   const [modelRatio, setModelRatio] = useState('');
   const [completionRatio, setCompletionRatio] = useState('');
   const [cacheRatio, setCacheRatio] = useState('');
+  const [createCacheRatio, setCreateCacheRatio] = useState('');
   const [audioInputRatio, setAudioInputRatio] = useState('');
   const [audioOutputRatio, setAudioOutputRatio] = useState('');
   const [imageInputRatio, setImageInputRatio] = useState('');
@@ -304,6 +310,11 @@ export default function PricingPage() {
           (o: Option) => o.key === 'CacheRatio'
         );
         setCacheRatio(formatJSON(cacheRatioOption?.value) || '{}');
+
+        const createCacheRatioOption = options.find(
+          (o: Option) => o.key === 'CreateCacheRatio'
+        );
+        setCreateCacheRatio(formatJSON(createCacheRatioOption?.value) || '{}');
       }
     } catch (err) {
       setError(
@@ -359,6 +370,7 @@ export default function PricingPage() {
             input_price: '',
             output_price: '',
             cache_price: '',
+            create_cache_price: '',
             image_input_price: '',
             image_output_price: '',
             audio_input_price: '',
@@ -366,6 +378,7 @@ export default function PricingPage() {
             model_ratio: '',
             completion_ratio: '',
             cache_ratio: '',
+            create_cache_ratio: '',
             image_input_ratio: '',
             image_output_ratio: '',
             audio_input_ratio: '',
@@ -445,6 +458,7 @@ export default function PricingPage() {
         !validateJSON(modelRatio, p.modelRatio) ||
         !validateJSON(completionRatio, p.completionRatio) ||
         !validateJSON(cacheRatio, p.cacheRatio) ||
+        !validateJSON(createCacheRatio, 'Create cache ratio') ||
         !validateJSON(audioInputRatio, p.audioInputRatio) ||
         !validateJSON(audioOutputRatio, p.audioOutputRatio) ||
         !validateJSON(imageInputRatio, p.imageInputRatio) ||
@@ -467,6 +481,7 @@ export default function PricingPage() {
       await saveOption('ModelRatio', modelRatio);
       await saveOption('CompletionRatio', completionRatio);
       await saveOption('CacheRatio', cacheRatio);
+      await saveOption('CreateCacheRatio', createCacheRatio);
       await saveOption('AudioInputRatio', audioInputRatio);
       await saveOption('AudioOutputRatio', audioOutputRatio);
       await saveOption('ImageInputRatio', imageInputRatio);
@@ -494,6 +509,9 @@ export default function PricingPage() {
         subRatioToPrice(model.completion_ratio || 0, mr)
       ),
       cache_price: formatPriceStr(subRatioToPrice(model.cache_ratio || 0, mr)),
+      create_cache_price: formatPriceStr(
+        subRatioToPrice(model.create_cache_ratio || 0, mr)
+      ),
       image_input_price: formatPriceStr(
         subRatioToPrice(model.image_input_ratio || 0, mr)
       ),
@@ -511,6 +529,7 @@ export default function PricingPage() {
       model_ratio: mr.toString(),
       completion_ratio: (model.completion_ratio || 0).toString(),
       cache_ratio: (model.cache_ratio || 0).toString(),
+      create_cache_ratio: (model.create_cache_ratio || 0).toString(),
       image_input_ratio: (model.image_input_ratio || 0).toString(),
       image_output_ratio: (model.image_output_ratio || 0).toString(),
       audio_input_ratio: (model.audio_input_ratio || 0).toString(),
@@ -531,6 +550,7 @@ export default function PricingPage() {
       | 'input_price'
       | 'output_price'
       | 'cache_price'
+      | 'create_cache_price'
       | 'image_input_price'
       | 'image_output_price'
       | 'audio_input_price'
@@ -557,6 +577,7 @@ export default function PricingPage() {
             ratioKey:
               | 'completion_ratio'
               | 'cache_ratio'
+              | 'create_cache_ratio'
               | 'image_input_ratio'
               | 'image_output_ratio'
               | 'audio_input_ratio'
@@ -569,6 +590,7 @@ export default function PricingPage() {
           };
           recompute(next.output_price, 'completion_ratio');
           recompute(next.cache_price, 'cache_ratio');
+          recompute(next.create_cache_price, 'create_cache_ratio');
           recompute(next.image_input_price, 'image_input_ratio');
           recompute(next.image_output_price, 'image_output_ratio');
           recompute(next.audio_input_price, 'audio_input_ratio');
@@ -583,6 +605,7 @@ export default function PricingPage() {
       const subMap: Record<string, string> = {
         output_price: 'completion_ratio',
         cache_price: 'cache_ratio',
+        create_cache_price: 'create_cache_ratio',
         image_input_price: 'image_input_ratio',
         image_output_price: 'image_output_ratio',
         audio_input_price: 'audio_input_ratio',
@@ -618,6 +641,9 @@ export default function PricingPage() {
       }
       if (editingRow.cache_ratio) {
         payload.cache_ratio = parseFloat(editingRow.cache_ratio);
+      }
+      if (editingRow.create_cache_ratio) {
+        payload.create_cache_ratio = parseFloat(editingRow.create_cache_ratio);
       }
       if (editingRow.image_input_ratio) {
         payload.image_input_ratio = parseFloat(editingRow.image_input_ratio);
@@ -668,6 +694,7 @@ export default function PricingPage() {
         input_price: '',
         output_price: '',
         cache_price: '',
+        create_cache_price: '',
         image_input_price: '',
         image_output_price: '',
         audio_input_price: '',
@@ -675,6 +702,7 @@ export default function PricingPage() {
         model_ratio: '',
         completion_ratio: '',
         cache_ratio: '',
+        create_cache_ratio: '',
         image_input_ratio: '',
         image_output_ratio: '',
         audio_input_ratio: '',
@@ -706,6 +734,13 @@ export default function PricingPage() {
           if (!isNaN(cachePrice) && cachePrice > 0) {
             newData.cache_ratio = formatRatio(
               priceToRatio(cachePrice, inputPrice)
+            );
+          }
+
+          const createCachePrice = parseFloat(newData.create_cache_price);
+          if (!isNaN(createCachePrice) && createCachePrice > 0) {
+            newData.create_cache_ratio = formatRatio(
+              priceToRatio(createCachePrice, inputPrice)
             );
           }
 
@@ -768,6 +803,14 @@ export default function PricingPage() {
         } else {
           newData.cache_ratio = '';
         }
+      }
+
+      if (field === 'create_cache_price' && baseInputPrice > 0) {
+        const createCachePrice = parseFloat(value);
+        newData.create_cache_ratio =
+          !isNaN(createCachePrice) && createCachePrice > 0
+            ? formatRatio(priceToRatio(createCachePrice, baseInputPrice))
+            : '';
       }
 
       // 当图片输入价格变化时，计算图片输入倍率
@@ -843,6 +886,11 @@ export default function PricingPage() {
 
         if (editData.cache_ratio) {
           modelData.cache_ratio = parseFloat(editData.cache_ratio);
+        }
+        if (editData.create_cache_ratio) {
+          modelData.create_cache_ratio = parseFloat(
+            editData.create_cache_ratio
+          );
         }
         if (editData.image_input_ratio) {
           modelData.image_input_ratio = parseFloat(editData.image_input_ratio);
@@ -1166,7 +1214,9 @@ export default function PricingPage() {
 
             {/* 提示缓存倍率 */}
             <div className="space-y-2">
-              <Label className="text-base font-semibold">{p.cacheRatio}</Label>
+              <Label className="text-base font-semibold">
+                Cache read ratio
+              </Label>
               <Textarea
                 value={cacheRatio}
                 onChange={(e) => setCacheRatio(e.target.value)}
@@ -1175,6 +1225,21 @@ export default function PricingPage() {
               />
               <p className="text-sm text-muted-foreground">
                 {p.cacheRatioHint}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-base font-semibold">
+                Cache creation ratio
+              </Label>
+              <Textarea
+                value={createCacheRatio}
+                onChange={(e) => setCreateCacheRatio(e.target.value)}
+                placeholder="{}"
+                className="h-32 font-mono text-sm"
+              />
+              <p className="text-sm text-muted-foreground">
+                Per-model cache write multiplier, independent of API/provider.
               </p>
             </div>
 
@@ -1283,7 +1348,8 @@ export default function PricingPage() {
                     <TableHead className="w-[90px]">Per-call (¥)</TableHead>
                     <TableHead className="w-[100px]">Input ($/1M)</TableHead>
                     <TableHead className="w-[100px]">Output ($/1M)</TableHead>
-                    <TableHead className="w-[70px]">Cache</TableHead>
+                    <TableHead className="w-[90px]">Cache read</TableHead>
+                    <TableHead className="w-[90px]">Cache write</TableHead>
                     <TableHead className="w-[70px]">Image in</TableHead>
                     <TableHead className="w-[70px]">Image out</TableHead>
                     <TableHead className="w-[70px]">Audio in</TableHead>
@@ -1295,13 +1361,13 @@ export default function PricingPage() {
                 <TableBody>
                   {isConfiguredLoading ? (
                     <TableRow>
-                      <TableCell colSpan={11} className="h-24 text-center">
+                      <TableCell colSpan={12} className="h-24 text-center">
                         Loading...
                       </TableCell>
                     </TableRow>
                   ) : configuredModels.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={11} className="h-24 text-center">
+                      <TableCell colSpan={12} className="h-24 text-center">
                         No data
                       </TableCell>
                     </TableRow>
@@ -1330,6 +1396,13 @@ export default function PricingPage() {
                           {model.cache_ratio > 0 && model.input_price > 0
                             ? `$${formatPrice(
                                 model.cache_ratio * model.input_price
+                              )}`
+                            : '-'}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {model.create_cache_ratio > 0 && model.input_price > 0
+                            ? `$${formatPrice(
+                                model.create_cache_ratio * model.input_price
                               )}`
                             : '-'}
                         </TableCell>
@@ -1459,7 +1532,7 @@ export default function PricingPage() {
                       </p>
                       <div className="grid grid-cols-3 gap-4">
                         <div className="space-y-1.5">
-                          <Label className="text-sm">Cache price</Label>
+                          <Label className="text-sm">Cache read price</Label>
                           <Input
                             type="number"
                             step="0.001"
@@ -1468,6 +1541,23 @@ export default function PricingPage() {
                               updateEditingPrice('cache_price', e.target.value)
                             }
                             placeholder="Default = output"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-sm">
+                            Cache creation price
+                          </Label>
+                          <Input
+                            type="number"
+                            step="0.001"
+                            value={editingRow.create_cache_price}
+                            onChange={(e) =>
+                              updateEditingPrice(
+                                'create_cache_price',
+                                e.target.value
+                              )
+                            }
+                            placeholder="Default = input"
                           />
                         </div>
                         <div className="space-y-1.5">
@@ -1646,7 +1736,7 @@ export default function PricingPage() {
                 calculated ratios.
               </div>
               <div className="overflow-x-auto rounded-xl border bg-card shadow-sm [&_input]:h-9 [&_input]:min-w-[92px] [&_td]:py-2">
-                <Table className="w-full min-w-[2050px] table-fixed">
+                <Table className="w-full min-w-[2250px] table-fixed">
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-12 px-3">
@@ -1672,13 +1762,13 @@ export default function PricingPage() {
                         Model name
                       </TableHead>
                       <TableHead
-                        colSpan={7}
+                        colSpan={8}
                         className="border-l bg-blue-50/60 px-3 py-3 text-center text-sm font-semibold text-blue-900 dark:bg-blue-950/30 dark:text-blue-200"
                       >
                         Price input ($/1M tokens)
                       </TableHead>
                       <TableHead
-                        colSpan={7}
+                        colSpan={8}
                         className="border-l bg-green-50/60 px-3 py-3 text-center text-sm font-semibold text-green-900 dark:bg-green-950/30 dark:text-green-200"
                       >
                         Ratio (auto-calculated)
@@ -1694,7 +1784,10 @@ export default function PricingPage() {
                         Text out
                       </TableHead>
                       <TableHead className="w-[70px] bg-blue-50/50 px-1 text-center text-xs dark:bg-blue-950/30">
-                        Cache
+                        Cache read
+                      </TableHead>
+                      <TableHead className="w-[80px] bg-blue-50/50 px-1 text-center text-xs dark:bg-blue-950/30">
+                        Cache write
                       </TableHead>
                       <TableHead className="w-[70px] bg-blue-50/50 px-1 text-center text-xs dark:bg-blue-950/30">
                         Image in
@@ -1715,7 +1808,10 @@ export default function PricingPage() {
                         Completion
                       </TableHead>
                       <TableHead className="w-[65px] bg-green-50/50 px-1 text-center text-xs dark:bg-green-950/30">
-                        Cache
+                        Cache read
+                      </TableHead>
+                      <TableHead className="w-[75px] bg-green-50/50 px-1 text-center text-xs dark:bg-green-950/30">
+                        Cache write
                       </TableHead>
                       <TableHead className="w-[65px] bg-green-50/50 px-1 text-center text-xs dark:bg-green-950/30">
                         Image in
@@ -1734,13 +1830,13 @@ export default function PricingPage() {
                   <TableBody>
                     {isUnsetLoading ? (
                       <TableRow>
-                        <TableCell colSpan={16} className="h-24 text-center">
+                        <TableCell colSpan={18} className="h-24 text-center">
                           Loading...
                         </TableCell>
                       </TableRow>
                     ) : unsetModels.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={16} className="h-24 text-center">
+                        <TableCell colSpan={18} className="h-24 text-center">
                           🎉 All models are configured!
                         </TableCell>
                       </TableRow>
@@ -1816,6 +1912,24 @@ export default function PricingPage() {
                                 updateUnsetEditData(
                                   model.model_name,
                                   'cache_price',
+                                  e.target.value
+                                )
+                              }
+                              className="h-7 px-1 text-center text-xs"
+                            />
+                          </TableCell>
+                          <TableCell className="bg-blue-50/30 px-0.5 dark:bg-blue-950/20">
+                            <Input
+                              type="text"
+                              placeholder="-"
+                              value={
+                                unsetEditData[model.model_name]
+                                  ?.create_cache_price || ''
+                              }
+                              onChange={(e) =>
+                                updateUnsetEditData(
+                                  model.model_name,
+                                  'create_cache_price',
                                   e.target.value
                                 )
                               }
@@ -1943,6 +2057,24 @@ export default function PricingPage() {
                                 updateUnsetEditData(
                                   model.model_name,
                                   'cache_ratio',
+                                  e.target.value
+                                )
+                              }
+                              className="h-7 bg-muted/30 px-1 text-center text-xs"
+                            />
+                          </TableCell>
+                          <TableCell className="bg-green-50/30 px-0.5 dark:bg-green-950/20">
+                            <Input
+                              type="text"
+                              placeholder="auto"
+                              value={
+                                unsetEditData[model.model_name]
+                                  ?.create_cache_ratio || ''
+                              }
+                              onChange={(e) =>
+                                updateUnsetEditData(
+                                  model.model_name,
+                                  'create_cache_ratio',
                                   e.target.value
                                 )
                               }
