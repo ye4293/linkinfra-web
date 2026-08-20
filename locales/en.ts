@@ -422,6 +422,7 @@ const en: Locale = {
       displayName: 'Display Name',
       email: 'Email',
       group: 'Group',
+      inviter: 'Inviter',
       statistics: 'Usage',
       role: 'Role',
       status: 'Status',

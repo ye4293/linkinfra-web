@@ -106,6 +106,22 @@ export const useUserColumns = (): ColumnDef<UserSelf>[] => {
         )
       },
       {
+        accessorKey: 'inviter_id',
+        header: () => (
+          <div className="text-center">{t.userPage.columns.inviter}</div>
+        ),
+        cell: ({ row }) => {
+          // 没有邀请人（inviter_id 为 0）默认显示 root 的 id=1
+          const inviterId = row.getValue<number>('inviter_id');
+          const display = inviterId && inviterId > 0 ? inviterId : 1;
+          return (
+            <div className="text-center tabular-nums text-muted-foreground">
+              {display}
+            </div>
+          );
+        }
+      },
+      {
         id: 'statistics',
         header: () => (
           <div className="text-center">{t.userPage.columns.statistics}</div>

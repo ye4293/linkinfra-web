@@ -418,6 +418,7 @@ const zh = {
       displayName: 'Display name',
       email: 'Email',
       group: 'Group',
+      inviter: '邀请人',
       statistics: 'Usage stats',
       role: 'Role',
       status: 'Status',
