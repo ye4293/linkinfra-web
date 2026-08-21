@@ -41,6 +41,8 @@ interface GroupFormData {
   discount: number;
   sort_order: number;
   description: string;
+  commission_rate: number;
+  upgrade_threshold_usd: number;
 }
 
 const defaultFormData: GroupFormData = {
@@ -48,10 +50,13 @@ const defaultFormData: GroupFormData = {
   display_name: '',
   discount: 100,
   sort_order: 0,
-  description: ''
+  description: '',
+  commission_rate: 0,
+  upgrade_threshold_usd: 0
 };
 
 export default function DiscountPage() {
+  const [quotaPerUnit, setQuotaPerUnit] = useState(500000);
   // ==================== 用户分组折扣状态 ====================
   const [groups, setGroups] = useState<GroupConfigItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -94,6 +99,12 @@ export default function DiscountPage() {
   }, []);
 
   useEffect(() => {
+    const configuredQuotaPerUnit = Number(
+      window.localStorage.getItem('quota_per_unit') || 500000
+    );
+    if (Number.isFinite(configuredQuotaPerUnit) && configuredQuotaPerUnit > 0) {
+      setQuotaPerUnit(configuredQuotaPerUnit);
+    }
     fetchGroups();
   }, [fetchGroups]);
 
@@ -111,7 +122,11 @@ export default function DiscountPage() {
       display_name: group.display_name,
       discount: Math.round(group.discount * 100),
       sort_order: group.sort_order,
-      description: group.description
+      description: group.description,
+      commission_rate: Number((group.commission_rate * 100).toFixed(4)),
+      upgrade_threshold_usd: Number(
+        (group.upgrade_threshold / quotaPerUnit).toFixed(6)
+      )
     });
     setDialogOpen(true);
   };
@@ -129,14 +144,25 @@ export default function DiscountPage() {
       toast.error('Discount must be between 0 and 100.');
       return;
     }
+    if (formData.commission_rate < 0 || formData.commission_rate > 100) {
+      toast.error('Commission rate must be between 0 and 100.');
+      return;
+    }
+    if (formData.upgrade_threshold_usd < 0) {
+      toast.error('Upgrade threshold cannot be negative.');
+      return;
+    }
 
     try {
       setIsSaving(true);
       const isEdit = editingGroup !== null;
       // 表单里 discount 是百分比（0-100），后端/计费语义是乘数（0-1），API 边界处转一次
+      const { upgrade_threshold_usd, ...groupData } = formData;
       const payload = {
-        ...formData,
-        discount: formData.discount / 100
+        ...groupData,
+        discount: formData.discount / 100,
+        commission_rate: formData.commission_rate / 100,
+        upgrade_threshold: Math.round(upgrade_threshold_usd * quotaPerUnit)
       };
       const body = isEdit ? { ...payload, id: editingGroup.id } : payload;
 
@@ -236,6 +262,8 @@ export default function DiscountPage() {
                     <TableHead className="w-[120px]">Group key</TableHead>
                     <TableHead className="w-[120px]">Display name</TableHead>
                     <TableHead className="w-[100px]">Discount rate</TableHead>
+                    <TableHead className="w-[120px]">Upgrade at</TableHead>
+                    <TableHead className="w-[110px]">Commission</TableHead>
                     <TableHead className="w-[80px]">Order</TableHead>
                     <TableHead>Description</TableHead>
                     <TableHead className="w-[100px] text-right">
@@ -246,14 +274,14 @@ export default function DiscountPage() {
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="h-24 text-center">
+                      <TableCell colSpan={8} className="h-24 text-center">
                         <Loader2 className="mx-auto h-5 w-5 animate-spin text-muted-foreground" />
                       </TableCell>
                     </TableRow>
                   ) : groups.length === 0 ? (
                     <TableRow>
                       <TableCell
-                        colSpan={6}
+                        colSpan={8}
                         className="h-24 text-center text-muted-foreground"
                       >
                         No groups configured. Click "Add group" to create one.
@@ -274,6 +302,12 @@ export default function DiscountPage() {
                           >
                             {Math.round(group.discount * 100)}%
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          ${(group.upgrade_threshold / quotaPerUnit).toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          {(group.commission_rate * 100).toFixed(2)}%
                         </TableCell>
                         <TableCell>{group.sort_order}</TableCell>
                         <TableCell className="max-w-[300px] truncate text-sm text-muted-foreground">
@@ -380,6 +414,51 @@ export default function DiscountPage() {
               <p className="text-xs text-muted-foreground">
                 100 = full price (no discount), 50 = 50% off, 0 = free.
               </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="upgrade_threshold_usd">
+                  Upgrade threshold ($)
+                </Label>
+                <Input
+                  id="upgrade_threshold_usd"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={formData.upgrade_threshold_usd}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      upgrade_threshold_usd: Number(e.target.value)
+                    })
+                  }
+                />
+                <p className="text-xs text-muted-foreground">
+                  Cumulative real top-up required to reach this group.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="commission_rate">Referral commission (%)</Label>
+                <Input
+                  id="commission_rate"
+                  type="number"
+                  min={0}
+                  max={100}
+                  step="0.01"
+                  value={formData.commission_rate}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      commission_rate: Number(e.target.value)
+                    })
+                  }
+                />
+                <p className="text-xs text-muted-foreground">
+                  Reward paid when an invited user tops up.
+                </p>
+              </div>
             </div>
 
             <div className="space-y-2">

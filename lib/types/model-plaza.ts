@@ -26,6 +26,10 @@ export interface GroupConfigItem {
   discount: number;
   sort_order: number;
   description: string;
+  /** Referral commission multiplier (0-1). */
+  commission_rate: number;
+  /** Cumulative real top-up quota required to reach this group. */
+  upgrade_threshold: number;
 }
 
 export interface ProviderInfo {
