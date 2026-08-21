@@ -22,13 +22,26 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardDescription
+} from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserSelf } from '@/lib/types/user';
 import { toast } from 'sonner';
-import { Plus } from 'lucide-react';
+import {
+  ArrowLeft,
+  BadgeDollarSign,
+  Link2,
+  Plus,
+  Save,
+  UserRound
+} from 'lucide-react';
 import ChannelRatiosEditor from './channel-ratios-editor';
 
 function getQuotaPerUnit(): number {
@@ -261,21 +274,25 @@ export default function UserForm() {
   }
 
   return (
-    <Card className="mx-auto w-full">
-      <CardHeader>
-        <CardTitle className="text-left text-2xl font-bold">
+    <Card className="mx-auto w-full max-w-7xl overflow-hidden border-border/70 shadow-sm">
+      <CardHeader className="border-b bg-muted/20 px-4 py-5 sm:px-6 lg:px-8">
+        <CardTitle className="text-left text-xl font-semibold tracking-tight sm:text-2xl">
           User Information
         </CardTitle>
+        <CardDescription>
+          Manage account details, balance, access tier, and channel-specific
+          pricing.
+        </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-0">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)}>
             <Tabs defaultValue="basic" className="w-full">
               <TabsList
                 className={
                   isCreate
-                    ? 'grid w-full grid-cols-1'
-                    : 'grid w-full grid-cols-2'
+                    ? 'm-4 grid h-11 grid-cols-1 sm:mx-6 lg:mx-8'
+                    : 'm-4 grid h-11 grid-cols-2 sm:mx-6 lg:mx-8 lg:max-w-lg'
                 }
               >
                 <TabsTrigger value="basic">Basic info</TabsTrigger>
@@ -286,228 +303,279 @@ export default function UserForm() {
                 )}
               </TabsList>
 
-              <TabsContent value="basic" className="space-y-6 pt-4">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="username"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Username</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter your username" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="display_name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Display name</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Enter your display name"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Password</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="password"
-                            placeholder="Enter your password"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  {!isCreate && (
+              <TabsContent
+                value="basic"
+                className="m-0 space-y-8 px-4 pb-7 pt-2 sm:px-6 lg:px-8"
+              >
+                <section className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <UserRound className="h-4 w-4 text-primary" />
+                    <h2 className="text-sm font-semibold">Account details</h2>
+                  </div>
+                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                     <FormField
                       control={form.control}
-                      name="group"
+                      name="username"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Group</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value || ''}
-                            disabled={isLoading}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select a group" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {groupOptions.map((group) => (
-                                <SelectItem key={group} value={group}>
-                                  {group}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <FormLabel>Username</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Enter your username"
+                              {...field}
+                            />
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                  )}
-                </div>
-                {!isCreate && (
-                  <>
-                    <Separator />
-
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="display_name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Display name</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Enter your display name"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Password</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="password"
+                              placeholder="Enter your password"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    {!isCreate && (
                       <FormField
                         control={form.control}
-                        name="quota"
-                        render={() => (
+                        name="group"
+                        render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Balance (USD)</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                                  $
-                                </span>
-                                <Input
-                                  type="number"
-                                  step="0.01"
-                                  placeholder="0.00"
-                                  className="pl-7"
-                                  value={dollarDisplay}
-                                  onChange={(e) => {
-                                    const val = e.target.value;
-                                    setDollarDisplay(val);
-                                    const dollars = parseFloat(val);
-                                    if (!isNaN(dollars)) {
-                                      form.setValue(
-                                        'quota',
-                                        dollarsToQuota(dollars)
-                                      );
-                                    }
-                                  }}
-                                />
-                              </div>
-                            </FormControl>
+                            <FormLabel>Group</FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              value={field.value || ''}
+                              disabled={isLoading}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select a group" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {groupOptions.map((group) => (
+                                  <SelectItem key={group} value={group}>
+                                    {group}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">
-                          Adjust Balance
-                        </label>
-                        <div className="flex items-center gap-2">
-                          <div className="relative flex-1">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                              $
-                            </span>
-                            <Input
-                              type="number"
-                              step="0.01"
-                              placeholder="+10 or -5"
-                              className="pl-7"
-                              value={adjustAmount}
-                              onChange={(e) => setAdjustAmount(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  e.preventDefault();
-                                  handleAdjustBalance();
-                                }
-                              }}
-                            />
-                          </div>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={handleAdjustBalance}
-                            className="shrink-0"
-                          >
-                            <Plus className="mr-1 h-3.5 w-3.5" />
-                            Apply
-                          </Button>
+                    )}
+                  </div>
+                </section>
+                {!isCreate && (
+                  <>
+                    <Separator />
+                    <section className="space-y-4">
+                      <div className="flex items-center gap-2">
+                        <BadgeDollarSign className="h-4 w-4 text-primary" />
+                        <div>
+                          <h2 className="text-sm font-semibold">Balance</h2>
+                          <p className="text-xs text-muted-foreground">
+                            Set the final balance or apply a relative
+                            adjustment.
+                          </p>
                         </div>
-                        <p className="text-xs text-muted-foreground">
-                          Positive to add, negative to deduct.
-                        </p>
                       </div>
-                    </div>
+                      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+                        <FormField
+                          control={form.control}
+                          name="quota"
+                          render={() => (
+                            <FormItem>
+                              <FormLabel>Balance (USD)</FormLabel>
+                              <FormControl>
+                                <div className="relative">
+                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                                    $
+                                  </span>
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    placeholder="0.00"
+                                    className="pl-7"
+                                    value={dollarDisplay}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      setDollarDisplay(val);
+                                      const dollars = parseFloat(val);
+                                      if (!isNaN(dollars)) {
+                                        form.setValue(
+                                          'quota',
+                                          dollarsToQuota(dollars)
+                                        );
+                                      }
+                                    }}
+                                  />
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">
+                            Adjust Balance
+                          </label>
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                            <div className="relative flex-1">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                                $
+                              </span>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                placeholder="+10 or -5"
+                                className="pl-7"
+                                value={adjustAmount}
+                                onChange={(e) =>
+                                  setAdjustAmount(e.target.value)
+                                }
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleAdjustBalance();
+                                  }
+                                }}
+                              />
+                            </div>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={handleAdjustBalance}
+                              className="h-9 shrink-0"
+                            >
+                              <Plus className="mr-1 h-3.5 w-3.5" />
+                              Apply
+                            </Button>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Positive to add, negative to deduct.
+                          </p>
+                        </div>
+                      </div>
+                    </section>
 
                     <Separator />
 
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                      <FormField
-                        control={form.control}
-                        name="github_id"
-                        disabled
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>GitHub ID</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Read-only" {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="google_id"
-                        disabled
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Google ID</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Read-only" {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="email"
-                        disabled
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Email</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Read-only" {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                    <section className="space-y-4">
+                      <div className="flex items-center gap-2">
+                        <Link2 className="h-4 w-4 text-primary" />
+                        <div>
+                          <h2 className="text-sm font-semibold">
+                            Linked identities
+                          </h2>
+                          <p className="text-xs text-muted-foreground">
+                            These fields are managed by the user and cannot be
+                            edited here.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+                        <FormField
+                          control={form.control}
+                          name="github_id"
+                          disabled
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>GitHub ID</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Read-only" {...field} />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="google_id"
+                          disabled
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Google ID</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Read-only" {...field} />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="email"
+                          disabled
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Email</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Read-only" {...field} />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </section>
                   </>
                 )}
               </TabsContent>
 
               {!isCreate && (
-                <TabsContent value="discount" className="pt-4">
+                <TabsContent
+                  value="discount"
+                  className="m-0 px-4 pb-7 pt-2 sm:px-6 lg:px-8"
+                >
                   <ChannelRatiosEditor control={form.control} />
                 </TabsContent>
               )}
             </Tabs>
 
-            <div className="flex gap-4">
-              <Button type="button" onClick={() => window.history.back()}>
+            <div className="sticky bottom-0 z-10 flex flex-col-reverse gap-2 border-t bg-background/95 px-4 py-3 backdrop-blur sm:flex-row sm:justify-end sm:px-6 lg:px-8">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => window.history.back()}
+                className="sm:min-w-28"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
                 Go Back
               </Button>
-              <Button type="submit">Submit</Button>
+              <Button type="submit" className="sm:min-w-28">
+                <Save className="mr-2 h-4 w-4" />
+                Save
+              </Button>
             </div>
           </form>
         </Form>
