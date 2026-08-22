@@ -18,6 +18,7 @@ import type {
   LogStatResponse,
   TimeBucket
 } from '@/lib/types/log-stat';
+import type { Dashboard, DashboardResult } from '@/lib/types/dashboard';
 import SummaryCards from '../components/summary-cards';
 import DurationChart from '../components/duration-chart';
 import LatencyChart from '../components/latency-chart';
@@ -64,6 +65,9 @@ export default function StatisticsPage() {
 
   // Data states
   const [data, setData] = useState<LogStatData | null>(null);
+  const [liveMetrics, setLiveMetrics] = useState<
+    Pick<Dashboard, 'rpm' | 'tpm' | 'used_pd'>
+  >({ rpm: 0, tpm: 0, used_pd: 0 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -103,13 +107,25 @@ export default function StatisticsPage() {
       if (userName && isAdmin) params.username = userName;
       if (typeFilter) params.type = typeFilter;
 
-      const res = await request.get<LogStatResponse>(apiPath, { params });
+      const dashboardApi = isAdmin ? '/api/dashboard' : '/api/dashboard/self';
+      const [res, dashboardRes] = await Promise.all([
+        request.get<LogStatResponse>(apiPath, { params }),
+        request.get<DashboardResult>(dashboardApi)
+      ]);
       // clientFetch 的响应拦截器会直接返回 data
       const resData = res as unknown as LogStatResponse;
       if (resData?.success && resData.data) {
         setData(resData.data);
       } else {
         setError(resData?.message || 'Failed to fetch statistics');
+      }
+      const dashboardData = dashboardRes as unknown as DashboardResult;
+      if (dashboardData?.success && dashboardData.data) {
+        setLiveMetrics({
+          rpm: dashboardData.data.rpm || 0,
+          tpm: dashboardData.data.tpm || 0,
+          used_pd: dashboardData.data.used_pd || 0
+        });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Request failed');
@@ -340,13 +356,13 @@ export default function StatisticsPage() {
 
         {/* Summary Cards */}
         {loading && !data ? (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-            {Array.from({ length: 5 }).map((_, i) => (
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
+            {Array.from({ length: 8 }).map((_, i) => (
               <Skeleton key={i} className="h-24 rounded-lg" />
             ))}
           </div>
         ) : data?.summary ? (
-          <SummaryCards summary={data.summary} />
+          <SummaryCards summary={data.summary} liveMetrics={liveMetrics} />
         ) : null}
 
         {/* Charts */}

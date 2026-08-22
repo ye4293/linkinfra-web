@@ -130,108 +130,117 @@ export default function OverViewPage() {
               className={cn(
                 'grid gap-3 sm:grid-cols-2 lg:gap-4',
                 isAdmin(userRole)
-                  ? 'xl:grid-cols-3 2xl:grid-cols-6'
-                  : 'lg:grid-cols-3 xl:grid-cols-5'
+                  ? 'xl:grid-cols-5'
+                  : 'lg:grid-cols-3 xl:grid-cols-4'
               )}
             >
-              {/* Balance card */}
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    {t.dashboard.cards.balance.title}
-                  </CardTitle>
-                  <Wallet className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  {loading ? (
-                    <div className="space-y-3">
-                      <Skeleton className="h-9 w-32" />
-                      <Skeleton className="h-3 w-40" />
-                    </div>
-                  ) : (
-                    <>
-                      <div
-                        className={cn(
-                          'text-3xl font-semibold tabular-nums tracking-tight',
-                          lowBalance && 'text-amber-600 dark:text-amber-500'
-                        )}
-                      >
-                        {renderQuota(current)}
-                      </div>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {t.dashboard.cards.balance.used}{' '}
-                        <span className="tabular-nums text-foreground/80">
-                          {renderQuota(used)}
-                        </span>
-                        {total > 0 && (
+              {/* Financial overview */}
+              <Card className="sm:col-span-2">
+                <CardContent className="p-0">
+                  <div className="grid grid-cols-1 divide-y sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+                    <div>
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-muted-foreground">
+                          {t.dashboard.cards.balance.title}
+                        </CardTitle>
+                        <Wallet className="h-4 w-4 text-muted-foreground" />
+                      </CardHeader>
+                      <CardContent>
+                        {loading ? (
+                          <div className="space-y-3">
+                            <Skeleton className="h-9 w-32" />
+                            <Skeleton className="h-3 w-40" />
+                          </div>
+                        ) : (
                           <>
-                            {' · '}
-                            <span className="tabular-nums">
-                              {usedRatio}%
-                            </span>{' '}
-                            {t.dashboard.cards.balance.usedRatio}
+                            <div
+                              className={cn(
+                                'text-3xl font-semibold tabular-nums tracking-tight',
+                                lowBalance &&
+                                  'text-amber-600 dark:text-amber-500'
+                              )}
+                            >
+                              {renderQuota(current)}
+                            </div>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              {t.dashboard.cards.balance.used}{' '}
+                              <span className="tabular-nums text-foreground/80">
+                                {renderQuota(used)}
+                              </span>
+                              {total > 0 && (
+                                <>
+                                  {' · '}
+                                  <span className="tabular-nums">
+                                    {usedRatio}%
+                                  </span>{' '}
+                                  {t.dashboard.cards.balance.usedRatio}
+                                </>
+                              )}
+                            </p>
+                            {total > 0 && (
+                              <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                                <div
+                                  className={cn(
+                                    'h-full rounded-full transition-all',
+                                    lowBalance ? 'bg-amber-500' : 'bg-primary'
+                                  )}
+                                  style={{
+                                    width: `${Math.min(usedRatio, 100)}%`
+                                  }}
+                                />
+                              </div>
+                            )}
                           </>
                         )}
-                      </p>
-                      {total > 0 && (
-                        <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                          <div
-                            className={cn(
-                              'h-full rounded-full transition-all',
-                              lowBalance ? 'bg-amber-500' : 'bg-primary'
-                            )}
-                            style={{ width: `${Math.min(usedRatio, 100)}%` }}
-                          />
-                        </div>
-                      )}
-                    </>
-                  )}
-                </CardContent>
-              </Card>
+                      </CardContent>
+                    </div>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Cumulative top-ups
-                  </CardTitle>
-                  <BadgeDollarSign className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  {loading ? (
-                    <Skeleton className="h-9 w-28" />
-                  ) : (
-                    <>
-                      <div className="text-3xl font-semibold tabular-nums tracking-tight">
-                        {renderQuota(dashboardData.topup_quota || 0)}
-                      </div>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        Real-money payments · determines tier
-                      </p>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
+                    <div>
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-muted-foreground">
+                          Cumulative top-ups
+                        </CardTitle>
+                        <BadgeDollarSign className="h-4 w-4 text-muted-foreground" />
+                      </CardHeader>
+                      <CardContent>
+                        {loading ? (
+                          <Skeleton className="h-9 w-28" />
+                        ) : (
+                          <>
+                            <div className="text-3xl font-semibold tabular-nums tracking-tight">
+                              {renderQuota(dashboardData.topup_quota || 0)}
+                            </div>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              Real-money payments · determines tier
+                            </p>
+                          </>
+                        )}
+                      </CardContent>
+                    </div>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Cumulative bonus
-                  </CardTitle>
-                  <Gift className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  {loading ? (
-                    <Skeleton className="h-9 w-28" />
-                  ) : (
-                    <>
-                      <div className="text-3xl font-semibold tabular-nums tracking-tight">
-                        {renderQuota(dashboardData.gift_quota || 0)}
-                      </div>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        Registration and referral rewards
-                      </p>
-                    </>
-                  )}
+                    <div>
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-muted-foreground">
+                          Cumulative bonus
+                        </CardTitle>
+                        <Gift className="h-4 w-4 text-muted-foreground" />
+                      </CardHeader>
+                      <CardContent>
+                        {loading ? (
+                          <Skeleton className="h-9 w-28" />
+                        ) : (
+                          <>
+                            <div className="text-3xl font-semibold tabular-nums tracking-tight">
+                              {renderQuota(dashboardData.gift_quota || 0)}
+                            </div>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              Registration and referral rewards
+                            </p>
+                          </>
+                        )}
+                      </CardContent>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 

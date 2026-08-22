@@ -2,9 +2,12 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import type { LogStatSummary } from '@/lib/types/log-stat';
+import { renderQuota } from '@/utils/render';
+import type { Dashboard } from '@/lib/types/dashboard';
 
 interface SummaryCardsProps {
   summary: LogStatSummary;
+  liveMetrics: Pick<Dashboard, 'rpm' | 'tpm' | 'used_pd'>;
 }
 
 function formatDuration(seconds: number): string {
@@ -21,12 +24,30 @@ function formatRate(success: number, total: number): string {
   return `${((success / total) * 100).toFixed(1)}%`;
 }
 
-export default function SummaryCards({ summary }: SummaryCardsProps) {
+export default function SummaryCards({
+  summary,
+  liveMetrics
+}: SummaryCardsProps) {
   const cards = [
     {
       title: 'Total Requests',
       value: summary.total_requests.toLocaleString(),
       sub: `${summary.error_count} errors`
+    },
+    {
+      title: 'RPM',
+      value: liveMetrics.rpm.toLocaleString(),
+      sub: 'Requests in the last 60 seconds'
+    },
+    {
+      title: 'TPM',
+      value: liveMetrics.tpm.toLocaleString(),
+      sub: 'Tokens in the last 60 seconds'
+    },
+    {
+      title: "Today's Spend",
+      value: renderQuota(liveMetrics.used_pd),
+      sub: 'From 00:00 to now'
     },
     {
       title: 'Avg Duration',
@@ -51,7 +72,7 @@ export default function SummaryCards({ summary }: SummaryCardsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
       {cards.map((card) => (
         <Card key={card.title}>
           <CardContent className="p-4">
