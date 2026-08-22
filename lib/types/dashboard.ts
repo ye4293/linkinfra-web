@@ -52,6 +52,17 @@ export interface DashboardResult extends Result {
   data: Dashboard;
 }
 
+export interface UsageMetrics {
+  rpm: number;
+  tpm: number;
+  today_spend: number;
+  cached_until: number;
+}
+
+export interface UsageMetricsResult extends Result {
+  data: UsageMetrics;
+}
+
 export interface GraphData {
   hour: string;
   timestamp?: number;

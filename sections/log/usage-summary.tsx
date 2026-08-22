@@ -6,30 +6,34 @@ import { Activity, Coins, Gauge } from 'lucide-react';
 import request from '@/app/lib/clientFetch';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { DashboardResult } from '@/lib/types/dashboard';
+import type { UsageMetricsResult } from '@/lib/types/dashboard';
 import { renderQuota } from '@/utils/render';
 
 const isAdmin = (role: unknown) => [10, 100].includes(Number(role));
 
 export default function UsageSummary() {
   const { data: session, status } = useSession();
-  const [metrics, setMetrics] = useState({ rpm: 0, tpm: 0, used_pd: 0 });
+  const [metrics, setMetrics] = useState({
+    rpm: 0,
+    tpm: 0,
+    today_spend: 0
+  });
   const [loading, setLoading] = useState(true);
 
   const loadMetrics = useCallback(async () => {
     if (status !== 'authenticated') return;
     try {
       const endpoint = isAdmin(session?.user?.role)
-        ? '/api/dashboard'
-        : '/api/dashboard/self';
+        ? '/api/dashboard/usage-metrics'
+        : '/api/dashboard/usage-metrics/self';
       const response = (await request.get(
         endpoint
-      )) as unknown as DashboardResult;
+      )) as unknown as UsageMetricsResult;
       if (response?.success && response.data) {
         setMetrics({
           rpm: response.data.rpm || 0,
           tpm: response.data.tpm || 0,
-          used_pd: response.data.used_pd || 0
+          today_spend: response.data.today_spend || 0
         });
       }
     } catch (error) {
@@ -60,7 +64,7 @@ export default function UsageSummary() {
     },
     {
       title: "Today's Spend",
-      value: renderQuota(metrics.used_pd),
+      value: renderQuota(metrics.today_spend),
       description: 'From 00:00 to now',
       icon: Coins
     }

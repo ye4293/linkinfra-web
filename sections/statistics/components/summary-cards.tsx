@@ -3,11 +3,11 @@
 import { Card, CardContent } from '@/components/ui/card';
 import type { LogStatSummary } from '@/lib/types/log-stat';
 import { renderQuota } from '@/utils/render';
-import type { Dashboard } from '@/lib/types/dashboard';
+import type { UsageMetrics } from '@/lib/types/dashboard';
 
 interface SummaryCardsProps {
   summary: LogStatSummary;
-  liveMetrics: Pick<Dashboard, 'rpm' | 'tpm' | 'used_pd'>;
+  liveMetrics: UsageMetrics;
 }
 
 function formatDuration(seconds: number): string {
@@ -46,7 +46,7 @@ export default function SummaryCards({
     },
     {
       title: "Today's Spend",
-      value: renderQuota(liveMetrics.used_pd),
+      value: renderQuota(liveMetrics.today_spend),
       sub: 'From 00:00 to now'
     },
     {

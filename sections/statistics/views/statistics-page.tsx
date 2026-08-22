@@ -18,7 +18,7 @@ import type {
   LogStatResponse,
   TimeBucket
 } from '@/lib/types/log-stat';
-import type { Dashboard, DashboardResult } from '@/lib/types/dashboard';
+import type { UsageMetrics, UsageMetricsResult } from '@/lib/types/dashboard';
 import SummaryCards from '../components/summary-cards';
 import DurationChart from '../components/duration-chart';
 import LatencyChart from '../components/latency-chart';
@@ -65,9 +65,12 @@ export default function StatisticsPage() {
 
   // Data states
   const [data, setData] = useState<LogStatData | null>(null);
-  const [liveMetrics, setLiveMetrics] = useState<
-    Pick<Dashboard, 'rpm' | 'tpm' | 'used_pd'>
-  >({ rpm: 0, tpm: 0, used_pd: 0 });
+  const [liveMetrics, setLiveMetrics] = useState<UsageMetrics>({
+    rpm: 0,
+    tpm: 0,
+    today_spend: 0,
+    cached_until: 0
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -107,10 +110,12 @@ export default function StatisticsPage() {
       if (userName && isAdmin) params.username = userName;
       if (typeFilter) params.type = typeFilter;
 
-      const dashboardApi = isAdmin ? '/api/dashboard' : '/api/dashboard/self';
+      const dashboardApi = isAdmin
+        ? '/api/dashboard/usage-metrics'
+        : '/api/dashboard/usage-metrics/self';
       const [res, dashboardRes] = await Promise.all([
         request.get<LogStatResponse>(apiPath, { params }),
-        request.get<DashboardResult>(dashboardApi)
+        request.get<UsageMetricsResult>(dashboardApi)
       ]);
       // clientFetch 的响应拦截器会直接返回 data
       const resData = res as unknown as LogStatResponse;
@@ -119,12 +124,13 @@ export default function StatisticsPage() {
       } else {
         setError(resData?.message || 'Failed to fetch statistics');
       }
-      const dashboardData = dashboardRes as unknown as DashboardResult;
+      const dashboardData = dashboardRes as unknown as UsageMetricsResult;
       if (dashboardData?.success && dashboardData.data) {
         setLiveMetrics({
           rpm: dashboardData.data.rpm || 0,
           tpm: dashboardData.data.tpm || 0,
-          used_pd: dashboardData.data.used_pd || 0
+          today_spend: dashboardData.data.today_spend || 0,
+          cached_until: dashboardData.data.cached_until || 0
         });
       }
     } catch (err) {
