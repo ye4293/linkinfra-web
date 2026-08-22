@@ -48,6 +48,8 @@ export interface SystemSettingsRequest extends CommonSystemSettings {
   EmailVerificationEnabled: string;
   /** 允许通过 GitHub 账户登录 & 注册 */
   GitHubOAuthEnabled: string;
+  /** 允许通过 Google 账户登录 & 注册 */
+  GoogleOAuthEnabled: string;
   /** 允许通过微信登录 & 注册 */
   WeChatAuthEnabled: string;
   /** 允许新用户注册（此项为否时，新用户将无法以任何方式进行注册） */
@@ -71,6 +73,8 @@ export interface SystemSettings extends CommonSystemSettings {
   EmailVerificationEnabled: boolean;
   /** 允许通过 GitHub 账户登录 & 注册 */
   GitHubOAuthEnabled: boolean;
+  /** 允许通过 Google 账户登录 & 注册 */
+  GoogleOAuthEnabled: boolean;
   /** 允许通过微信登录 & 注册 */
   WeChatAuthEnabled: boolean;
   /** 允许新用户注册（此项为否时，新用户将无法以任何方式进行注册） */

@@ -21,7 +21,9 @@ import {
   Mail,
   MessageSquare,
   SendHorizontal,
-  HardDrive
+  HardDrive,
+  Github,
+  LogIn
 } from 'lucide-react';
 
 const breadcrumbItems = [
@@ -32,6 +34,14 @@ const breadcrumbItems = [
 interface Option {
   key: string;
   value: any;
+}
+
+interface OAuthConfigStatus {
+  baseUrl: string;
+  githubConfigured: boolean;
+  googleConfigured: boolean;
+  githubCallbackUrl: string;
+  googleCallbackUrl: string;
 }
 
 export default function SettingPage() {
@@ -52,6 +62,13 @@ export default function SettingPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isDataLoading, setIsDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // ==================== OAuth login settings ====================
+  const [githubOAuthEnabled, setGithubOAuthEnabled] = useState(false);
+  const [googleOAuthEnabled, setGoogleOAuthEnabled] = useState(false);
+  const [oauthConfig, setOAuthConfig] = useState<OAuthConfigStatus | null>(
+    null
+  );
 
   // ==================== 提醒设置状态 ====================
   // SMTP 邮箱配置
@@ -88,6 +105,22 @@ export default function SettingPage() {
       const result = await response.json();
       if (result.success && result.data) {
         const options = result.data;
+
+        const githubOAuthOption = options.find(
+          (o: Option) => o.key === 'GitHubOAuthEnabled'
+        );
+        setGithubOAuthEnabled(
+          githubOAuthOption?.value === 'true' ||
+            githubOAuthOption?.value === true
+        );
+
+        const googleOAuthOption = options.find(
+          (o: Option) => o.key === 'GoogleOAuthEnabled'
+        );
+        setGoogleOAuthEnabled(
+          googleOAuthOption?.value === 'true' ||
+            googleOAuthOption?.value === true
+        );
 
         // 加载系统名称
         const systemNameOption = options.find(
@@ -269,6 +302,11 @@ export default function SettingPage() {
         if (cfFilePublicUrlOption) {
           setCfFilePublicUrl(cfFilePublicUrlOption.value || '');
         }
+
+        const oauthStatusResponse = await fetch('/api/auth/config-status');
+        if (oauthStatusResponse.ok) {
+          setOAuthConfig(await oauthStatusResponse.json());
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load settings');
@@ -344,6 +382,38 @@ export default function SettingPage() {
     const count = parseInt(value);
     if (!isNaN(count) && count >= 0) {
       setRetryCount(count);
+    }
+  };
+
+  const handleSaveOAuth = async () => {
+    setIsLoading(true);
+    try {
+      const oauthOptions = [
+        {
+          key: 'GitHubOAuthEnabled',
+          value: githubOAuthEnabled.toString()
+        },
+        {
+          key: 'GoogleOAuthEnabled',
+          value: googleOAuthEnabled.toString()
+        }
+      ];
+
+      for (const option of oauthOptions) {
+        const response = await fetch('/api/option', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(option)
+        });
+        if (!response.ok) throw new Error(`Failed to save ${option.key}`);
+      }
+
+      toast.success('OAuth login settings saved.');
+    } catch (error) {
+      console.error('Save OAuth error:', error);
+      toast.error('Failed to save OAuth login settings.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -639,6 +709,121 @@ export default function SettingPage() {
 
           <Card>
             <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <LogIn className="h-5 w-5" />
+                OAuth login
+              </CardTitle>
+              <CardDescription>
+                Configure and control third-party login for the sign-in and
+                registration pages.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div className="grid gap-4 lg:grid-cols-2">
+                <div className="flex min-w-0 flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0 space-y-2">
+                    <Label
+                      htmlFor="github-oauth-enabled"
+                      className="flex items-center gap-2 text-base"
+                    >
+                      <Github className="h-4 w-4" /> GitHub login
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Environment: GITHUB_ID and GITHUB_SECRET
+                    </p>
+                    <p className="break-all rounded-md bg-muted px-3 py-2 font-mono text-xs leading-relaxed text-muted-foreground">
+                      Callback: {oauthConfig?.githubCallbackUrl || 'Loading...'}
+                    </p>
+                    <p
+                      className={`text-xs ${
+                        oauthConfig?.githubConfigured
+                          ? 'text-green-600'
+                          : 'text-amber-600'
+                      }`}
+                    >
+                      {oauthConfig?.githubConfigured
+                        ? 'Credentials configured'
+                        : 'Credentials missing — configure both variables and restart the frontend'}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center justify-between gap-3 sm:justify-end">
+                    <span className="text-xs text-muted-foreground sm:hidden">
+                      Enable
+                    </span>
+                    <Switch
+                      id="github-oauth-enabled"
+                      checked={githubOAuthEnabled}
+                      onCheckedChange={setGithubOAuthEnabled}
+                      disabled={
+                        !oauthConfig?.githubConfigured && !githubOAuthEnabled
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="flex min-w-0 flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0 space-y-2">
+                    <Label
+                      htmlFor="google-oauth-enabled"
+                      className="flex items-center gap-2 text-base"
+                    >
+                      <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-blue-600 text-[10px] font-bold text-white">
+                        G
+                      </span>
+                      Google login
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Environment: GOOGLE_ID and GOOGLE_SECRET
+                    </p>
+                    <p className="break-all rounded-md bg-muted px-3 py-2 font-mono text-xs leading-relaxed text-muted-foreground">
+                      Callback: {oauthConfig?.googleCallbackUrl || 'Loading...'}
+                    </p>
+                    <p
+                      className={`text-xs ${
+                        oauthConfig?.googleConfigured
+                          ? 'text-green-600'
+                          : 'text-amber-600'
+                      }`}
+                    >
+                      {oauthConfig?.googleConfigured
+                        ? 'Credentials configured'
+                        : 'Credentials missing — configure both variables and restart the frontend'}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center justify-between gap-3 sm:justify-end">
+                    <span className="text-xs text-muted-foreground sm:hidden">
+                      Enable
+                    </span>
+                    <Switch
+                      id="google-oauth-enabled"
+                      checked={googleOAuthEnabled}
+                      onCheckedChange={setGoogleOAuthEnabled}
+                      disabled={
+                        !oauthConfig?.googleConfigured && !googleOAuthEnabled
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <p className="rounded-lg border border-dashed p-3 text-sm leading-relaxed text-muted-foreground">
+                OAuth secrets are deployment credentials. They are read only by
+                the NextAuth server and are never stored in or returned to the
+                browser.
+              </p>
+              <Button
+                className="w-full sm:w-auto"
+                onClick={handleSaveOAuth}
+                disabled={isLoading}
+              >
+                <Save className="mr-2 h-4 w-4" />
+                Save OAuth settings
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
               <CardTitle>Auto-disable channels</CardTitle>
               <CardDescription>
                 When a response contains any of the following keywords, the
@@ -791,7 +976,7 @@ export default function SettingPage() {
             <CardHeader>
               <CardTitle>Upstream model patrol</CardTitle>
               <CardDescription>
-                Periodically check each channel's upstream model list for
+                Periodically check each channel&apos;s upstream model list for
                 additions or removals, and sync changes automatically. Only
                 applies to enabled channels; each channel must have patrol
                 enabled individually.
