@@ -113,7 +113,12 @@ export async function createAuthConfig(): Promise<NextAuthConfig> {
     providers: [
       GithubProvider({
         clientId: oauth.githubId,
-        clientSecret: oauth.githubSecret
+        clientSecret: oauth.githubSecret,
+        // GitHub now includes the RFC 9207 `iss` parameter in OAuth callbacks.
+        // @auth/core 0.39's built-in GitHub provider does not declare it, so the
+        // strict callback validator rejects an otherwise valid response with
+        // `unexpected "iss" response parameter value`.
+        issuer: 'https://github.com/login/oauth'
         // authorization: {
         //   url: 'https://github.com/login/oauth/authorize'
         // }
