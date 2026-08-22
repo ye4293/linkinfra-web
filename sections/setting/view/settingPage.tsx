@@ -66,6 +66,10 @@ export default function SettingPage() {
   // ==================== OAuth login settings ====================
   const [githubOAuthEnabled, setGithubOAuthEnabled] = useState(false);
   const [googleOAuthEnabled, setGoogleOAuthEnabled] = useState(false);
+  const [githubClientId, setGithubClientId] = useState('');
+  const [githubClientSecret, setGithubClientSecret] = useState('');
+  const [googleClientId, setGoogleClientId] = useState('');
+  const [googleClientSecret, setGoogleClientSecret] = useState('');
   const [oauthConfig, setOAuthConfig] = useState<OAuthConfigStatus | null>(
     null
   );
@@ -120,6 +124,13 @@ export default function SettingPage() {
         setGoogleOAuthEnabled(
           googleOAuthOption?.value === 'true' ||
             googleOAuthOption?.value === true
+        );
+
+        setGithubClientId(
+          options.find((o: Option) => o.key === 'GitHubClientId')?.value || ''
+        );
+        setGoogleClientId(
+          options.find((o: Option) => o.key === 'GoogleClientId')?.value || ''
         );
 
         // 加载系统名称
@@ -389,6 +400,8 @@ export default function SettingPage() {
     setIsLoading(true);
     try {
       const oauthOptions = [
+        { key: 'GitHubClientId', value: githubClientId.trim() },
+        { key: 'GoogleClientId', value: googleClientId.trim() },
         {
           key: 'GitHubOAuthEnabled',
           value: githubOAuthEnabled.toString()
@@ -399,6 +412,19 @@ export default function SettingPage() {
         }
       ];
 
+      if (githubClientSecret) {
+        oauthOptions.unshift({
+          key: 'GitHubClientSecret',
+          value: githubClientSecret
+        });
+      }
+      if (googleClientSecret) {
+        oauthOptions.unshift({
+          key: 'GoogleClientSecret',
+          value: googleClientSecret
+        });
+      }
+
       for (const option of oauthOptions) {
         const response = await fetch('/api/option', {
           method: 'PUT',
@@ -408,7 +434,11 @@ export default function SettingPage() {
         if (!response.ok) throw new Error(`Failed to save ${option.key}`);
       }
 
+      await fetch('/api/auth/config-status', { method: 'POST' });
+      setGithubClientSecret('');
+      setGoogleClientSecret('');
       toast.success('OAuth login settings saved.');
+      await fetchOptions();
     } catch (error) {
       console.error('Save OAuth error:', error);
       toast.error('Failed to save OAuth login settings.');
@@ -729,8 +759,41 @@ export default function SettingPage() {
                       <Github className="h-4 w-4" /> GitHub login
                     </Label>
                     <p className="text-sm text-muted-foreground">
-                      Environment: GITHUB_ID and GITHUB_SECRET
+                      Create an OAuth App in GitHub Developer Settings.
                     </p>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="github-client-id" className="text-xs">
+                        Client ID
+                      </Label>
+                      <Input
+                        id="github-client-id"
+                        value={githubClientId}
+                        onChange={(event) =>
+                          setGithubClientId(event.target.value)
+                        }
+                        placeholder="GitHub Client ID"
+                        autoComplete="off"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="github-client-secret" className="text-xs">
+                        Client Secret
+                      </Label>
+                      <Input
+                        id="github-client-secret"
+                        type="password"
+                        value={githubClientSecret}
+                        onChange={(event) =>
+                          setGithubClientSecret(event.target.value)
+                        }
+                        placeholder={
+                          oauthConfig?.githubConfigured
+                            ? 'Configured — leave blank to keep'
+                            : 'GitHub Client Secret'
+                        }
+                        autoComplete="new-password"
+                      />
+                    </div>
                     <p className="break-all rounded-md bg-muted px-3 py-2 font-mono text-xs leading-relaxed text-muted-foreground">
                       Callback: {oauthConfig?.githubCallbackUrl || 'Loading...'}
                     </p>
@@ -755,7 +818,9 @@ export default function SettingPage() {
                       checked={githubOAuthEnabled}
                       onCheckedChange={setGithubOAuthEnabled}
                       disabled={
-                        !oauthConfig?.githubConfigured && !githubOAuthEnabled
+                        !oauthConfig?.githubConfigured &&
+                        !(githubClientId.trim() && githubClientSecret) &&
+                        !githubOAuthEnabled
                       }
                     />
                   </div>
@@ -773,8 +838,41 @@ export default function SettingPage() {
                       Google login
                     </Label>
                     <p className="text-sm text-muted-foreground">
-                      Environment: GOOGLE_ID and GOOGLE_SECRET
+                      Create an OAuth 2.0 Client in Google Cloud Console.
                     </p>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="google-client-id" className="text-xs">
+                        Client ID
+                      </Label>
+                      <Input
+                        id="google-client-id"
+                        value={googleClientId}
+                        onChange={(event) =>
+                          setGoogleClientId(event.target.value)
+                        }
+                        placeholder="Google Client ID"
+                        autoComplete="off"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="google-client-secret" className="text-xs">
+                        Client Secret
+                      </Label>
+                      <Input
+                        id="google-client-secret"
+                        type="password"
+                        value={googleClientSecret}
+                        onChange={(event) =>
+                          setGoogleClientSecret(event.target.value)
+                        }
+                        placeholder={
+                          oauthConfig?.googleConfigured
+                            ? 'Configured — leave blank to keep'
+                            : 'Google Client Secret'
+                        }
+                        autoComplete="new-password"
+                      />
+                    </div>
                     <p className="break-all rounded-md bg-muted px-3 py-2 font-mono text-xs leading-relaxed text-muted-foreground">
                       Callback: {oauthConfig?.googleCallbackUrl || 'Loading...'}
                     </p>
@@ -799,7 +897,9 @@ export default function SettingPage() {
                       checked={googleOAuthEnabled}
                       onCheckedChange={setGoogleOAuthEnabled}
                       disabled={
-                        !oauthConfig?.googleConfigured && !googleOAuthEnabled
+                        !oauthConfig?.googleConfigured &&
+                        !(googleClientId.trim() && googleClientSecret) &&
+                        !googleOAuthEnabled
                       }
                     />
                   </div>
@@ -807,9 +907,9 @@ export default function SettingPage() {
               </div>
 
               <p className="rounded-lg border border-dashed p-3 text-sm leading-relaxed text-muted-foreground">
-                OAuth secrets are deployment credentials. They are read only by
-                the NextAuth server and are never stored in or returned to the
-                browser.
+                Client Secrets are stored by the backend and are never returned
+                to the browser. Leaving a Secret field blank keeps its current
+                value.
               </p>
               <Button
                 className="w-full sm:w-auto"
