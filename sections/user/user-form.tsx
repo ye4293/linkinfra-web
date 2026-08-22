@@ -33,10 +33,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserSelf } from '@/lib/types/user';
+import { renderQuota } from '@/utils/render';
 import { toast } from 'sonner';
 import {
   ArrowLeft,
   BadgeDollarSign,
+  Gift,
   Link2,
   Plus,
   Save,
@@ -119,7 +121,7 @@ export default function UserForm() {
   const isCreate = !userId || userId === 'create';
 
   const [isLoading, setIsLoading] = useState(true);
-  const [userData, setUserData] = useState<Object | null>(null);
+  const [userData, setUserData] = useState<UserSelf | null>(null);
   const [groupOptions, setGroupOptions] = useState<string[]>([]);
 
   const [dollarDisplay, setDollarDisplay] = useState('0');
@@ -486,6 +488,32 @@ export default function UserForm() {
                           </div>
                           <p className="text-xs text-muted-foreground">
                             Positive to add, negative to deduct.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div className="rounded-lg border bg-muted/20 p-4">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <BadgeDollarSign className="h-4 w-4" />
+                            Cumulative top-ups
+                          </div>
+                          <p className="mt-2 text-2xl font-semibold tabular-nums">
+                            {renderQuota(userData?.topup_quota || 0)}
+                          </p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Real-money payments used for tier upgrades.
+                          </p>
+                        </div>
+                        <div className="rounded-lg border bg-muted/20 p-4">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Gift className="h-4 w-4" />
+                            Cumulative bonus
+                          </div>
+                          <p className="mt-2 text-2xl font-semibold tabular-nums">
+                            {renderQuota(userData?.gift_quota || 0)}
+                          </p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Registration bonuses and referral rewards.
                           </p>
                         </div>
                       </div>

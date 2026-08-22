@@ -9,7 +9,7 @@ import PaymentSection from '../payment-section';
 import PaymentSuccessIndicator from '../payment-success-indicator';
 import InviteCard from '../invite-card';
 import TransactionHistory from '../transaction-history';
-import { Wallet } from 'lucide-react';
+import { BadgeDollarSign, Gift, Wallet } from 'lucide-react';
 
 const breadcrumbItems = [
   { title: 'Dashboard', link: '/dashboard' },
@@ -41,22 +41,53 @@ export default async function TopupPage({ paid }: { paid?: string }) {
 
         {paid && <PaymentSuccessIndicator paid={paid} />}
 
-        {/* Account Balance Card */}
-        <Card className="border-none bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md">
-          <CardContent className="flex items-center gap-4 p-6">
-            <div className="rounded-full bg-white/20 p-3">
-              <Wallet className="h-8 w-8 text-white" />
-            </div>
-            <div>
-              <p className="mb-1 text-sm font-medium text-blue-100">
-                Current Balance
-              </p>
-              <h2 className="text-3xl font-bold tracking-tight">
-                {renderQuota(userData?.quota || 0)}
-              </h2>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card className="border-none bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md">
+            <CardContent className="flex items-center gap-4 p-6">
+              <div className="rounded-full bg-white/20 p-3">
+                <Wallet className="h-7 w-7 text-white" />
+              </div>
+              <div>
+                <p className="mb-1 text-sm font-medium text-blue-100">
+                  Current balance
+                </p>
+                <h2 className="text-2xl font-bold tracking-tight">
+                  {renderQuota(userData?.quota || 0)}
+                </h2>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex items-center gap-4 p-6">
+              <div className="rounded-full bg-emerald-500/10 p-3">
+                <BadgeDollarSign className="h-7 w-7 text-emerald-600" />
+              </div>
+              <div>
+                <p className="mb-1 text-sm font-medium text-muted-foreground">
+                  Cumulative top-ups
+                </p>
+                <h2 className="text-2xl font-bold tracking-tight">
+                  {renderQuota(userData?.topup_quota || 0)}
+                </h2>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex items-center gap-4 p-6">
+              <div className="rounded-full bg-amber-500/10 p-3">
+                <Gift className="h-7 w-7 text-amber-600" />
+              </div>
+              <div>
+                <p className="mb-1 text-sm font-medium text-muted-foreground">
+                  Cumulative bonus
+                </p>
+                <h2 className="text-2xl font-bold tracking-tight">
+                  {renderQuota(userData?.gift_quota || 0)}
+                </h2>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Main Grid Layout */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">

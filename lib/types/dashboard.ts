@@ -3,6 +3,8 @@ import { Result } from '@/lib/types/common';
 export interface Dashboard {
   current_quota: number;
   used_quota: number;
+  topup_quota: number;
+  gift_quota: number;
   tpm: number;
   rpm: number;
   quota_pm: number;

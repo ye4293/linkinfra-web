@@ -2,7 +2,15 @@
 
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
-import { Wallet, Zap, CalendarDays, CreditCard, Users } from 'lucide-react';
+import {
+  Wallet,
+  Zap,
+  CalendarDays,
+  CreditCard,
+  Users,
+  BadgeDollarSign,
+  Gift
+} from 'lucide-react';
 import { BarGraph } from '../bar-graph';
 import { AnalyticsContent } from '../analytics-content';
 import PageContainer from '@/components/layout/page-container';
@@ -36,6 +44,8 @@ export default function OverViewPage() {
   const [dashboardData, setDashboardData] = useState<Dashboard>({
     current_quota: 0,
     used_quota: 0,
+    topup_quota: 0,
+    gift_quota: 0,
     tpm: 0,
     rpm: 0,
     quota_pm: 0,
@@ -119,7 +129,9 @@ export default function OverViewPage() {
             <div
               className={cn(
                 'grid gap-3 sm:grid-cols-2 lg:gap-4',
-                isAdmin(userRole) ? 'xl:grid-cols-4' : 'lg:grid-cols-3'
+                isAdmin(userRole)
+                  ? 'xl:grid-cols-3 2xl:grid-cols-6'
+                  : 'lg:grid-cols-3 xl:grid-cols-5'
               )}
             >
               {/* Balance card */}
@@ -172,6 +184,52 @@ export default function OverViewPage() {
                           />
                         </div>
                       )}
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Cumulative top-ups
+                  </CardTitle>
+                  <BadgeDollarSign className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  {loading ? (
+                    <Skeleton className="h-9 w-28" />
+                  ) : (
+                    <>
+                      <div className="text-3xl font-semibold tabular-nums tracking-tight">
+                        {renderQuota(dashboardData.topup_quota || 0)}
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Real-money payments · determines tier
+                      </p>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Cumulative bonus
+                  </CardTitle>
+                  <Gift className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  {loading ? (
+                    <Skeleton className="h-9 w-28" />
+                  ) : (
+                    <>
+                      <div className="text-3xl font-semibold tabular-nums tracking-tight">
+                        {renderQuota(dashboardData.gift_quota || 0)}
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Registration and referral rewards
+                      </p>
                     </>
                   )}
                 </CardContent>

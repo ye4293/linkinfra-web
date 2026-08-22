@@ -34,6 +34,10 @@ export interface UserSelf {
   role: number;
   status: number;
   used_quota: number;
+  /** Cumulative real-money top-ups, in quota units. */
+  topup_quota: number;
+  /** Cumulative bonuses and referral rewards, in quota units. */
+  gift_quota: number;
   user_remind_threshold: number;
   username: string;
   verification_code: string;
