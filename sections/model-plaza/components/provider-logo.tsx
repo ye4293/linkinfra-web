@@ -29,6 +29,7 @@ export function ProviderLogoMark({
   className = ''
 }: ProviderLogoMarkProps) {
   const src = logoMap[provider];
+  const displayName = provider === 'Zhipu' ? 'ZAI' : provider;
   if (!src) {
     return (
       <Box
@@ -40,7 +41,7 @@ export function ProviderLogoMark({
   return (
     <Image
       src={src}
-      alt={provider}
+      alt={displayName}
       width={size}
       height={size}
       className={`shrink-0 ${className}`}
@@ -62,6 +63,7 @@ export default function ProviderLogo({
   showName = true,
   className = ''
 }: ProviderLogoProps) {
+  const displayName = provider === 'Zhipu' ? 'ZAI' : provider;
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-muted/60 px-1.5 py-0.5 ${className}`}
@@ -69,7 +71,7 @@ export default function ProviderLogo({
       <ProviderLogoMark provider={provider} size={size} />
       {showName && (
         <span className="text-[10px] font-medium leading-none text-foreground/80">
-          {provider}
+          {displayName}
         </span>
       )}
     </span>

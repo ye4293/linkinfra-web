@@ -65,7 +65,7 @@ const MODEL_CATEGORIES: Record<
     match: (model) => model.toLowerCase().includes('deepseek')
   },
   zhipu: {
-    label: 'Zhipu',
+    label: 'ZAI',
     match: (model) => {
       const m = model.toLowerCase();
       return (
