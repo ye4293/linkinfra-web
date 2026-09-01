@@ -2,15 +2,8 @@
 
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
-import {
-  Wallet,
-  Zap,
-  CalendarDays,
-  CreditCard,
-  Users,
-  BadgeDollarSign,
-  Gift
-} from 'lucide-react';
+import Link from 'next/link';
+import { Wallet, Zap, CalendarDays, Users, ArrowRight } from 'lucide-react';
 import { BarGraph } from '../bar-graph';
 import { AnalyticsContent } from '../analytics-content';
 import PageContainer from '@/components/layout/page-container';
@@ -33,8 +26,35 @@ import {
 } from '@/lib/types/dashboard';
 import { useLocale } from '@/components/providers/locale-provider';
 import { cn } from '@/lib/utils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from '@/components/ui/tooltip';
 
 const isAdmin = (role: unknown) => [10, 100].includes(Number(role));
+
+function compactQuota(quota: number) {
+  const raw = String(renderQuota(quota));
+  if (!raw.startsWith('$')) return { compact: raw, full: raw };
+  const amount = Number(raw.slice(1));
+  if (!Number.isFinite(amount)) return { compact: raw, full: raw };
+  const full = amount.toLocaleString('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+  const compact =
+    Math.abs(amount) >= 1_000_000
+      ? `$${Intl.NumberFormat('en-US', {
+          notation: 'compact',
+          maximumFractionDigits: 2
+        }).format(amount)}`
+      : full;
+  return { compact, full };
+}
 
 export default function OverViewPage() {
   const { data: session, status } = useSession();
@@ -103,6 +123,7 @@ export default function OverViewPage() {
   const total = current + used;
   const usedRatio = total > 0 ? Math.round((used / total) * 100) : 0;
   const lowBalance = total > 0 && usedRatio >= 80;
+  const balanceDisplay = compactQuota(current);
 
   return (
     <PageContainer scrollable>
@@ -126,121 +147,64 @@ export default function OverViewPage() {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="overview" className="space-y-4">
-            <div
-              className={cn(
-                'grid gap-3 sm:grid-cols-2 lg:gap-4',
-                isAdmin(userRole)
-                  ? 'xl:grid-cols-5'
-                  : 'lg:grid-cols-3 xl:grid-cols-4'
-              )}
-            >
-              {/* Financial overview */}
-              <Card className="sm:col-span-2">
-                <CardContent className="p-0">
-                  <div className="grid grid-cols-1 divide-y sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-                    <div>
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">
-                          {t.dashboard.cards.balance.title}
-                        </CardTitle>
-                        <Wallet className="h-4 w-4 text-muted-foreground" />
-                      </CardHeader>
-                      <CardContent>
-                        {loading ? (
-                          <div className="space-y-3">
-                            <Skeleton className="h-9 w-32" />
-                            <Skeleton className="h-3 w-40" />
-                          </div>
-                        ) : (
-                          <>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4">
+              <Card className="min-w-0">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    {t.dashboard.cards.balance.title}
+                  </CardTitle>
+                  <Wallet className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent className="min-w-0">
+                  {loading ? (
+                    <div className="space-y-3">
+                      <Skeleton className="h-9 w-32" />
+                      <Skeleton className="h-3 w-40" />
+                    </div>
+                  ) : (
+                    <>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
                             <div
                               className={cn(
-                                'text-3xl font-semibold tabular-nums tracking-tight',
+                                'truncate text-3xl font-semibold tabular-nums tracking-tight',
                                 lowBalance &&
                                   'text-amber-600 dark:text-amber-500'
                               )}
                             >
-                              {renderQuota(current)}
+                              {balanceDisplay.compact}
                             </div>
-                            <p className="mt-1 text-xs text-muted-foreground">
-                              {t.dashboard.cards.balance.used}{' '}
-                              <span className="tabular-nums text-foreground/80">
-                                {renderQuota(used)}
-                              </span>
-                              {total > 0 && (
-                                <>
-                                  {' · '}
-                                  <span className="tabular-nums">
-                                    {usedRatio}%
-                                  </span>{' '}
-                                  {t.dashboard.cards.balance.usedRatio}
-                                </>
-                              )}
-                            </p>
-                            {total > 0 && (
-                              <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                                <div
-                                  className={cn(
-                                    'h-full rounded-full transition-all',
-                                    lowBalance ? 'bg-amber-500' : 'bg-primary'
-                                  )}
-                                  style={{
-                                    width: `${Math.min(usedRatio, 100)}%`
-                                  }}
-                                />
-                              </div>
+                          </TooltipTrigger>
+                          <TooltipContent>{balanceDisplay.full}</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <p className="mt-1 truncate text-xs text-muted-foreground">
+                        {t.dashboard.cards.balance.used}{' '}
+                        <span className="tabular-nums text-foreground/80">
+                          {renderQuota(used)}
+                        </span>
+                        {total > 0 && ` · ${usedRatio}%`}
+                      </p>
+                      {total > 0 && (
+                        <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                          <div
+                            className={cn(
+                              'h-full rounded-full transition-all',
+                              lowBalance ? 'bg-amber-500' : 'bg-primary'
                             )}
-                          </>
-                        )}
-                      </CardContent>
-                    </div>
-
-                    <div>
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">
-                          Cumulative top-ups
-                        </CardTitle>
-                        <BadgeDollarSign className="h-4 w-4 text-muted-foreground" />
-                      </CardHeader>
-                      <CardContent>
-                        {loading ? (
-                          <Skeleton className="h-9 w-28" />
-                        ) : (
-                          <>
-                            <div className="text-3xl font-semibold tabular-nums tracking-tight">
-                              {renderQuota(dashboardData.topup_quota || 0)}
-                            </div>
-                            <p className="mt-1 text-xs text-muted-foreground">
-                              Real-money payments · determines tier
-                            </p>
-                          </>
-                        )}
-                      </CardContent>
-                    </div>
-
-                    <div>
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">
-                          Cumulative bonus
-                        </CardTitle>
-                        <Gift className="h-4 w-4 text-muted-foreground" />
-                      </CardHeader>
-                      <CardContent>
-                        {loading ? (
-                          <Skeleton className="h-9 w-28" />
-                        ) : (
-                          <>
-                            <div className="text-3xl font-semibold tabular-nums tracking-tight">
-                              {renderQuota(dashboardData.gift_quota || 0)}
-                            </div>
-                            <p className="mt-1 text-xs text-muted-foreground">
-                              Registration and referral rewards
-                            </p>
-                          </>
-                        )}
-                      </CardContent>
-                    </div>
-                  </div>
+                            style={{ width: `${Math.min(usedRatio, 100)}%` }}
+                          />
+                        </div>
+                      )}
+                      <Link
+                        href="/dashboard/topup"
+                        className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                      >
+                        View billing <ArrowRight className="h-3 w-3" />
+                      </Link>
+                    </>
+                  )}
                 </CardContent>
               </Card>
 
@@ -323,34 +287,6 @@ export default function OverViewPage() {
                   )}
                 </CardContent>
               </Card>
-
-              {isAdmin(userRole) && (
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
-                      Recharge · 24h
-                    </CardTitle>
-                    <CreditCard className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    {loading ? (
-                      <div className="space-y-3">
-                        <Skeleton className="h-9 w-24" />
-                        <Skeleton className="h-3 w-40" />
-                      </div>
-                    ) : (
-                      <>
-                        <div className="text-3xl font-semibold tabular-nums tracking-tight">
-                          ${(dashboardData.recharge_amount || 0).toFixed(2)}
-                        </div>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          Successful payments · 10 min cache
-                        </p>
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
             </div>
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-7">
               <div className="lg:col-span-4">
