@@ -11,16 +11,10 @@ export interface CommonSystemSettings {
   CryptCallbackUrl: string;
   /** 接收地址 */
   AddressOut: string;
-  /** SMTP 服务器地址 */
-  SMTPServer: string;
-  /** SMTP 端口 */
-  SMTPPort: string;
-  /** SMTP 账户 */
-  SMTPAccount: string;
-  /** SMTP 发送者邮箱 */
-  SMTPFrom: string;
-  /** SMTP 访问凭证 */
-  SMTPToken: string;
+  /** Resend API key */
+  ResendApiKey: string;
+  /** Resend 发件人邮箱 */
+  ResendFrom: string;
   /** GitHub Client ID */
   GitHubClientId: string;
   /** GitHub Client Secret */

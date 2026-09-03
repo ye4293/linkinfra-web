@@ -75,13 +75,9 @@ export default function SettingPage() {
   );
 
   // ==================== 提醒设置状态 ====================
-  // SMTP 邮箱配置
-  const [smtpServer, setSmtpServer] = useState('');
-  const [smtpPort, setSmtpPort] = useState('');
-  const [smtpAccount, setSmtpAccount] = useState('');
-  const [smtpFrom, setSmtpFrom] = useState('');
-  const [smtpToken, setSmtpToken] = useState('');
-  const [smtpSSLEnabled, setSmtpSSLEnabled] = useState(false);
+  // Resend 邮件配置
+  const [resendApiKey, setResendApiKey] = useState('');
+  const [resendFrom, setResendFrom] = useState('');
 
   // 飞书 Webhook 配置（支持多个，每行一个）
   const [feishuWebhookUrls, setFeishuWebhookUrls] = useState('');
@@ -229,42 +225,12 @@ export default function SettingPage() {
         }
 
         // ==================== 加载提醒设置 ====================
-        // SMTP 配置
-        const smtpServerOption = options.find(
-          (o: Option) => o.key === 'SMTPServer'
+        // Resend 配置（API key 为敏感信息，后端不回显）
+        const resendFromOption = options.find(
+          (o: Option) => o.key === 'ResendFrom'
         );
-        if (smtpServerOption) {
-          setSmtpServer(smtpServerOption.value || '');
-        }
-
-        const smtpPortOption = options.find(
-          (o: Option) => o.key === 'SMTPPort'
-        );
-        if (smtpPortOption) {
-          setSmtpPort(smtpPortOption.value || '');
-        }
-
-        const smtpAccountOption = options.find(
-          (o: Option) => o.key === 'SMTPAccount'
-        );
-        if (smtpAccountOption) {
-          setSmtpAccount(smtpAccountOption.value || '');
-        }
-
-        const smtpFromOption = options.find(
-          (o: Option) => o.key === 'SMTPFrom'
-        );
-        if (smtpFromOption) {
-          setSmtpFrom(smtpFromOption.value || '');
-        }
-
-        const smtpSSLOption = options.find(
-          (o: Option) => o.key === 'SMTPSSLEnabled'
-        );
-        if (smtpSSLOption) {
-          setSmtpSSLEnabled(
-            smtpSSLOption.value === 'true' || smtpSSLOption.value === true
-          );
+        if (resendFromOption) {
+          setResendFrom(resendFromOption.value || '');
         }
 
         // 飞书 Webhook 配置（支持多个）
@@ -447,24 +413,18 @@ export default function SettingPage() {
     }
   };
 
-  // ==================== 保存 SMTP 设置 ====================
-  const handleSaveSMTP = async () => {
+  // ==================== 保存 Resend 设置 ====================
+  const handleSaveResend = async () => {
     setIsLoading(true);
     try {
-      const smtpOptions = [
-        { key: 'SMTPServer', value: smtpServer },
-        { key: 'SMTPPort', value: smtpPort },
-        { key: 'SMTPAccount', value: smtpAccount },
-        { key: 'SMTPFrom', value: smtpFrom },
-        { key: 'SMTPSSLEnabled', value: smtpSSLEnabled.toString() }
-      ];
+      const resendOptions = [{ key: 'ResendFrom', value: resendFrom }];
 
-      // 只有当 smtpToken 不为空时才更新（敏感信息）
-      if (smtpToken) {
-        smtpOptions.push({ key: 'SMTPToken', value: smtpToken });
+      // 只有当 resendApiKey 不为空时才更新（敏感信息）
+      if (resendApiKey) {
+        resendOptions.push({ key: 'ResendApiKey', value: resendApiKey });
       }
 
-      for (const option of smtpOptions) {
+      for (const option of resendOptions) {
         const response = await fetch('/api/option', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -475,10 +435,10 @@ export default function SettingPage() {
         }
       }
 
-      toast.success('SMTP settings saved.');
-      setSmtpToken(''); // clear the password field
+      toast.success('Resend settings saved.');
+      setResendApiKey(''); // clear the API key field
     } catch (error) {
-      console.error('Save SMTP error:', error);
+      console.error('Save Resend error:', error);
       toast.error('Save failed. Please try again.');
     } finally {
       setIsLoading(false);
@@ -554,8 +514,8 @@ export default function SettingPage() {
     }
   };
 
-  // ==================== 测试 SMTP 邮件发送 ====================
-  const handleTestSMTP = async () => {
+  // ==================== 测试邮件发送 ====================
+  const handleTestEmail = async () => {
     if (!testEmail) {
       toast.error('Enter a test email address.');
       return;
@@ -570,7 +530,7 @@ export default function SettingPage() {
 
     setIsTesting(true);
     try {
-      const response = await fetch('/api/test/smtp', {
+      const response = await fetch('/api/test/email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: testEmail })
@@ -584,8 +544,8 @@ export default function SettingPage() {
         toast.error(result.message || 'Failed to send test email.');
       }
     } catch (error) {
-      console.error('Test SMTP error:', error);
-      toast.error('Failed to send test email. Check your SMTP settings.');
+      console.error('Test email error:', error);
+      toast.error('Failed to send test email. Check your Resend settings.');
     } finally {
       setIsTesting(false);
     }
@@ -1114,84 +1074,48 @@ export default function SettingPage() {
             Notification settings
           </h3>
 
-          {/* SMTP configuration */}
+          {/* Resend email configuration */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Mail className="h-5 w-5" />
-                Configure SMTP
+                Configure Resend
               </CardTitle>
               <CardDescription>
-                Used to enable system email sending, such as verification codes
-                and notifications.
+                Used to send system emails such as verification codes and
+                notifications through Resend. The sender domain must be verified
+                in your Resend account.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="smtp-server">SMTP server</Label>
+                  <Label htmlFor="resend-api-key">Resend API key</Label>
                   <Input
-                    id="smtp-server"
-                    value={smtpServer}
-                    onChange={(e) => setSmtpServer(e.target.value)}
-                    placeholder="e.g. smtp.gmail.com"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="smtp-port">SMTP port</Label>
-                  <Input
-                    id="smtp-port"
-                    value={smtpPort}
-                    onChange={(e) => setSmtpPort(e.target.value)}
-                    placeholder="e.g. 465 or 587"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="smtp-account">SMTP account</Label>
-                  <Input
-                    id="smtp-account"
-                    value={smtpAccount}
-                    onChange={(e) => setSmtpAccount(e.target.value)}
-                    placeholder="Account used to log in to the SMTP server"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <div className="space-y-2">
-                  <Label htmlFor="smtp-from">Sender address</Label>
-                  <Input
-                    id="smtp-from"
-                    value={smtpFrom}
-                    onChange={(e) => setSmtpFrom(e.target.value)}
-                    placeholder="From address displayed on outgoing emails"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="smtp-token">SMTP credential</Label>
-                  <Input
-                    id="smtp-token"
+                    id="resend-api-key"
                     type="password"
-                    value={smtpToken}
-                    onChange={(e) => setSmtpToken(e.target.value)}
+                    value={resendApiKey}
+                    onChange={(e) => setResendApiKey(e.target.value)}
                     placeholder="Sensitive — not displayed after saving"
                   />
                 </div>
-                <div className="flex items-center space-x-2 pt-6">
-                  <Switch
-                    id="smtp-ssl"
-                    checked={smtpSSLEnabled}
-                    onCheckedChange={setSmtpSSLEnabled}
+                <div className="space-y-2">
+                  <Label htmlFor="resend-from">Sender address</Label>
+                  <Input
+                    id="resend-from"
+                    value={resendFrom}
+                    onChange={(e) => setResendFrom(e.target.value)}
+                    placeholder="e.g. noreply@yourdomain.com"
                   />
-                  <Label htmlFor="smtp-ssl">Enable SMTP SSL</Label>
                 </div>
               </div>
               <div className="flex flex-wrap items-end gap-4">
-                <Button onClick={handleSaveSMTP} disabled={isLoading}>
+                <Button onClick={handleSaveResend} disabled={isLoading}>
                   <Save className="mr-2 h-4 w-4" />
-                  Save SMTP settings
+                  Save Resend settings
                 </Button>
 
-                {/* test SMTP */}
+                {/* send test email */}
                 <div className="flex items-end gap-2">
                   <div className="space-y-2">
                     <Label htmlFor="test-email">Test email address</Label>
@@ -1206,8 +1130,8 @@ export default function SettingPage() {
                   </div>
                   <Button
                     variant="outline"
-                    onClick={handleTestSMTP}
-                    disabled={isTesting || !smtpServer}
+                    onClick={handleTestEmail}
+                    disabled={isTesting || !resendFrom}
                   >
                     <SendHorizontal className="mr-2 h-4 w-4" />
                     {isTesting ? 'Sending...' : 'Send test email'}
