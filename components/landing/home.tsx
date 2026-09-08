@@ -268,9 +268,9 @@ export function LandingHome() {
               <ArrowRight size={13} />
             </Link>
             <h1>
-              {c('一个 API，', 'One API.')}
+              {c('连接智能，', 'Connect to intelligence.')}
               <br />
-              {c('连接你的 AI 世界。', 'Every possibility.')}
+              {c('构建新可能。', 'Build what’s next.')}
             </h1>
             <p className={s.heroDescription}>
               {c(
@@ -609,7 +609,10 @@ export function LandingHome() {
               {brand}
             </Link>
             <p>
-              {c('一个 API，连接你的 AI 世界。', 'One API. Every possibility.')}
+              {c(
+                '连接智能，构建新可能。',
+                'Connect to intelligence. Build what’s next.'
+              )}
             </p>
           </div>
           <div>
