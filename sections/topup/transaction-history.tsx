@@ -24,6 +24,7 @@ import {
 import { toast } from 'sonner';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 interface TopUpRecord {
   id: number;
@@ -256,6 +257,11 @@ export default function TransactionHistory() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    {isAdmin && (
+                      <TableHead className="whitespace-nowrap">
+                        User ID
+                      </TableHead>
+                    )}
                     <TableHead>Date</TableHead>
                     <TableHead>Order ID</TableHead>
                     <TableHead>Credits</TableHead>
@@ -278,6 +284,17 @@ export default function TransactionHistory() {
                     const entrySummary = manualCompleteSummary(record.other);
                     return (
                       <TableRow key={record.id}>
+                        {isAdmin && (
+                          <TableCell className="whitespace-nowrap font-mono tabular-nums">
+                            <Link
+                              href={`/dashboard/user/${record.user_id}`}
+                              className="text-primary hover:underline"
+                              aria-label={`View user ${record.user_id}`}
+                            >
+                              {record.user_id}
+                            </Link>
+                          </TableCell>
+                        )}
                         <TableCell className="whitespace-nowrap">
                           {format(
                             new Date(record.create_time * 1000),
