@@ -31,6 +31,7 @@ export default async function UserListingPage({}: TUserListingPage) {
   const baseUrl =
     process.env.NEXT_PUBLIC_API_BASE_URL + `/api/user/search?${params}`;
   const res = await fetch(baseUrl, {
+    cache: 'no-store',
     credentials: 'include',
     headers: {
       Authorization: `Bearer ${session?.user?.accessToken}`

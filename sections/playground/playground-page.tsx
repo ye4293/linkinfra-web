@@ -97,39 +97,16 @@ const ENABLED_TOKEN_STATUS = 1;
 const DEFAULT_SYSTEM_PROMPT = 'You are a helpful assistant.';
 
 function normalizeModelOptions(data: unknown): ModelOption[] {
-  if (Array.isArray(data)) {
-    return data.reduce<ModelOption[]>((models, item) => {
-      if (typeof item === 'string') {
-        models.push({ id: item, object: 'model' });
-        return models;
-      }
-      if (
-        item &&
-        typeof item === 'object' &&
-        'id' in item &&
-        typeof item.id === 'string'
-      ) {
-        models.push({ id: item.id, object: 'model' });
-      }
-      return models;
-    }, []);
-  }
-
-  if (!data || typeof data !== 'object') {
+  if (!Array.isArray(data)) {
     return [];
   }
 
-  const uniqueModels = new Set<string>();
-  Object.values(data as Record<string, unknown>).forEach((value) => {
-    if (!Array.isArray(value)) {
-      return;
-    }
-    value.forEach((model) => {
-      if (typeof model === 'string' && model.trim()) {
-        uniqueModels.add(model);
-      }
-    });
-  });
+  const uniqueModels = new Set(
+    data.filter(
+      (model): model is string =>
+        typeof model === 'string' && model.trim().length > 0
+    )
+  );
 
   return Array.from(uniqueModels)
     .sort((a, b) => a.localeCompare(b))
@@ -423,23 +400,26 @@ function SearchableSelect({
           <Button
             variant="outline"
             role="combobox"
+            aria-label={label}
             aria-expanded={open}
-            className="h-9 w-full justify-between px-3 text-xs font-normal"
+            className="h-auto min-h-10 w-full justify-between gap-2 px-3 py-2 text-sm font-normal"
             disabled={disabled}
           >
-            <span className="truncate text-left">
+            <span className="min-w-0 whitespace-normal break-words text-left leading-5 [overflow-wrap:anywhere]">
               {selectedOption?.label || placeholder}
             </span>
             <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          className="w-[var(--radix-popover-trigger-width)] min-w-[260px] p-0"
+          className="w-[var(--radix-popover-trigger-width)] max-w-[calc(100vw-24px)] overflow-hidden p-0 shadow-lg"
           align="start"
+          collisionPadding={12}
+          sideOffset={6}
         >
-          <Command>
+          <Command className="h-auto max-h-[var(--radix-popover-content-available-height)] [&_[cmdk-input-wrapper]]:shrink-0">
             <CommandInput placeholder={searchPlaceholder} />
-            <CommandList>
+            <CommandList className="max-h-64 min-h-0 flex-1 overscroll-contain">
               <CommandEmpty>{emptyText}</CommandEmpty>
               <CommandGroup>
                 {options.map((option) => (
@@ -450,15 +430,17 @@ function SearchableSelect({
                       onChange(option.value);
                       setOpen(false);
                     }}
-                    className="text-xs"
+                    className="cursor-pointer items-start gap-2 py-2.5 text-sm"
                   >
                     <Check
                       className={cn(
-                        'mr-2 h-3.5 w-3.5',
+                        'mt-0.5 h-4 w-4 shrink-0',
                         value === option.value ? 'opacity-100' : 'opacity-0'
                       )}
                     />
-                    <span className="truncate">{option.label}</span>
+                    <span className="min-w-0 break-words leading-5 [overflow-wrap:anywhere]">
+                      {option.label}
+                    </span>
                   </CommandItem>
                 ))}
               </CommandGroup>
@@ -527,27 +509,37 @@ function PlaygroundSettingsContent({
 }: PlaygroundSettingsContentProps) {
   return (
     <div className="space-y-5 p-4">
-      <SearchableSelect
-        label="Model"
-        value={selectedModel}
-        options={modelOptions}
-        onChange={onModelChange}
-        disabled={modelsCount === 0}
-        placeholder={modelError ? 'Models unavailable' : 'Select model'}
-        searchPlaceholder="Search models..."
-        emptyText="No matching models."
-      />
+      <div className="space-y-4 rounded-xl border bg-background p-3">
+        <div className="flex items-center justify-between gap-2">
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Connection
+          </h4>
+          <span className="text-xs tabular-nums text-muted-foreground">
+            {modelsCount} models
+          </span>
+        </div>
+        <SearchableSelect
+          label="Model"
+          value={selectedModel}
+          options={modelOptions}
+          onChange={onModelChange}
+          disabled={modelsCount === 0}
+          placeholder={modelError ? 'Models unavailable' : 'Select model'}
+          searchPlaceholder="Search models..."
+          emptyText="No matching models."
+        />
 
-      <SearchableSelect
-        label="API Key"
-        value={selectedTokenKey}
-        options={tokenOptions}
-        onChange={onTokenChange}
-        disabled={tokensCount === 0}
-        placeholder={tokenError ? 'API keys unavailable' : 'Select API key'}
-        searchPlaceholder="Search API keys..."
-        emptyText="No matching API keys."
-      />
+        <SearchableSelect
+          label="API Key"
+          value={selectedTokenKey}
+          options={tokenOptions}
+          onChange={onTokenChange}
+          disabled={tokensCount === 0}
+          placeholder={tokenError ? 'API keys unavailable' : 'Select API key'}
+          searchPlaceholder="Search API keys..."
+          emptyText="No matching API keys."
+        />
+      </div>
 
       {(modelError || tokenError) && (
         <Alert variant="destructive">
@@ -567,56 +559,63 @@ function PlaygroundSettingsContent({
         </Alert>
       )}
 
-      <ImageUrlInput
-        imageUrls={imageUrls}
-        imageEnabled={imageEnabled}
-        localImageCount={localImageCount}
-        onImageUrlsChange={onImageUrlsChange}
-        onImageEnabledChange={onImageEnabledChange}
-        onRemoveImage={onRemoveImage}
-      />
-
-      <div className="space-y-2">
+      <div className="space-y-2 rounded-xl border bg-background p-3">
         <Label className="text-xs">System Prompt</Label>
         <Textarea
           value={systemPrompt}
           onChange={(e) => onSystemPromptChange(e.target.value)}
           placeholder="You are a helpful assistant."
-          className="min-h-[80px] text-xs"
+          className="min-h-[100px] resize-y text-sm leading-relaxed"
           rows={4}
         />
       </div>
 
-      <div className="flex items-center justify-between">
-        <Label className="text-xs">Stream</Label>
-        <Switch checked={streamEnabled} onCheckedChange={onStreamChange} />
-      </div>
-
-      <div className="space-y-2">
+      <div className="space-y-5 rounded-xl border bg-background p-3">
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Generation
+        </h4>
         <div className="flex items-center justify-between">
-          <Label className="text-xs">Temperature</Label>
-          <span className="text-xs text-muted-foreground">{temperature}</span>
+          <Label className="text-xs">Stream</Label>
+          <Switch checked={streamEnabled} onCheckedChange={onStreamChange} />
         </div>
-        <Slider
-          value={[temperature]}
-          onValueChange={([value]) => onTemperatureChange(value)}
-          min={0}
-          max={2}
-          step={0.1}
-        />
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs">Temperature</Label>
+            <span className="text-xs text-muted-foreground">{temperature}</span>
+          </div>
+          <Slider
+            value={[temperature]}
+            onValueChange={([value]) => onTemperatureChange(value)}
+            min={0}
+            max={2}
+            step={0.1}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-xs">Max Tokens</Label>
+          <Input
+            type="number"
+            value={maxTokens}
+            onChange={(e) =>
+              onMaxTokensChange(Math.max(1, parseInt(e.target.value, 10) || 1))
+            }
+            className="h-8 text-xs"
+            min={1}
+            max={128000}
+          />
+        </div>
       </div>
 
-      <div className="space-y-2">
-        <Label className="text-xs">Max Tokens</Label>
-        <Input
-          type="number"
-          value={maxTokens}
-          onChange={(e) =>
-            onMaxTokensChange(Math.max(1, parseInt(e.target.value, 10) || 1))
-          }
-          className="h-8 text-xs"
-          min={1}
-          max={128000}
+      <div className="rounded-xl border bg-background p-3">
+        <ImageUrlInput
+          imageUrls={imageUrls}
+          imageEnabled={imageEnabled}
+          localImageCount={localImageCount}
+          onImageUrlsChange={onImageUrlsChange}
+          onImageEnabledChange={onImageEnabledChange}
+          onRemoveImage={onRemoveImage}
         />
       </div>
 
@@ -705,7 +704,7 @@ export default function PlaygroundPage() {
   const loadModels = useCallback(async () => {
     try {
       setModelError('');
-      const res = await fetch('/api/models');
+      const res = await fetch('/api/playground/models', { cache: 'no-store' });
       const json = await res.json();
 
       if (!res.ok || !json.success) {
@@ -724,7 +723,9 @@ export default function PlaygroundPage() {
       });
 
       if (modelList.length === 0) {
-        setModelError('No models were returned by the current backend.');
+        setModelError(
+          'No models are currently available for your account. Please contact the administrator.'
+        );
       }
 
       return modelList;
@@ -1056,7 +1057,7 @@ export default function PlaygroundPage() {
   };
 
   return (
-    <div className="flex h-[calc(100dvh-52px)] overflow-hidden">
+    <div className="flex h-[calc(100dvh-57px)] min-h-0 min-w-0 overflow-hidden">
       <input
         ref={imageFileInputRef}
         type="file"
@@ -1069,62 +1070,68 @@ export default function PlaygroundPage() {
       {!isCompactLayout && (
         <div
           className={cn(
-            'relative hidden flex-shrink-0 bg-background transition-all duration-300 xl:block',
-            settingsOpen ? 'w-72 border-r' : 'w-0'
+            'relative hidden min-h-0 flex-shrink-0 flex-col bg-muted/20 transition-all duration-300 xl:flex',
+            settingsOpen ? 'w-80 border-r 2xl:w-[340px]' : 'w-0'
           )}
         >
           {settingsOpen && (
-            <ScrollArea className="h-full">
-              <div className="flex items-center justify-between border-b px-4 py-3">
+            <>
+              <div className="flex shrink-0 items-center justify-between border-b bg-background px-4 py-3">
                 <h3 className="text-sm font-semibold">Settings</h3>
                 <Button
                   variant="ghost"
                   size="icon"
                   className="h-7 w-7"
+                  aria-label="Hide settings"
                   onClick={() => setSettingsOpen(false)}
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
               </div>
-              <PlaygroundSettingsContent
-                modelOptions={modelOptions}
-                tokenOptions={tokenOptions}
-                selectedModel={selectedModel}
-                selectedTokenKey={selectedTokenKey}
-                modelError={modelError}
-                tokenError={tokenError}
-                modelsCount={models.length}
-                tokensCount={tokens.length}
-                imageUrls={imageUrls}
-                imageEnabled={imageEnabled}
-                localImageCount={localImageCount}
-                systemPrompt={systemPrompt}
-                streamEnabled={streamEnabled}
-                temperature={temperature}
-                maxTokens={maxTokens}
-                onModelChange={setSelectedModel}
-                onTokenChange={setSelectedTokenKey}
-                onImageUrlsChange={setImageUrls}
-                onImageEnabledChange={setImageEnabled}
-                onRemoveImage={handleRemoveImage}
-                onSystemPromptChange={setSystemPrompt}
-                onStreamChange={setStreamEnabled}
-                onTemperatureChange={setTemperature}
-                onMaxTokensChange={setMaxTokens}
-                onClearMessages={handleClear}
-              />
-            </ScrollArea>
+              <ScrollArea className="min-h-0 flex-1">
+                <PlaygroundSettingsContent
+                  modelOptions={modelOptions}
+                  tokenOptions={tokenOptions}
+                  selectedModel={selectedModel}
+                  selectedTokenKey={selectedTokenKey}
+                  modelError={modelError}
+                  tokenError={tokenError}
+                  modelsCount={models.length}
+                  tokensCount={tokens.length}
+                  imageUrls={imageUrls}
+                  imageEnabled={imageEnabled}
+                  localImageCount={localImageCount}
+                  systemPrompt={systemPrompt}
+                  streamEnabled={streamEnabled}
+                  temperature={temperature}
+                  maxTokens={maxTokens}
+                  onModelChange={setSelectedModel}
+                  onTokenChange={setSelectedTokenKey}
+                  onImageUrlsChange={setImageUrls}
+                  onImageEnabledChange={setImageEnabled}
+                  onRemoveImage={handleRemoveImage}
+                  onSystemPromptChange={setSystemPrompt}
+                  onStreamChange={setStreamEnabled}
+                  onTemperatureChange={setTemperature}
+                  onMaxTokensChange={setMaxTokens}
+                  onClearMessages={handleClear}
+                />
+              </ScrollArea>
+            </>
           )}
         </div>
       )}
 
       {isCompactLayout && (
         <Sheet open={mobileSettingsOpen} onOpenChange={setMobileSettingsOpen}>
-          <SheetContent side="left" className="w-[88vw] p-0 sm:max-w-sm">
+          <SheetContent
+            side="left"
+            className="flex w-[92vw] max-w-sm flex-col gap-0 p-0"
+          >
             <SheetHeader className="border-b px-4 py-3">
               <SheetTitle className="text-sm">Settings</SheetTitle>
             </SheetHeader>
-            <ScrollArea className="h-[calc(100dvh-57px)]">
+            <ScrollArea className="min-h-0 flex-1 bg-muted/20">
               <PlaygroundSettingsContent
                 modelOptions={modelOptions}
                 tokenOptions={tokenOptions}
@@ -1158,7 +1165,7 @@ export default function PlaygroundPage() {
       )}
 
       {/* Main Chat Area */}
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         {/* Top Bar */}
         <div className="flex h-12 flex-shrink-0 items-center gap-2 border-b px-3 sm:px-4">
           {(isCompactLayout || !settingsOpen) && (
@@ -1166,6 +1173,7 @@ export default function PlaygroundPage() {
               variant="ghost"
               size="icon"
               className="h-8 w-8"
+              aria-label="Show settings"
               onClick={() =>
                 isCompactLayout
                   ? setMobileSettingsOpen(true)
@@ -1184,7 +1192,7 @@ export default function PlaygroundPage() {
         </div>
 
         {/* Messages */}
-        <ScrollArea className="flex-1">
+        <ScrollArea className="min-h-0 flex-1">
           <div className="mx-auto w-full max-w-3xl space-y-1 p-3 sm:p-4">
             {messages.length === 0 && (
               <div className="flex h-[50vh] items-center justify-center">
@@ -1231,7 +1239,7 @@ export default function PlaygroundPage() {
                   </div>
                   <div className="space-y-3 pl-6">
                     {textContent && (
-                      <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                      <div className="whitespace-pre-wrap break-words text-sm leading-relaxed [overflow-wrap:anywhere]">
                         {textContent}
                       </div>
                     )}
@@ -1272,7 +1280,7 @@ export default function PlaygroundPage() {
         </ScrollArea>
 
         {/* Input Area */}
-        <div className="flex-shrink-0 border-t bg-background p-3 sm:p-4">
+        <div className="flex-shrink-0 border-t bg-background p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-4">
           <div className="mx-auto max-w-3xl">
             {validImageUrls.length > 0 && (
               <div className="mb-3 flex items-center justify-between rounded-md border bg-muted/40 px-3 py-2">
@@ -1300,6 +1308,7 @@ export default function PlaygroundPage() {
                 onClick={handleOpenImageUpload}
                 disabled={isStreaming}
                 title="Upload image"
+                aria-label="Upload image"
               >
                 <ImagePlus className="h-4 w-4" />
               </Button>
@@ -1311,8 +1320,8 @@ export default function PlaygroundPage() {
                 onPaste={handlePasteImage}
                 placeholder={
                   imageEnabled
-                    ? 'Type a message or paste an image... (Enter to send, Shift+Enter for new line)'
-                    : 'Type a message... (Enter to send, Shift+Enter for new line)'
+                    ? 'Type a message or paste an image...'
+                    : 'Type a message...'
                 }
                 className="max-h-[200px] min-h-[40px] resize-none text-sm sm:min-h-[44px]"
                 rows={1}
@@ -1324,6 +1333,7 @@ export default function PlaygroundPage() {
                   size="icon"
                   className="h-10 w-10 flex-shrink-0 sm:h-[44px] sm:w-[44px]"
                   onClick={handleStop}
+                  aria-label="Stop generating"
                 >
                   <Square className="h-4 w-4" />
                 </Button>
@@ -1332,6 +1342,7 @@ export default function PlaygroundPage() {
                   size="icon"
                   className="h-10 w-10 flex-shrink-0 sm:h-[44px] sm:w-[44px]"
                   onClick={handleSend}
+                  aria-label="Send message"
                   disabled={
                     (!inputValue.trim() && !hasPendingImages) ||
                     !selectedModel ||
@@ -1342,6 +1353,9 @@ export default function PlaygroundPage() {
                 </Button>
               )}
             </div>
+            <p className="mt-2 hidden text-xs text-muted-foreground sm:block">
+              Enter to send · Shift + Enter for a new line
+            </p>
           </div>
         </div>
       </div>

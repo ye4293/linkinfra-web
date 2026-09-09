@@ -87,8 +87,11 @@ export const useUserColumns = (): ColumnDef<UserSelf>[] => {
         accessorKey: 'email',
         header: t.userPage.columns.email,
         cell: ({ row }) => (
-          <div className="truncate text-muted-foreground">
-            {row.getValue('email') || '—'}
+          <div
+            className="max-w-xs truncate text-muted-foreground"
+            title={row.original.email || 'No email linked'}
+          >
+            {row.getValue('email') || 'No email linked'}
           </div>
         )
       },

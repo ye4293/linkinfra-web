@@ -62,7 +62,7 @@ const MobileUserCard = ({ row }: { row: UserSelf }) => {
             <div className="min-w-0">
               <div className="truncate font-medium">{user.username}</div>
               <div className="truncate text-xs text-muted-foreground">
-                {user.email || '—'}
+                {user.email || 'No email linked'}
               </div>
             </div>
           </div>
