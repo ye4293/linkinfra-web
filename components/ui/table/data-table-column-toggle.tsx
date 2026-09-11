@@ -32,7 +32,11 @@ export function DataTableViewOptions<TData>({
           View
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[150px]">
+      <DropdownMenuContent
+        align="end"
+        collisionPadding={12}
+        className="max-h-[var(--radix-dropdown-menu-content-available-height)] w-56 max-w-[calc(100vw-24px)] overflow-y-auto overscroll-contain"
+      >
         <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {table
@@ -45,11 +49,11 @@ export function DataTableViewOptions<TData>({
             return (
               <DropdownMenuCheckboxItem
                 key={column.id}
-                className="capitalize"
+                className="break-words capitalize"
                 checked={column.getIsVisible()}
                 onCheckedChange={(value) => column.toggleVisibility(!!value)}
               >
-                {column.id}
+                {column.id.replace(/_/g, ' ')}
               </DropdownMenuCheckboxItem>
             );
           })}

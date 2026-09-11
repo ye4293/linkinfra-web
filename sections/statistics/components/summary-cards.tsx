@@ -2,12 +2,9 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import type { LogStatSummary } from '@/lib/types/log-stat';
-import { renderQuota } from '@/utils/render';
-import type { UsageMetrics } from '@/lib/types/dashboard';
 
 interface SummaryCardsProps {
   summary: LogStatSummary;
-  liveMetrics: UsageMetrics;
 }
 
 function formatDuration(seconds: number): string {
@@ -24,30 +21,12 @@ function formatRate(success: number, total: number): string {
   return `${((success / total) * 100).toFixed(1)}%`;
 }
 
-export default function SummaryCards({
-  summary,
-  liveMetrics
-}: SummaryCardsProps) {
+export default function SummaryCards({ summary }: SummaryCardsProps) {
   const cards = [
     {
       title: 'Total Requests',
       value: summary.total_requests.toLocaleString(),
       sub: `${summary.error_count} errors`
-    },
-    {
-      title: 'RPM',
-      value: liveMetrics.rpm.toLocaleString(),
-      sub: 'Requests in the last 60 seconds'
-    },
-    {
-      title: 'TPM',
-      value: liveMetrics.tpm.toLocaleString(),
-      sub: 'Tokens in the last 60 seconds'
-    },
-    {
-      title: "Today's Spend",
-      value: renderQuota(liveMetrics.today_spend),
-      sub: 'From 00:00 to now'
     },
     {
       title: 'Avg Duration',
@@ -72,14 +51,14 @@ export default function SummaryCards({
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
       {cards.map((card) => (
-        <Card key={card.title}>
+        <Card key={card.title} className="min-w-0">
           <CardContent className="p-4">
             <p className="text-xs font-medium text-muted-foreground">
               {card.title}
             </p>
-            <p className="mt-1 text-2xl font-bold tracking-tight">
+            <p className="mt-1 break-words text-xl font-bold tracking-tight sm:text-2xl">
               {card.value}
             </p>
             <p className="mt-0.5 text-xs text-muted-foreground">{card.sub}</p>

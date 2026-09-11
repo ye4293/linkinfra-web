@@ -279,7 +279,11 @@ export function DateTimeRangePicker({
             </span>
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto max-w-[95vw] p-0" align="start">
+        <PopoverContent
+          className="max-h-[var(--radix-popover-content-available-height)] w-auto max-w-[calc(100vw-24px)] overflow-y-auto overscroll-contain p-0"
+          align="start"
+          collisionPadding={12}
+        >
           <div className="flex flex-col sm:flex-row">
             {/* 左侧：快捷选择 */}
             <div className="border-b p-3 sm:border-b-0 sm:border-r">

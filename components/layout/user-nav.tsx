@@ -39,7 +39,11 @@ export function UserNav() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+        <Button
+          variant="ghost"
+          className="relative h-8 w-8 rounded-full"
+          aria-label="Account menu"
+        >
           <Avatar className="h-8 w-8">
             <AvatarImage
               src={session.user?.image ?? ''}
@@ -72,7 +76,9 @@ export function UserNav() {
             <Link href="/dashboard/topup">{t.userMenu.billing}</Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href="/dashboard/setting">{t.userMenu.settings}</Link>
+            <Link href="/dashboard/setting/updateUser">
+              {t.userMenu.settings}
+            </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />

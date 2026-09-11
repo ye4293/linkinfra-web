@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,13 +13,11 @@ import { LOG_OPTIONS } from '@/constants';
 import { Search, Loader2, X, RefreshCw } from 'lucide-react';
 import PageContainer from '@/components/layout/page-container';
 import { Breadcrumbs } from '@/components/breadcrumbs';
-import request from '@/app/lib/clientFetch';
 import type {
   LogStatData,
   LogStatResponse,
   TimeBucket
 } from '@/lib/types/log-stat';
-import type { UsageMetrics, UsageMetricsResult } from '@/lib/types/dashboard';
 import SummaryCards from '../components/summary-cards';
 import DurationChart from '../components/duration-chart';
 import LatencyChart from '../components/latency-chart';
@@ -52,6 +51,7 @@ interface DateTimeRange {
 export default function StatisticsPage() {
   const { data: session } = useSession();
   const isAdmin = [10, 100].includes(Number((session?.user as any)?.role));
+  const userId = session?.user?.id;
 
   // Filter states
   const [modelName, setModelName] = useState('');
@@ -65,14 +65,10 @@ export default function StatisticsPage() {
 
   // Data states
   const [data, setData] = useState<LogStatData | null>(null);
-  const [liveMetrics, setLiveMetrics] = useState<UsageMetrics>({
-    rpm: 0,
-    tpm: 0,
-    today_spend: 0,
-    cached_until: 0
-  });
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const activeRequest = useRef<AbortController | null>(null);
+  const [refresh, setRefresh] = useState(0);
 
   // Adapter for DataTableSingleFilterBox which expects nuqs-style setter
   const typeFilterSetter = useCallback(
@@ -87,78 +83,102 @@ export default function StatisticsPage() {
     []
   );
 
-  const fetchData = useCallback(async () => {
-    if (!session?.user) return;
-    if (!dateTimeRange.from || !dateTimeRange.to) return;
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const apiPath = isAdmin ? '/api/log/stat' : '/api/log/stat/self';
-      const params: Record<string, string> = {
-        start_timestamp: String(
-          Math.floor(dateTimeRange.from.getTime() / 1000)
-        ),
-        end_timestamp: String(Math.floor(dateTimeRange.to.getTime() / 1000)),
-        time_bucket: timeBucket
-      };
-
-      if (modelName) params.model_name = modelName;
-      if (channelId) params.channel = channelId;
-      if (tokenName) params.token_name = tokenName;
-      if (userName && isAdmin) params.username = userName;
-      if (typeFilter) params.type = typeFilter;
-
-      const dashboardApi = isAdmin
-        ? '/api/dashboard/usage-metrics'
-        : '/api/dashboard/usage-metrics/self';
-      const [res, dashboardRes] = await Promise.all([
-        request.get<LogStatResponse>(apiPath, { params }),
-        request.get<UsageMetricsResult>(dashboardApi)
-      ]);
-      // clientFetch 的响应拦截器会直接返回 data
-      const resData = res as unknown as LogStatResponse;
-      if (resData?.success && resData.data) {
-        setData(resData.data);
-      } else {
-        setError(resData?.message || 'Failed to fetch statistics');
+  const fetchData = useCallback(
+    async (controller: AbortController) => {
+      if (!userId) return;
+      const { signal } = controller;
+      const start = dateTimeRange.from?.getTime();
+      const end = dateTimeRange.to?.getTime();
+      if (
+        start === undefined ||
+        end === undefined ||
+        !Number.isFinite(start) ||
+        !Number.isFinite(end)
+      ) {
+        setError('Select both a start and end time to view statistics.');
+        setLoading(false);
+        return;
       }
-      const dashboardData = dashboardRes as unknown as UsageMetricsResult;
-      if (dashboardData?.success && dashboardData.data) {
-        setLiveMetrics({
-          rpm: dashboardData.data.rpm || 0,
-          tpm: dashboardData.data.tpm || 0,
-          today_spend: dashboardData.data.today_spend || 0,
-          cached_until: dashboardData.data.cached_until || 0
-        });
+      if (start > end) {
+        setError('Start time must be before end time.');
+        setLoading(false);
+        return;
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Request failed');
-    } finally {
-      setLoading(false);
-    }
-  }, [
-    session,
-    isAdmin,
-    dateTimeRange,
-    timeBucket,
-    modelName,
-    channelId,
-    tokenName,
-    userName,
-    typeFilter
-  ]);
 
-  // Fetch on mount
+      setLoading(true);
+      setError(null);
+
+      try {
+        const apiPath = isAdmin ? '/api/log/stat' : '/api/log/stat/self';
+        const params: Record<string, string> = {
+          start_timestamp: String(Math.floor(start / 1000)),
+          end_timestamp: String(Math.floor(end / 1000)),
+          time_bucket: timeBucket
+        };
+
+        if (modelName) params.model_name = modelName;
+        if (channelId && isAdmin) params.channel = channelId;
+        if (tokenName) params.token_name = tokenName;
+        if (userName && isAdmin) params.username = userName;
+        if (typeFilter) params.type = typeFilter;
+
+        const response = await fetch(
+          `${apiPath}?${new URLSearchParams(params)}`,
+          { signal, cache: 'no-store' }
+        );
+        if (!response.ok)
+          throw new Error('Unable to load statistics. Please try again.');
+        const result: LogStatResponse = await response.json();
+        if (signal.aborted) return;
+        if (
+          !result.success ||
+          !result.data?.summary ||
+          !Array.isArray(result.data.timeseries)
+        ) {
+          throw new Error(
+            result.message || 'Unable to load statistics. Please try again.'
+          );
+        }
+        setData(result.data);
+      } catch (err) {
+        if (signal.aborted) return;
+        setError(err instanceof Error ? err.message : 'Request failed');
+      } finally {
+        if (!signal.aborted) setLoading(false);
+      }
+    },
+    [
+      userId,
+      isAdmin,
+      dateTimeRange,
+      timeBucket,
+      modelName,
+      channelId,
+      tokenName,
+      userName,
+      typeFilter
+    ]
+  );
+
+  // 筛选变化后自动查询；取消旧请求，避免结果在快速切换时倒退。
   useEffect(() => {
-    if (session?.user) {
-      fetchData();
-    }
-  }, [session]); // eslint-disable-line react-hooks/exhaustive-deps
+    const controller = new AbortController();
+    activeRequest.current = controller;
+    setData(null);
+    setError(null);
+    setLoading(true);
+    const timer = setTimeout(() => {
+      void fetchData(controller);
+    }, 250);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [fetchData, refresh]);
 
   const handleSearch = () => {
-    fetchData();
+    activeRequest.current?.abort();
+    setRefresh((value) => value + 1);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -173,6 +193,7 @@ export default function StatisticsPage() {
     setTypeFilter('');
     setTimeBucket('5m');
     setDateTimeRange(getTodayRange());
+    handleSearch();
   };
 
   // Format timeseries timestamps for chart display
@@ -180,7 +201,9 @@ export default function StatisticsPage() {
     if (!data?.timeseries) return [];
     return data.timeseries.map((point) => ({
       ...point,
-      time: new Date(point.timestamp * 1000).toLocaleTimeString('zh-CN', {
+      time: new Date(point.timestamp * 1000).toLocaleString(undefined, {
+        month: 'short',
+        day: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
       })
@@ -192,6 +215,21 @@ export default function StatisticsPage() {
       <div className="space-y-4">
         <Breadcrumbs items={breadcrumbItems} />
         <Separator />
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h1 className="text-xl font-semibold">Performance statistics</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Request volume, reliability and response speed for the selected
+              period.
+            </p>
+          </div>
+          <Link
+            href="/dashboard/log"
+            className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+          >
+            View request history & live usage →
+          </Link>
+        </div>
 
         {/* Filters */}
         <div className="space-y-3">
@@ -292,7 +330,14 @@ export default function StatisticsPage() {
             </div>
 
             {/* Time bucket selector */}
-            <div className="flex flex-shrink-0 gap-1">
+            <div
+              className="flex flex-shrink-0 items-center gap-1"
+              role="group"
+              aria-label="Chart interval"
+            >
+              <span className="mr-1 text-xs text-muted-foreground">
+                Chart interval
+              </span>
               {TIME_BUCKETS.map((b) => (
                 <Button
                   key={b.value}
@@ -300,13 +345,14 @@ export default function StatisticsPage() {
                   size="sm"
                   className="h-8 px-3 text-xs"
                   onClick={() => setTimeBucket(b.value)}
+                  aria-pressed={timeBucket === b.value}
                 >
                   {b.label}
                 </Button>
               ))}
             </div>
 
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 basis-full sm:flex-1 sm:basis-auto">
               <DateTimeRangePicker
                 value={dateTimeRange}
                 onValueChange={(range) =>
@@ -319,6 +365,7 @@ export default function StatisticsPage() {
               onClick={handleSearch}
               disabled={loading}
               className="flex-shrink-0 gap-2"
+              aria-label="Apply filters"
             >
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -337,6 +384,7 @@ export default function StatisticsPage() {
               disabled={loading}
               className="h-8 w-8 flex-shrink-0"
               title="Refresh"
+              aria-label="Refresh statistics"
             >
               <RefreshCw
                 className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`}
@@ -352,23 +400,40 @@ export default function StatisticsPage() {
             </Button>
           </div>
         </div>
+        <p className="text-xs text-muted-foreground">
+          Filters update automatically. Chart interval groups requests into
+          5-minute, 15-minute or hourly points; it does not change the selected
+          date range. Times use your local timezone.
+        </p>
+        {data && (
+          <p className="text-sm text-muted-foreground">
+            Showing: {dateTimeRange.from?.toLocaleString()} —{' '}
+            {dateTimeRange.to?.toLocaleString()}
+          </p>
+        )}
 
         {/* Error */}
         {error && (
-          <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+          <div
+            role="alert"
+            className="flex flex-wrap items-center gap-3 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive"
+          >
             {error}
+            <Button variant="outline" size="sm" onClick={handleSearch}>
+              Retry
+            </Button>
           </div>
         )}
 
         {/* Summary Cards */}
         {loading && !data ? (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
-            {Array.from({ length: 8 }).map((_, i) => (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
+            {Array.from({ length: 5 }).map((_, i) => (
               <Skeleton key={i} className="h-24 rounded-lg" />
             ))}
           </div>
         ) : data?.summary ? (
-          <SummaryCards summary={data.summary} liveMetrics={liveMetrics} />
+          <SummaryCards summary={data.summary} />
         ) : null}
 
         {/* Charts */}
