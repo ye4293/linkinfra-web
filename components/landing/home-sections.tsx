@@ -113,7 +113,7 @@ export function HomeSections({
                 </div>
               </li>
             </ol>
-            <a href={docsAddress || '/dashboard/token'} className={s.primary}>
+            <a href={docsAddress || start} className={s.primary}>
               {docsAddress
                 ? c('阅读接入文档', 'Read the docs')
                 : c('获取 API Key', 'Get your API key')}

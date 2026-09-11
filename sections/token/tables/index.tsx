@@ -23,6 +23,7 @@ import {
 import { renderQuota } from '@/utils/render';
 import dayjs from 'dayjs';
 import { CellAction } from './cell-action';
+import { ClientSetupDialog } from '../client-setup-dialog';
 
 // 移动端Token卡片
 const MobileTokenCard = ({ row }: { row: Token }) => {
@@ -163,6 +164,7 @@ const MobileTokenCard = ({ row }: { row: Token }) => {
         >
           <Copy className="mr-2 h-3 w-3" /> Copy Token Key
         </Button>
+        <ClientSetupDialog token={token} />
       </CardContent>
     </Card>
   );

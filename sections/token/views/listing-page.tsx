@@ -10,6 +10,7 @@ import { searchParamsCache } from '@/lib/searchparams';
 import { cn } from '@/lib/utils';
 import { Plus } from 'lucide-react';
 import Link from 'next/link';
+import { ApiConnectionGuide } from '@/components/api-connection-guide';
 
 const breadcrumbItems = [
   { title: 'Dashboard', link: '/dashboard' },
@@ -52,7 +53,7 @@ export default async function TokenListingPage({}: TTokenListingPage) {
         <div className="flex items-start justify-between">
           <Heading
             title={`Token (${totalData})`}
-            description="Manage Token (Server side table functionalities.)"
+            description="Manage API keys and their spending limits."
           />
 
           <Link
@@ -63,6 +64,7 @@ export default async function TokenListingPage({}: TTokenListingPage) {
           </Link>
         </div>
         <Separator />
+        <ApiConnectionGuide />
         <TokenTable data={token} totalData={totalData} />
       </div>
     </PageContainer>

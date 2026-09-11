@@ -4,7 +4,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { ArrowLeft, RefreshCw } from 'lucide-react';
+import { ArrowLeft, RefreshCw, KeyRound, Copy } from 'lucide-react';
+import { toast } from 'sonner';
+import { apiKeyHref } from '@/lib/api-key-navigation';
 
 import { get } from '@/app/lib/clientFetch';
 import { useLocale } from '@/components/providers/locale-provider';
@@ -144,7 +146,9 @@ export default function ModelDetailView() {
         </Button>
 
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-bold tracking-tight">{modelName}</h1>
+          <h1 className="break-all text-2xl font-bold tracking-tight">
+            {modelName}
+          </h1>
           {detail?.provider && <ProviderLogo provider={detail.provider} />}
           {detail && current && (
             <StatusBadge
@@ -159,8 +163,30 @@ export default function ModelDetailView() {
             />
           )}
         </div>
-        <p className="mt-1 font-mono text-sm text-muted-foreground">
+        <p className="mt-1 break-all font-mono text-sm text-muted-foreground">
           {detail?.provider?.toLowerCase() || ''}/{modelName}
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button asChild>
+            <Link href={apiKeyHref(Boolean(session))}>
+              <KeyRound className="mr-2 h-4 w-4" /> Get API key
+            </Link>
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() =>
+              navigator.clipboard
+                .writeText(modelName)
+                .then(() => toast.success('Model ID copied'))
+                .catch(() => toast.error('Unable to copy model ID'))
+            }
+          >
+            <Copy className="mr-2 h-4 w-4" /> Copy model ID
+          </Button>
+        </div>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Already have a key? Use it with this model ID. The same key works
+          across models available to your account.
         </p>
       </div>
 

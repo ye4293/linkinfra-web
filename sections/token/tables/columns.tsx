@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { Token } from '@/lib/types/token';
 import { ColumnDef } from '@tanstack/react-table';
 import { CellAction } from './cell-action';
+import { ClientSetupDialog } from '../client-setup-dialog';
 import { renderQuota } from '@/utils/render';
 import { CheckCircle2, Ban, Clock, AlertTriangle } from 'lucide-react';
 
@@ -166,6 +167,16 @@ export const columns: ColumnDef<Token>[] = [
         </div>
       );
     }
+  },
+  {
+    id: 'clientSetup',
+    header: () => <div className="text-center">Client setup</div>,
+    cell: ({ row }) => (
+      <div className="text-center">
+        <ClientSetupDialog token={row.original} />
+      </div>
+    ),
+    enableHiding: false
   },
   {
     id: 'actions',

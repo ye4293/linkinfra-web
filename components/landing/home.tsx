@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+import { apiKeyHref } from '@/lib/api-key-navigation';
 import {
   ArrowUpRight,
   ArrowRight,
@@ -52,7 +53,7 @@ export function LandingHome() {
   const { data: session } = useSession();
   const { systemName, docsAddress } = useSystemConfig();
   const brand = systemName.trim() || 'LinkInfra';
-  const start = session ? '/dashboard' : '/sign-in';
+  const start = apiKeyHref(Boolean(session));
   const [menu, setMenu] = useState(false);
   const [catalog, setCatalog] = useState(emptyCatalog);
   const [loading, setLoading] = useState(true);
@@ -212,9 +213,7 @@ export function LandingHome() {
               </Link>
             )}
             <Link className={s.navCta} href={start}>
-              {session
-                ? c('控制台', 'Dashboard')
-                : c('开始构建', 'Start building')}
+              {c('获取 API Key', 'Get an API key')}
               <ArrowUpRight size={15} />
             </Link>
             <button
@@ -516,7 +515,15 @@ export function LandingHome() {
                               {c('精选', 'SPOTLIGHT')}
                             </span>
                           )}
-                        <ArrowUpRight className={s.cardArrow} size={17} />
+                        <span
+                          className={s.cardArrow}
+                          title={c('查看详情', 'View details')}
+                        >
+                          <ArrowUpRight size={17} aria-hidden="true" />
+                          <span className="sr-only">
+                            {c('查看详情', 'View details')}
+                          </span>
+                        </span>
                       </div>
                       <h3>{modelTitle(model.model_name)}</h3>
                       <code className={s.modelId} title={model.model_name}>
