@@ -42,11 +42,6 @@ const emptyCatalog: ModelPlazaResponse = {
   page_size: 100
 };
 
-function focusModelSearch() {
-  document.getElementById('models')?.scrollIntoView({ behavior: 'auto' });
-  document.getElementById('model-search')?.focus({ preventScroll: true });
-}
-
 export function LandingHome() {
   const { lang, setLang } = useLocale();
   const zh = lang === 'zh';
@@ -66,26 +61,6 @@ export function LandingHome() {
   const [sort, setSort] = useState('featured');
   const [billing, setBilling] = useState('all');
   const [metrics, setMetrics] = useState<Record<string, ModelMetricsMini>>({});
-
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement | null;
-      if (
-        event.key !== '/' ||
-        event.metaKey ||
-        event.ctrlKey ||
-        event.altKey ||
-        event.isComposing ||
-        target?.isContentEditable ||
-        target?.closest('input, textarea, select')
-      )
-        return;
-      event.preventDefault();
-      focusModelSearch();
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -176,16 +151,6 @@ export function LandingHome() {
             </span>
             {brand}
           </Link>
-          <button
-            className={s.navSearch}
-            onClick={focusModelSearch}
-            aria-label={c('搜索模型', 'Search models')}
-            aria-keyshortcuts="/"
-          >
-            <Search size={14} />
-            <span>{c('搜索模型', 'Search models')}</span>
-            <span className={s.searchHint}>/</span>
-          </button>
           <nav
             className={s.desktopNav}
             aria-label={c('主导航', 'Main navigation')}

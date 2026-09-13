@@ -196,6 +196,7 @@ export function DataTable<TData, TValue>({
         }}
       >
         <Table
+          containerClassName="overflow-visible"
           className="relative w-full"
           style={{
             tableLayout: 'auto', // 改为 auto，让列宽自适应内容
@@ -203,7 +204,7 @@ export function DataTable<TData, TValue>({
               minWidth === '100%' && columns.length > 5 ? '1200px' : minWidth // 如果列多，给一个最小宽度
           }}
         >
-          <TableHeader className="sticky top-0 z-10 bg-secondary/90 backdrop-blur supports-[backdrop-filter]:bg-secondary/50">
+          <TableHeader className="sticky top-0 z-10 bg-secondary">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow
                 key={headerGroup.id}
