@@ -47,22 +47,49 @@ const steps = [
 
 export function GettingStartedCard() {
   return (
-    <details className="rounded-lg border bg-card p-4">
-      <summary className="cursor-pointer text-sm font-semibold">
-        <BookOpen className="mr-2 inline h-4 w-4" />
-        New here? Start with the setup guide
-      </summary>
-      <p className="mt-3 text-sm text-muted-foreground">
-        Check your balance, create a key, connect your client and send your
-        first request.
-      </p>
-      <Link
-        href="/getting-started"
-        className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-primary"
-      >
-        Open step-by-step guide <ArrowRight className="h-4 w-4" />
-      </Link>
-    </details>
+    <section
+      aria-label="Getting started"
+      className="rounded-xl border border-l-4 border-primary/25 border-l-primary bg-gradient-to-r from-primary/10 to-primary/5 p-5 sm:p-6"
+    >
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+            <BookOpen className="h-5 w-5" aria-hidden="true" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+              Quick start guide
+            </p>
+            <h2 className="mt-1 text-lg font-semibold tracking-tight sm:text-xl">
+              New to LinkInfra? Start here.
+            </h2>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              We’ll walk you through creating a key, connecting your app and
+              making your first request.
+            </p>
+          </div>
+        </div>
+        <Button asChild size="lg" className="w-full shrink-0 gap-2 sm:w-auto">
+          <Link href="/getting-started">
+            Start setup <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
+        </Button>
+      </div>
+      <ol className="mt-5 flex flex-wrap gap-x-6 gap-y-3 border-t border-primary/15 pt-4 text-sm">
+        {[
+          'Create an API key',
+          'Connect your client',
+          'Send your first request'
+        ].map((label, index) => (
+          <li key={label} className="flex items-center gap-2">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+              {index + 1}
+            </span>
+            <span>{label}</span>
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }
 
