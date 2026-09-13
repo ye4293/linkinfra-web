@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { SHOW_PUBLIC_USER_TIERS } from '@/lib/public-navigation';
 import { useLocale } from '@/components/providers/locale-provider';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 import { Input } from '@/components/ui/input';
@@ -309,6 +310,10 @@ export default function ModelPlazaView() {
   const { t } = useLocale();
   useDocumentTitle('Model marketplace');
   const router = useRouter();
+  useEffect(() => {
+    // Next.js 可能跳过 sticky 顶栏并沿用前一页滚动位置；进入目录时明确复位。
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
+  }, []);
 
   const [models, setModels] = useState<ModelPlazaItem[]>([]);
   const [groups, setGroups] = useState<GroupConfigItem[]>([]);
@@ -422,7 +427,7 @@ export default function ModelPlazaView() {
         </div>
       </FilterSection>
 
-      {groups.length > 0 && (
+      {SHOW_PUBLIC_USER_TIERS && groups.length > 0 && (
         <FilterSection title={t.modelPlaza.userTier} icon={Users}>
           <div className="flex flex-wrap gap-1.5 px-1.5">
             {groups.map((g) => (
@@ -444,6 +449,9 @@ export default function ModelPlazaView() {
       )}
 
       <FilterSection title={t.modelPlaza.billingType} icon={Receipt}>
+        <p className="mb-2 px-1.5 text-xs leading-relaxed text-muted-foreground">
+          {t.modelPlaza.billingExplanation}
+        </p>
         <div className="space-y-0.5">
           <FilterRow
             active={selectedPriceType === ''}
@@ -507,7 +515,7 @@ export default function ModelPlazaView() {
       )}
 
       {/* 主内容区 */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="min-w-0 flex-1">
         {/* 顶栏 */}
         <div className="sticky top-0 z-10 border-b bg-background/95 px-4 py-3 backdrop-blur lg:px-6">
           <div className="flex items-center gap-3">
@@ -517,6 +525,7 @@ export default function ModelPlazaView() {
               size="sm"
               className="shrink-0 lg:hidden"
               onClick={() => setShowMobileFilters(true)}
+              aria-label="Filter models"
             >
               <SlidersHorizontal className="h-4 w-4" />
             </Button>

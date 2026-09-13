@@ -10,6 +10,7 @@ import { useLocale } from '@/components/providers/locale-provider';
 import { usePathname } from 'next/navigation';
 import { Home, Store, FileText } from 'lucide-react';
 import { useSystemConfig } from '@/hooks/use-system-config';
+import { docsHref } from '@/lib/public-navigation';
 
 export default function Header() {
   const { t } = useLocale();
@@ -25,7 +26,7 @@ export default function Header() {
     },
     {
       key: 'docs' as const,
-      href: docsAddress,
+      href: docsHref(docsAddress),
       icon: FileText,
       external: true
     }
@@ -56,13 +57,7 @@ export default function Header() {
 
               if (link.external) {
                 return (
-                  <a
-                    key={link.key}
-                    href={link.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={linkClass}
-                  >
+                  <a key={link.key} href={link.href} className={linkClass}>
                     <Icon className="h-4 w-4" />
                     <span>{label}</span>
                   </a>

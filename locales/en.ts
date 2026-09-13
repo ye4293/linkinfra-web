@@ -5,7 +5,7 @@ const en: Locale = {
   nav: {
     home: 'Home',
     models: 'Models',
-    docs: 'Document',
+    docs: 'Docs',
     marketplace: 'Model Plaza',
     signIn: 'Sign In',
     dashboard: 'Dashboard'
@@ -93,10 +93,12 @@ const en: Locale = {
     userTier: 'User Tier',
     billingType: 'Billing',
     all: 'All',
-    tokenBased: 'Token-based',
-    perCall: 'Per Call',
-    perCallShort: 'Per Call',
-    tokenBasedShort: 'Token',
+    tokenBased: 'Per token',
+    perCall: 'Per call',
+    perCallShort: 'Per call',
+    tokenBasedShort: 'Per token',
+    billingExplanation:
+      'Per token: charged for input and output tokens. Per call: charged per request. /M means per million tokens.',
     input: 'Input',
     output: 'Output',
     perUnit: 'Per Call',

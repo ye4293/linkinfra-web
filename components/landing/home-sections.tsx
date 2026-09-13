@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useLocale } from '@/components/providers/locale-provider';
 import { useSystemConfig } from '@/hooks/use-system-config';
+import { docsHref } from '@/lib/public-navigation';
 import s from './home.module.css';
 import { ProviderLogoMark } from '@/sections/model-plaza/components/provider-logo';
 
@@ -113,12 +114,16 @@ export function HomeSections({
                 </div>
               </li>
             </ol>
-            <a href={docsAddress || start} className={s.primary}>
-              {docsAddress
-                ? c('阅读接入文档', 'Read the docs')
-                : c('获取 API Key', 'Get your API key')}
+            <a href={docsHref(docsAddress)} className={s.primary}>
+              {c('阅读接入文档', 'Read the docs')}
               <ArrowUpRight size={16} />
             </a>
+            <Link href="/getting-started" className={s.textLink}>
+              {c(
+                '第一次使用？查看新手指引',
+                'First time? Follow the setup guide'
+              )}
+            </Link>
           </div>
           <div className={s.codeWindow}>
             <div className={s.codeTabs}>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
+import { GettingStartedCard } from '@/components/getting-started-guide';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Wallet, Zap, CalendarDays, Users, ArrowRight } from 'lucide-react';
@@ -138,6 +139,7 @@ export default function OverViewPage() {
           </h2>
         </div>
         <Tabs defaultValue="overview" className="space-y-4">
+          <GettingStartedCard />
           <TabsList>
             <TabsTrigger value="overview">
               {t.dashboard.tabs.overview}

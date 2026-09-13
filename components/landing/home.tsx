@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { apiKeyHref } from '@/lib/api-key-navigation';
+import { docsHref, SHOW_PUBLIC_USER_TIERS } from '@/lib/public-navigation';
 import {
   ArrowUpRight,
   ArrowRight,
@@ -194,7 +195,7 @@ export function LandingHome() {
               {c('在线体验', 'Playground')}
             </Link>
             <a href="#models">{c('价格', 'Pricing')}</a>
-            <a href={docsAddress || '#developers'}>
+            <a href={docsHref(docsAddress)}>
               {c('文档', 'Docs')} <ArrowUpRight size={12} />
             </a>
           </nav>
@@ -237,7 +238,8 @@ export function LandingHome() {
               ['#models', c('模型广场', 'Models')],
               ['/dashboard/playground', c('在线体验', 'Playground')],
               ['#platform', c('平台能力', 'Platform')],
-              ['#developers', c('开发者文档', 'Developers')]
+              [docsHref(docsAddress), c('文档', 'Docs')],
+              ['/getting-started', c('新手指引', 'Getting started')]
             ].map(([href, label]) => (
               <a key={href} href={href} onClick={() => setMenu(false)}>
                 {label}
@@ -321,7 +323,7 @@ export function LandingHome() {
                 )}
               </p>
             </div>
-            <Link href="/model-plaza" className={s.textLink}>
+            <Link href="/model-plaza" scroll={true} className={s.textLink}>
               {c('查看完整模型广场', 'Explore all models')}
               <ArrowUpRight size={17} />
             </Link>
@@ -402,7 +404,7 @@ export function LandingHome() {
                   <option value="ratio">{c('按 Token', 'Per token')}</option>
                   <option value="fixed">{c('按次调用', 'Per call')}</option>
                 </select>
-                {catalog.groups.length > 0 && (
+                {SHOW_PUBLIC_USER_TIERS && catalog.groups.length > 0 && (
                   <label>
                     {c('价格分组', 'Price group')}
                     <select
@@ -631,10 +633,11 @@ export function LandingHome() {
           </div>
           <div>
             <strong>{c('开发', 'Build')}</strong>
-            <a href={docsAddress || '#developers'}>
-              {c('接入文档', 'Documentation')}
-            </a>
+            <a href={docsHref(docsAddress)}>{c('接入文档', 'Documentation')}</a>
             <Link href="/dashboard/playground">Playground</Link>
+            <Link href="/getting-started">
+              {c('新手指引', 'Getting started')}
+            </Link>
           </div>
           <div>
             <strong>{c('管理', 'Manage')}</strong>

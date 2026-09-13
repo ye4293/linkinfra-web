@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { ArrowLeft, RefreshCw, KeyRound, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiKeyHref } from '@/lib/api-key-navigation';
+import { SHOW_PUBLIC_USER_TIERS } from '@/lib/public-navigation';
 
 import { get } from '@/app/lib/clientFetch';
 import { useLocale } from '@/components/providers/locale-provider';
@@ -222,7 +223,11 @@ export default function ModelDetailView() {
               />
               <MetricCard
                 title={t.modelDetail?.priceType || 'Type'}
-                value={pricing.price_type === 'fixed' ? 'Per Call' : 'Token'}
+                value={
+                  pricing.price_type === 'fixed'
+                    ? t.modelPlaza.perCall
+                    : t.modelPlaza.tokenBased
+                }
               />
               <MetricCard
                 title={t.modelDetail?.requests24h || '24h Requests'}
@@ -413,6 +418,7 @@ export default function ModelDetailView() {
 
           {/* Pricing detail table */}
           {pricing &&
+            SHOW_PUBLIC_USER_TIERS &&
             pricing.group_prices &&
             pricing.group_prices.length > 0 && (
               <Card className="mt-4">

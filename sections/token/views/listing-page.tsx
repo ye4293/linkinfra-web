@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import { ApiConnectionGuide } from '@/components/api-connection-guide';
+import { GettingStartedCard } from '@/components/getting-started-guide';
 
 const breadcrumbItems = [
   { title: 'Dashboard', link: '/dashboard' },
@@ -65,6 +66,7 @@ export default async function TokenListingPage({}: TTokenListingPage) {
         </div>
         <Separator />
         <ApiConnectionGuide />
+        <GettingStartedCard />
         <TokenTable data={token} totalData={totalData} />
       </div>
     </PageContainer>

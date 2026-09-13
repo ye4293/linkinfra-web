@@ -6,6 +6,7 @@ import { useSystemConfig } from '@/hooks/use-system-config';
 import ThemeToggle from '@/components/layout/ThemeToggle/theme-toggle';
 import LanguageToggle from '@/components/layout/language-toggle';
 import { UserNav } from '@/components/layout/user-nav';
+import { docsHref } from '@/lib/public-navigation';
 
 export default function ModelPlazaLayout({
   children
@@ -43,9 +44,7 @@ export default function ModelPlazaLayout({
                 {t.modelPlaza.backHome}
               </Link>
               <a
-                href={docsAddress}
-                target="_blank"
-                rel="noopener noreferrer"
+                href={docsHref(docsAddress)}
                 className="text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
                 {t.nav.docs}

@@ -62,8 +62,6 @@ export function useSystemConfig(): SystemConfig {
   }));
 
   useEffect(() => {
-    if (cachedConfig) return;
-
     let cancelled = false;
     fetchSystemConfig().then((result) => {
       if (!cancelled) {
