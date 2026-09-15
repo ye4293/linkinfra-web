@@ -15,5 +15,5 @@ export function docsHref(address: string): string {
   } catch {
     /* 未配置时提供站内指引。 */
   }
-  return '/getting-started';
+  return '/docs';
 }

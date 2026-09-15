@@ -12,6 +12,7 @@
     "start": "next start",
     "lint": "next lint",
     "test:landing": "node --test scripts/test-landing.cjs",
+    "test:docs": "node --test scripts/test-api-docs.cjs",
     "format": "prettier . --write",
     "prepare": "husky"
   },
