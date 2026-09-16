@@ -33,6 +33,54 @@ function model(model_name, overrides = {}) {
   };
 }
 
+test('duration catalog accepts paid and zero tariffs and rejects missing minute prices', async () => {
+  const previous = global.fetch;
+  try {
+    for (const amount of [0, 0.0045]) {
+      const item = model('gpt-transcribe', {
+        price_type: 'duration',
+        base_duration_price_per_minute: amount
+      });
+      global.fetch = async () => ({
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: {
+            models: [item],
+            groups: [],
+            providers: [],
+            total: 1,
+            page_size: 100
+          }
+        })
+      });
+      const result = await catalog.fetchCatalog(new AbortController().signal);
+      assert.equal(result.models[0].base_duration_price_per_minute, amount);
+    }
+    for (const amount of [undefined, null, -1, '0.0045', Infinity]) {
+      global.fetch = async () => ({
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: {
+            models: [
+              model('gpt-transcribe', {
+                price_type: 'duration',
+                base_duration_price_per_minute: amount
+              })
+            ],
+            total: 1,
+            page_size: 100
+          }
+        })
+      });
+      await assert.rejects(catalog.fetchCatalog(new AbortController().signal));
+    }
+  } finally {
+    global.fetch = previous;
+  }
+});
+
 test('model labels preserve version numbers and distinguish thinking variants', () => {
   assert.equal(catalog.modelTitle('deepseek-v3'), 'DeepSeek V3');
   assert.equal(catalog.modelTitle('deepseek-v3.2'), 'DeepSeek V3.2');

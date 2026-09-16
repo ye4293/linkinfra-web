@@ -1,5 +1,6 @@
 'use client';
 import { useText } from '@/components/locale-text';
+import { DurationPrice } from '@/components/duration-price';
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -125,7 +126,9 @@ function ModelPriceCard({
               variant="secondary"
               className="gap-0.5 text-[10px] leading-none"
             >
-              {model.price_type === 'fixed' ? (
+              {model.price_type === 'duration' ? (
+                t.durationPricing.perDuration
+              ) : model.price_type === 'fixed' ? (
                 <>
                   <Hash className="h-2.5 w-2.5" />
                   {t.modelPlaza.perCallShort}
@@ -159,7 +162,21 @@ function ModelPriceCard({
         )}
       {/* 价格区域 */}
       <div className="mt-auto border-t border-border/60 px-4 py-3.5">
-        {model.price_type === 'fixed' ? (
+        {model.price_type === 'duration' ? (
+          <div className="space-y-1">
+            <span className="text-xs text-muted-foreground">
+              {t.durationPricing.price}
+            </span>
+            <div className="text-lg font-bold tabular-nums">
+              <DurationPrice
+                value={
+                  groupPrice?.final_duration_price_per_minute ??
+                  model.base_duration_price_per_minute
+                }
+              />
+            </div>
+          </div>
+        ) : model.price_type === 'fixed' ? (
           <div className="flex items-baseline justify-between">
             <span className="text-xs text-muted-foreground">
               {t.modelPlaza.perUnit}
@@ -508,6 +525,16 @@ export default function ModelPlazaView() {
             icon={<Hash className="h-3.5 w-3.5" />}
             label={t.modelPlaza.perCall}
           />
+          <FilterRow
+            active={selectedPriceType === 'duration'}
+            onClick={() => {
+              setSelectedPriceType(
+                selectedPriceType === 'duration' ? '' : 'duration'
+              );
+              setPage(1);
+            }}
+            label={t.durationPricing.perDuration}
+          />
         </div>
       </FilterSection>
     </>
@@ -654,7 +681,7 @@ export default function ModelPlazaView() {
                       {t.modelPlaza.billingType}
                     </th>
                     <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      {t.modelPlaza.inputPrice}
+                      {tr('Input / unit price')}
                     </th>
                     <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                       {t.modelPlaza.outputPrice}
@@ -697,12 +724,21 @@ export default function ModelPlazaView() {
                           <ProviderLogo provider={model.provider} />
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">
-                          {model.price_type === 'fixed'
+                          {model.price_type === 'duration'
+                            ? t.durationPricing.perDuration
+                            : model.price_type === 'fixed'
                             ? t.modelPlaza.perCallShort
                             : t.modelPlaza.tokenBasedShort}
                         </td>
                         <td className="px-4 py-3 text-right tabular-nums">
-                          {model.price_type === 'fixed' ? (
+                          {model.price_type === 'duration' ? (
+                            <DurationPrice
+                              value={
+                                groupPrice?.final_duration_price_per_minute ??
+                                model.base_duration_price_per_minute
+                              }
+                            />
+                          ) : model.price_type === 'fixed' ? (
                             <span>
                               {hasDiscount && (
                                 <span className="mr-1.5 text-muted-foreground/60 line-through">
@@ -733,7 +769,7 @@ export default function ModelPlazaView() {
                           )}
                         </td>
                         <td className="px-4 py-3 text-right tabular-nums">
-                          {model.price_type !== 'fixed' ? (
+                          {model.price_type === 'ratio' ? (
                             <span>
                               {hasDiscount && (
                                 <span className="mr-1.5 text-muted-foreground/60 line-through">

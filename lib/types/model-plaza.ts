@@ -6,12 +6,14 @@ export interface GroupPrice {
   final_input_price: number;
   final_output_price: number;
   final_fixed_price: number;
+  final_duration_price_per_minute?: number;
 }
 
 export interface ModelPlazaItem {
   model_name: string;
   provider: string;
-  price_type: 'ratio' | 'fixed';
+  price_type: 'ratio' | 'fixed' | 'duration';
+  base_duration_price_per_minute?: number;
   base_input_price: number;
   base_output_price: number;
   base_fixed_price: number;

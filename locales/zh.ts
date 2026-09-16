@@ -94,7 +94,7 @@ const zh = {
     perCallShort: '按次',
     tokenBasedShort: '按 Token',
     billingExplanation:
-      '按 Token：根据输入和输出的 Token 数量计费。按次：每次请求按标价计费。/M 表示每百万 Token。',
+      '按 Token：根据输入和输出的 Token 数量计费。按次：每次请求按标价计费。按时长：按音频秒数与美元/分钟单价计算。/M 表示每百万 Token。',
     input: '输入',
     output: '输出',
     perUnit: '每次请求',

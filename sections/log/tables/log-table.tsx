@@ -1,4 +1,5 @@
 'use client';
+import { DurationBilling } from '../duration-billing';
 import {
   ColumnDef,
   PaginationState,
@@ -245,7 +246,8 @@ const ExpandedRowContentImpl = ({ row }: { row: Row<LogStat> }) => {
       </div>
 
       {/* 计费详情 */}
-      {hasBillingDetails && (
+      <DurationBilling other={parseLogOther(log)} quota={log.quota} />
+      {hasBillingDetails && parseLogOther(log)?.billing_mode !== 'duration' && (
         <div className="mt-4 space-y-3 border-t pt-4">
           {/* 计费模式 */}
           <div className="space-y-1">
@@ -535,6 +537,7 @@ const MobileLogCard = ({ row }: { row: Row<LogStat> }) => {
         </div>
 
         {/* 可展开的详细信息 */}
+        <DurationBilling other={parseLogOther(log)} quota={log.quota} />
         {(hasUsageDetails || log.content) && (
           <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
             <CollapsibleTrigger asChild>

@@ -47,6 +47,7 @@ import {
   Layers3
 } from 'lucide-react';
 import { useLocale } from '@/components/providers/locale-provider';
+import DurationPricing from '@/sections/setting/duration-pricing';
 
 interface Option {
   key: string;
@@ -54,6 +55,7 @@ interface Option {
 }
 
 interface ModelPriceInfo {
+  duration_price_per_minute?: number;
   model_name: string;
   model_ratio: number;
   completion_ratio: number;
@@ -175,6 +177,14 @@ const formatRatio = (ratio: number): string => {
 export default function PricingPage() {
   const { t } = useLocale();
   const p = t.pricing;
+  const [activeTab, setActiveTab] = useState('ratio-settings');
+  const [durationModels, setDurationModels] = useState<string[]>([]);
+  const openDurationPricing = (models: string[]) => {
+    setDurationModels(models);
+    setEditDialogOpen(false);
+    setEditingRow(null);
+    setActiveTab('duration-pricing');
+  };
   const breadcrumbItems = [
     { title: 'Dashboard', link: '/dashboard' },
     { title: p.breadcrumbSettings, link: '/dashboard/setting' },
@@ -500,6 +510,10 @@ export default function PricingPage() {
 
   // ==================== 可视化编辑相关 ====================
   const startEditing = (model: ModelPriceInfo) => {
+    if (model.price_type === 'duration') {
+      openDurationPricing([model.model_name]);
+      return;
+    }
     const mr = model.model_ratio || 0;
     // 把后端存的倍率反算成价格用于展示编辑
     setEditingRow({
@@ -1166,8 +1180,12 @@ export default function PricingPage() {
         </div>
         <Separator />
 
-        <Tabs defaultValue="ratio-settings" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4 lg:inline-flex lg:w-auto">
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="space-y-4"
+        >
+          <TabsList className="h-auto flex-wrap">
             <TabsTrigger value="ratio-settings">
               {p.tabRatioSettings}
             </TabsTrigger>
@@ -1176,6 +1194,9 @@ export default function PricingPage() {
             </TabsTrigger>
             <TabsTrigger value="unset-models">{p.tabUnsetModels}</TabsTrigger>
             <TabsTrigger value="video-pricing">{p.tabVideoPricing}</TabsTrigger>
+            <TabsTrigger value="duration-pricing">
+              {t.durationPricing.title}
+            </TabsTrigger>
           </TabsList>
 
           {/* ==================== 模型倍率设置 Tab ==================== */}
@@ -1348,6 +1369,9 @@ export default function PricingPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[220px]">Model name</TableHead>
+                    <TableHead className="w-[160px]">
+                      {t.durationPricing.price}
+                    </TableHead>
                     <TableHead className="w-[90px]">Per-call (¥)</TableHead>
                     <TableHead className="w-[100px]">Input ($/1M)</TableHead>
                     <TableHead className="w-[100px]">Output ($/1M)</TableHead>
@@ -1364,13 +1388,13 @@ export default function PricingPage() {
                 <TableBody>
                   {isConfiguredLoading ? (
                     <TableRow>
-                      <TableCell colSpan={12} className="h-24 text-center">
+                      <TableCell colSpan={13} className="h-24 text-center">
                         Loading...
                       </TableCell>
                     </TableRow>
                   ) : configuredModels.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={12} className="h-24 text-center">
+                      <TableCell colSpan={13} className="h-24 text-center">
                         No data
                       </TableCell>
                     </TableRow>
@@ -1379,6 +1403,12 @@ export default function PricingPage() {
                       <TableRow key={model.model_name}>
                         <TableCell className="font-mono text-xs">
                           {model.model_name}
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {model.price_type === 'duration' &&
+                          model.duration_price_per_minute != null
+                            ? `$${model.duration_price_per_minute}`
+                            : '-'}
                         </TableCell>
                         <TableCell className="text-sm">
                           {model.fixed_price > 0
@@ -1440,12 +1470,16 @@ export default function PricingPage() {
                         <TableCell>
                           <span
                             className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                              model.price_type === 'fixed'
+                              model.price_type === 'duration'
+                                ? 'bg-violet-100 text-violet-800 dark:bg-violet-950 dark:text-violet-200'
+                                : model.price_type === 'fixed'
                                 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
                                 : 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
                             }`}
                           >
-                            {model.price_type === 'fixed'
+                            {model.price_type === 'duration'
+                              ? t.durationPricing.perDuration
+                              : model.price_type === 'fixed'
                               ? 'Per-call'
                               : 'Per-token'}
                           </span>
@@ -1491,6 +1525,14 @@ export default function PricingPage() {
                 </DialogHeader>
                 {editingRow && (
                   <div className="space-y-5 py-2">
+                    <Button
+                      variant="outline"
+                      onClick={() =>
+                        openDurationPricing([editingRow.model_name])
+                      }
+                    >
+                      {t.durationPricing.configure}
+                    </Button>
                     <div className="grid grid-cols-3 gap-4">
                       <div className="space-y-1.5">
                         <Label className="text-sm">Input ($/1M)</Label>
@@ -1715,6 +1757,15 @@ export default function PricingPage() {
               <div className="flex flex-wrap items-center gap-2">
                 <Button
                   variant="outline"
+                  disabled={isLoading || selectedModels.size === 0}
+                  onClick={() =>
+                    openDurationPricing(Array.from(selectedModels))
+                  }
+                >
+                  {t.durationPricing.configureSelected} ({selectedModels.size})
+                </Button>
+                <Button
+                  variant="outline"
                   onClick={batchSetDefaultRatio}
                   disabled={isLoading || selectedModels.size === 0}
                 >
@@ -1862,7 +1913,16 @@ export default function PricingPage() {
                             className="sticky left-0 z-10 truncate border-r bg-background px-4 py-2 font-mono text-sm font-medium"
                             title={model.model_name}
                           >
-                            {model.model_name}
+                            <div className="truncate">{model.model_name}</div>
+                            <Button
+                              variant="link"
+                              className="h-auto p-0 font-sans text-xs"
+                              onClick={() =>
+                                openDurationPricing([model.model_name])
+                              }
+                            >
+                              {t.durationPricing.configure}
+                            </Button>
                           </TableCell>
                           {/* 价格输入区域 */}
                           <TableCell className="border-l bg-blue-50/30 px-0.5 dark:bg-blue-950/20">
@@ -2459,6 +2519,17 @@ export default function PricingPage() {
                 </li>
               </ul>
             </div>
+          </TabsContent>
+          <TabsContent value="duration-pricing" className="space-y-4">
+            <DurationPricing
+              initialModels={durationModels}
+              onSaved={() => {
+                setSelectedModels(new Set());
+                fetchConfiguredModels();
+                fetchUnsetModels();
+                fetchPricingOptions();
+              }}
+            />
           </TabsContent>
         </Tabs>
       </div>

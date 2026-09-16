@@ -1,5 +1,7 @@
 'use client';
 import { useText } from '@/components/locale-text';
+import { formatPrice as formatCatalogPrice } from '@/components/landing/catalog';
+import { DurationPrice } from '@/components/duration-price';
 
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -211,9 +213,17 @@ export default function ModelDetailView() {
           {pricing && (
             <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
               <MetricCard
-                title={t.modelDetail?.inputPrice || 'Input Price'}
+                title={
+                  pricing.price_type === 'duration'
+                    ? t.durationPricing.price
+                    : t.modelDetail?.inputPrice || 'Input Price'
+                }
                 value={
-                  pricing.price_type === 'fixed'
+                  pricing.price_type === 'duration'
+                    ? `${formatCatalogPrice(
+                        pricing.base_duration_price_per_minute
+                      )} / min`
+                    : pricing.price_type === 'fixed'
                     ? formatPrice(pricing.base_fixed_price)
                     : `${formatPrice(pricing.base_input_price)}/M`
                 }
@@ -221,7 +231,7 @@ export default function ModelDetailView() {
               <MetricCard
                 title={t.modelDetail?.outputPrice || 'Output Price'}
                 value={
-                  pricing.price_type === 'fixed'
+                  pricing.price_type !== 'ratio'
                     ? '-'
                     : `${formatPrice(pricing.base_output_price)}/M`
                 }
@@ -229,7 +239,9 @@ export default function ModelDetailView() {
               <MetricCard
                 title={t.modelDetail?.priceType || 'Type'}
                 value={
-                  pricing.price_type === 'fixed'
+                  pricing.price_type === 'duration'
+                    ? t.durationPricing.perDuration
+                    : pricing.price_type === 'fixed'
                     ? t.modelPlaza.perCall
                     : t.modelPlaza.tokenBased
                 }
@@ -441,7 +453,9 @@ export default function ModelDetailView() {
                             {t.modelDetail?.userTier || 'Tier'}
                           </th>
                           <th className="pb-2 text-right font-medium text-muted-foreground">
-                            {t.modelDetail?.inputPrice || tr('Input')}
+                            {pricing.price_type === 'duration'
+                              ? t.durationPricing.price
+                              : t.modelDetail?.inputPrice || tr('Input')}
                           </th>
                           <th className="pb-2 text-right font-medium text-muted-foreground">
                             {t.modelDetail?.outputPrice || tr('Output')}
@@ -459,12 +473,18 @@ export default function ModelDetailView() {
                           >
                             <td className="py-2">{gp.display_name}</td>
                             <td className="py-2 text-right">
-                              {pricing.price_type === 'fixed'
-                                ? formatPrice(gp.final_fixed_price)
-                                : `${formatPrice(gp.final_input_price)}/M`}
+                              {pricing.price_type === 'duration' ? (
+                                <DurationPrice
+                                  value={gp.final_duration_price_per_minute}
+                                />
+                              ) : pricing.price_type === 'fixed' ? (
+                                formatPrice(gp.final_fixed_price)
+                              ) : (
+                                `${formatPrice(gp.final_input_price)}/M`
+                              )}
                             </td>
                             <td className="py-2 text-right">
-                              {pricing.price_type === 'fixed'
+                              {pricing.price_type !== 'ratio'
                                 ? '-'
                                 : `${formatPrice(gp.final_output_price)}/M`}
                             </td>

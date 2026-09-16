@@ -1,4 +1,5 @@
 'use client';
+import { DurationBilling } from '../duration-billing';
 
 import { DataTable } from '@/components/ui/table/data-table';
 import { DataTableSingleFilterBox } from '@/components/ui/table/data-table-single-filter-box';
@@ -352,7 +353,8 @@ const ExpandedRowContent = ({ row }: { row: Row<LogStat> }) => {
       )}
 
       {/* 计费详情 */}
-      {hasBillingDetails && (
+      <DurationBilling other={parseLogOther(log)} quota={log.quota} />
+      {hasBillingDetails && parseLogOther(log)?.billing_mode !== 'duration' && (
         <div className="mt-4 space-y-3 border-t pt-4">
           <div className="space-y-1">
             <span className="text-xs font-medium text-muted-foreground">
@@ -697,6 +699,7 @@ const MobileLogCard = ({ row }: { row: LogStat }) => {
         )}
 
         {/* 可展开的详细信息 */}
+        <DurationBilling other={parseLogOther(log)} quota={log.quota} />
         {(hasUsageDetails || log.content) && (
           <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
             <CollapsibleTrigger asChild>

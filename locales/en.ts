@@ -98,7 +98,7 @@ const en: Locale = {
     perCallShort: 'Per call',
     tokenBasedShort: 'Per token',
     billingExplanation:
-      'Per token: charged for input and output tokens. Per call: charged per request. /M means per million tokens.',
+      'Per token: charged for input and output tokens. Per call: charged per request. Duration: charged by audio seconds at a USD/minute rate. /M means per million tokens.',
     input: 'Input',
     output: 'Output',
     perUnit: 'Per Call',

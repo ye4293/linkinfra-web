@@ -129,7 +129,9 @@ export async function fetchCatalog(
           typeof model.model_name === 'string' &&
           model.model_name.length > 0 &&
           typeof model.provider === 'string' &&
-          (model.price_type === 'ratio' || model.price_type === 'fixed') &&
+          ['ratio', 'fixed', 'duration'].includes(model.price_type) &&
+          (model.price_type !== 'duration' ||
+            validPrice(model.base_duration_price_per_minute)) &&
           [
             model.base_input_price,
             model.base_output_price,
@@ -141,6 +143,8 @@ export async function fetchCatalog(
                 (price) =>
                   price &&
                   typeof price.group_key === 'string' &&
+                  (model.price_type !== 'duration' ||
+                    validPrice(price.final_duration_price_per_minute)) &&
                   [
                     price.final_input_price,
                     price.final_output_price,
