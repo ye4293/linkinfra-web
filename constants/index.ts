@@ -17,7 +17,7 @@ export const CHANNEL_OPTIONS = [
   { key: 40, text: 'Replicate', value: 40, color: 'blue' },
   { key: 30, text: 'Ollama', value: 30, color: 'orange' },
   { key: 29, text: 'Groq', value: 29, color: 'orange' },
-  { key: 15, text: '百度文心千帆', value: 15, color: 'blue' },
+  { key: 15, text: 'qianfanv2', value: 15, color: 'blue' },
   { key: 17, text: 'Qwen', value: 17, color: 'orange' },
   { key: 18, text: '讯飞星火认知', value: 18, color: 'blue' },
   { key: 16, text: 'ZAI', value: 16, color: 'violet' },

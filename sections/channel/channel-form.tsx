@@ -1061,10 +1061,9 @@ export default function ChannelForm() {
   };
 
   const type2secretPrompt = (type: string) => {
-    // inputs.type === 15 ? '按照如下格式输入：APIKey|SecretKey' : (inputs.type === 18 ? '按照如下格式输入：APPID|APISecret|APIKey' : '请输入渠道对应的鉴权密钥')
     switch (type) {
       case '15':
-        return 'Format: APIKey|SecretKey';
+        return 'Enter your Qianfan API key (bce-v3/...).';
       case '18':
         return 'Format: APPID|APISecret|APIKey';
       case '22':
@@ -3342,7 +3341,11 @@ ${type2secretPrompt(form.watch('type'))}`}
                         <FormControl>
                           <Textarea
                             className="h-auto max-h-64 min-h-32 resize-none overflow-auto"
-                            placeholder="This option is used to make API calls through the proxy station, please enter the proxy address in the format https://domain.com"
+                            placeholder={
+                              form.watch('type') === '15'
+                                ? 'Default: https://qianfan.baidubce.com (also accepts /v2 or /anthropic).'
+                                : 'This option is used to make API calls through the proxy station, please enter the proxy address in the format https://domain.com'
+                            }
                             {...field}
                           />
                         </FormControl>
