@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { refreshSystemConfig } from '@/hooks/use-system-config';
+import { NoticeSettings } from '@/sections/setting/notice-settings';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import PageContainer from '@/components/layout/page-container';
 import { Separator } from '@/components/ui/separator';
@@ -609,6 +610,7 @@ export default function SettingPage() {
         <Separator />
 
         <div className="grid gap-6">
+          <NoticeSettings />
           <Card>
             <CardHeader>
               <CardTitle>General</CardTitle>

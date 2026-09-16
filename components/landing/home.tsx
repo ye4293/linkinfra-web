@@ -22,6 +22,7 @@ import { fetchCatalog, modelTitle } from './catalog';
 import { HomeFeatures, HomeSections } from './home-sections';
 import s from './home.module.css';
 import { SiteNavLinks } from '@/components/layout/site-nav-links';
+import { SiteNotice } from '@/components/site-notice';
 
 const emptyCatalog: ModelPlazaResponse = {
   models: [],
@@ -142,6 +143,7 @@ export function LandingHome() {
         )}
       </header>
       <main id="main-content">
+        <SiteNotice className="mx-4 mt-4 sm:mx-8 lg:mx-12" />
         <section className={s.hero}>
           <div className={s.heroCopy}>
             <Link

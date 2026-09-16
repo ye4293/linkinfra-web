@@ -2,6 +2,7 @@
 
 import { useSession } from 'next-auth/react';
 import { GettingStartedCard } from '@/components/getting-started-guide';
+import { SiteNotice } from '@/components/site-notice';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Wallet, Zap, CalendarDays, Users, ArrowRight } from 'lucide-react';
@@ -129,6 +130,7 @@ export default function OverViewPage() {
   return (
     <PageContainer scrollable>
       <div className="space-y-2">
+        <SiteNotice />
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold tracking-tight sm:text-2xl">
             {t.dashboard.welcome}
