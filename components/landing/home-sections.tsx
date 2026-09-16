@@ -20,7 +20,7 @@ import { ProviderLogoMark } from '@/sections/model-plaza/components/provider-log
 export function HomeSections({ sampleModel }: { sampleModel: string }) {
   const { lang } = useLocale();
   const c = (cn: string, en: string) => (lang === 'zh' ? cn : en);
-  const { docsAddress, serverAddress } = useSystemConfig();
+  const { serverAddress } = useSystemConfig();
   const [codeTab, setCodeTab] = useState('Python');
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState(false);
@@ -108,10 +108,10 @@ export function HomeSections({ sampleModel }: { sampleModel: string }) {
                 </div>
               </li>
             </ol>
-            <a href={docsHref(docsAddress)} className={s.primary}>
+            <Link href={docsHref()} className={s.primary}>
               {c('阅读接入文档', 'Read the docs')}
               <ArrowUpRight size={16} />
-            </a>
+            </Link>
             <Link href="/getting-started" className={s.textLink}>
               {c(
                 '第一次使用？查看新手指引',

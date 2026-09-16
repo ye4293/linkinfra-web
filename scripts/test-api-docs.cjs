@@ -30,7 +30,7 @@ const { docsHref } = load('../lib/public-navigation.ts');
 const run = promisify(execFile);
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 
-test('请求地址规范化并拒绝无效地址，文档默认入口保留外部配置', () => {
+test('请求地址规范化并拒绝无效地址，文档入口固定为站内页面', () => {
   assert.equal(
     resolveApiRoot('https://api.example.com/v1/'),
     'https://api.example.com'
@@ -48,12 +48,8 @@ test('请求地址规范化并拒绝无效地址，文档默认入口保留外�
   ]) {
     assert.equal(resolveApiRoot(value), null);
   }
-  assert.equal(docsHref(''), '/docs');
-  assert.equal(docsHref('javascript:alert(1)'), '/docs');
-  assert.equal(
-    docsHref('https://docs.example.com'),
-    'https://docs.example.com'
-  );
+  assert.equal(docsHref(), '/docs');
+  assert.equal(docsHref('https://docs.example.com'), '/docs');
 });
 
 test('JavaScript 示例生成正确的 JSON、文件上传和音频保存请求', async (t) => {

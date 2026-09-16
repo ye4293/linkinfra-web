@@ -3,7 +3,7 @@
 ## 入口与结构
 
 - `/docs` 默认跳转到 `/docs/api/chat-completions`，所有文档均可匿名访问。
-- 首页、模型广场和控制台已有的 `docsHref()` 文档入口默认指向 `/docs`；后台配置的有效外部文档地址仍优先使用。
+- 首页、模型广场和控制台的文档入口固定指向站内 `/docs`；不再读取或编辑外部 DocsAddress 配置。
 - `app/docs/[[...slug]]/page.tsx` 负责路由、页面元数据和 404。
 - `lib/api-docs/catalog.ts` 维护接口目录、中英文说明、字段、请求体和响应示例。
 - `lib/api-docs/examples.ts` 生成 cURL、Python、JavaScript、Go 示例以及 Markdown。

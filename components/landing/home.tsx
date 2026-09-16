@@ -37,7 +37,7 @@ export function LandingHome() {
   const zh = lang === 'zh';
   const c = (cn: string, en: string) => (zh ? cn : en);
   const { data: session } = useSession();
-  const { systemName, docsAddress } = useSystemConfig();
+  const { systemName } = useSystemConfig();
   const brand = systemName.trim() || 'LinkInfra';
   const start = apiKeyHref(Boolean(session), undefined, lang);
   const [menu, setMenu] = useState(false);
@@ -312,7 +312,7 @@ export function LandingHome() {
           </div>
           <div>
             <strong>{c('开发', 'Build')}</strong>
-            <a href={docsHref(docsAddress)}>{c('接入文档', 'Documentation')}</a>
+            <Link href={docsHref()}>{c('接入文档', 'Documentation')}</Link>
             <Link href="/dashboard/playground">Playground</Link>
             <Link href="/getting-started">
               {c('新手指引', 'Getting started')}

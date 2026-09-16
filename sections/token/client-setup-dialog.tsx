@@ -58,6 +58,8 @@ function ClientSetupContent({ token }: { token: Token }) {
   const {
     serverAddress,
     systemName,
+    error: configError,
+    retry: retryConfig,
     loading: configLoading
   } = useSystemConfig();
   const [target, setTarget] = useState<Target>(
@@ -99,7 +101,11 @@ function ClientSetupContent({ token }: { token: Token }) {
     token.expired_time !== -1 &&
     token.expired_time <= Date.now() / 1000;
   const inactive = token.status !== 1 || expired;
-  const endpoint = target === 'ccswitch' && app !== 'codex' ? root : openai;
+  const endpoint = configError
+    ? ''
+    : target === 'ccswitch' && app !== 'codex'
+    ? root
+    : openai;
   const availableModels =
     target === 'ccswitch'
       ? models.filter((item) => modelMatchesApp(item, app))
@@ -166,7 +172,15 @@ function ClientSetupContent({ token }: { token: Token }) {
     }
   };
   const launch = () => {
-    if (inactive || addressError || keyError || invalidModel) return;
+    if (
+      configLoading ||
+      configError ||
+      inactive ||
+      addressError ||
+      keyError ||
+      invalidModel
+    )
+      return;
     try {
       const url = buildClientImport(target === 'cherry' ? 'cherry' : app, {
         serverAddress,
@@ -240,10 +254,20 @@ function ClientSetupContent({ token }: { token: Token }) {
             {tr('Loading API address…')}
           </p>
         ) : (
-          addressError && (
-            <p role="alert" className="text-sm text-destructive">
-              {tr(addressError)}
-            </p>
+          (configError || addressError) && (
+            <div className="space-y-2">
+              <p role="alert" className="text-sm text-destructive">
+                {tr(configError || addressError)}
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => retryConfig()}
+              >
+                {tr('Reload API address')}
+              </Button>
+            </div>
           )
         )}
         {target !== 'manual' && (
@@ -469,6 +493,7 @@ function ClientSetupContent({ token }: { token: Token }) {
             <Button
               disabled={
                 configLoading ||
+                !!configError ||
                 !!addressError ||
                 !!keyError ||
                 inactive ||

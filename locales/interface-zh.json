@@ -1,5 +1,7 @@
 {
   "Home": "首页",
+  "Unable to load the API address. Please retry.": "暂时无法读取 API 地址，请重试。",
+  "Reload API address": "重新读取 API 地址",
   "Input / unit price": "输入 / 单位价格",
   "Models": "模型",
   "Docs": "文档",

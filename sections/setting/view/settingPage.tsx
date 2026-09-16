@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { refreshSystemConfig } from '@/hooks/use-system-config';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import PageContainer from '@/components/layout/page-container';
 import { Separator } from '@/components/ui/separator';
@@ -49,7 +50,6 @@ export default function SettingPage() {
   const [systemName, setSystemName] = useState('');
   const [frontendServerAddress, setFrontendServerAddress] = useState('');
   const [serverAddress, setServerAddress] = useState('');
-  const [docsAddress, setDocsAddress] = useState('');
   const [retryCount, setRetryCount] = useState(0);
   const [autoDisableEnabled, setAutoDisableEnabled] = useState(false);
   const [autoDisableKeywords, setAutoDisableKeywords] = useState('');
@@ -149,13 +149,6 @@ export default function SettingPage() {
         );
         if (serverAddressOption) {
           setServerAddress(serverAddressOption.value || '');
-        }
-
-        const docsAddressOption = options.find(
-          (o: Option) => o.key === 'DocsAddress'
-        );
-        if (docsAddressOption) {
-          setDocsAddress(docsAddressOption.value || '');
         }
 
         const retryCountOption = options.find(
@@ -306,7 +299,6 @@ export default function SettingPage() {
           value: frontendServerAddress.trim()
         },
         { key: 'ServerAddress', value: serverAddress.trim() },
-        { key: 'DocsAddress', value: docsAddress.trim() },
         { key: 'RetryTimes', value: retryCount.toString() },
         {
           key: 'AutomaticDisableChannelEnabled',
@@ -341,11 +333,13 @@ export default function SettingPage() {
           body: JSON.stringify(option)
         });
 
-        if (!response.ok) {
+        const result = await response.json();
+        if (!response.ok || !result.success) {
           throw new Error(`Failed to save ${option.key}`);
         }
       }
 
+      await refreshSystemConfig();
       toast.success('Saved.');
     } catch (error) {
       console.error('Save error:', error);
@@ -662,20 +656,6 @@ export default function SettingPage() {
                 <p className="text-sm text-muted-foreground">
                   Corresponds to ServerAddress. Used for the public API address,
                   callback URLs, and resource access.
-                </p>
-              </div>
-              <div className="grid w-full max-w-2xl items-center gap-1.5">
-                <Label htmlFor="docs-address">Docs address</Label>
-                <Input
-                  id="docs-address"
-                  type="text"
-                  value={docsAddress}
-                  onChange={(e) => setDocsAddress(e.target.value)}
-                  placeholder="e.g. https://docs.example.com"
-                />
-                <p className="text-sm text-muted-foreground">
-                  Corresponds to DocsAddress. Used for the documentation link on
-                  the home page and navigation bar.
                 </p>
               </div>
               <div className="grid w-full max-w-sm items-center gap-1.5">

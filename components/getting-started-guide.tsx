@@ -3,7 +3,6 @@ import { useText } from '@/components/locale-text';
 
 import Link from 'next/link';
 import { BookOpen, ArrowRight } from 'lucide-react';
-import { useSystemConfig } from '@/hooks/use-system-config';
 import { docsHref } from '@/lib/public-navigation';
 import { ApiConnectionGuide } from '@/components/api-connection-guide';
 import { SiteNavLinks } from '@/components/layout/site-nav-links';
@@ -112,8 +111,7 @@ export function GettingStartedCard({ compact = false }: { compact?: boolean }) {
 
 export function GettingStartedGuide() {
   const tr = useText();
-  const { docsAddress } = useSystemConfig();
-  const documentation = docsHref(docsAddress);
+  const documentation = docsHref();
   return (
     <main className="mx-auto max-w-4xl space-y-7 px-4 py-8 sm:px-6">
       <nav

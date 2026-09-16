@@ -4,13 +4,19 @@ import { useText } from '@/components/locale-text';
 import { Button } from '@/components/ui/button';
 import { useSystemConfig } from '@/hooks/use-system-config';
 import { toast } from 'sonner';
+import { apiAddresses } from '@/lib/client-setup';
 
 export function ApiConnectionGuide({ compact = false }: { compact?: boolean }) {
   const tr = useText();
-  const { serverAddress, loading } = useSystemConfig();
-  const baseUrl = serverAddress
-    ? `${serverAddress.replace(/\/+$/, '').replace(/\/v1$/, '')}/v1`
-    : '';
+  const { serverAddress, loading, error, retry } = useSystemConfig();
+  let baseUrl = '';
+  if (!error) {
+    try {
+      baseUrl = apiAddresses(serverAddress).openai;
+    } catch {
+      /* 空配置不生成地址。 */
+    }
+  }
 
   return (
     <section
@@ -35,7 +41,7 @@ export function ApiConnectionGuide({ compact = false }: { compact?: boolean }) {
           {baseUrl ||
             (loading
               ? tr('Loading…')
-              : tr('Contact support for your API address.'))}
+              : tr(error || 'Contact support for your API address.'))}
         </code>
         <Button
           type="button"
@@ -52,6 +58,16 @@ export function ApiConnectionGuide({ compact = false }: { compact?: boolean }) {
           {tr('Copy URL')}
         </Button>
       </div>
+      {!loading && (error || !baseUrl) && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => retry()}
+        >
+          {tr('Reload API address')}
+        </Button>
+      )}
       {compact && (
         <details className="text-xs text-muted-foreground">
           <summary className="cursor-pointer">
