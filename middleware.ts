@@ -9,7 +9,13 @@ const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
   if (!req.auth) {
-    const url = req.url.replace(req.nextUrl.pathname, '/sign-in');
+    const url = new URL('/sign-in', req.url);
+    url.searchParams.set(
+      'callbackUrl',
+      req.nextUrl.pathname + req.nextUrl.search
+    );
+    const lang = req.nextUrl.searchParams.get('lang');
+    if (lang === 'zh' || lang === 'en') url.searchParams.set('lang', lang);
     return Response.redirect(url);
   }
 });

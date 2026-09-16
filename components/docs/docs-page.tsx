@@ -38,7 +38,7 @@ import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
 import { useLocale } from '@/components/providers/locale-provider';
 import { useSystemConfig } from '@/hooks/use-system-config';
-import { apiKeyHref } from '@/lib/api-key-navigation';
+import { apiKeyHref, consoleHref } from '@/lib/api-key-navigation';
 import {
   allDocs,
   apiDocs,
@@ -67,6 +67,7 @@ import {
   SheetTitle
 } from '@/components/ui/sheet';
 import s from './docs.module.css';
+import { SiteNavLinks } from '@/components/layout/site-nav-links';
 
 const groupIcons = {
   text: MessageSquare,
@@ -220,7 +221,7 @@ export function DocsPage({ slug }: { slug: string }) {
   const { data: session } = useSession();
   const brand = 'Linkinfra API';
   const root = 'https://api.linkinfra.ai';
-  const keyHref = apiKeyHref(Boolean(session));
+  const keyHref = apiKeyHref(Boolean(session), undefined, lang);
   const doc = findApiDoc(slug);
   const page = allDocs.find((item) => item.slug === slug)!;
   const [searchOpen, setSearchOpen] = useState(false);
@@ -361,19 +362,7 @@ export function DocsPage({ slug }: { slug: string }) {
             className={s.topNav}
             aria-label={c('文档导航', 'Documentation sections')}
           >
-            <Link href="/docs/quickstart" className={!doc ? s.topActive : ''}>
-              {c('开发指南', 'Guides')}
-            </Link>
-            <Link
-              href="/docs/api/chat-completions"
-              className={doc ? s.topActive : ''}
-            >
-              {c('API 参考', 'API Reference')}
-            </Link>
-            <Link href="/model-plaza">
-              {c('模型广场', 'Models')}
-              <ArrowUpRight size={12} />
-            </Link>
+            <SiteNavLinks includeConsole={false} />
           </nav>
           <div className={s.headerActions}>
             <button
@@ -402,8 +391,11 @@ export function DocsPage({ slug }: { slug: string }) {
             >
               {dark ? <Sun size={17} /> : <Moon size={17} />}
             </button>
-            <a href="/dashboard" className={s.consoleLink}>
-              {c('控制台', 'Console')}
+            <a
+              href={consoleHref(Boolean(session), lang)}
+              className={s.consoleLink}
+            >
+              Console
               <ArrowUpRight size={14} />
             </a>
           </div>
@@ -418,7 +410,8 @@ export function DocsPage({ slug }: { slug: string }) {
               <Menu size={17} />
               {c('文档目录', 'Documentation')}
             </button>
-            <span>{page.title[lang]}</span>
+            <Link href="/">{c('首页', 'Home')}</Link>
+            <Link href="/model-plaza">{c('模型广场', 'Models')}</Link>
           </div>
           <main id="doc-main" className={s.main}>
             <div className={s.pageHeading}>

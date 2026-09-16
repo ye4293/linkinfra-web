@@ -1,4 +1,5 @@
 'use client';
+import { useText } from '@/components/locale-text';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -47,6 +48,7 @@ export function DataTableFilterBox({
   setFilterValue,
   filterValue
 }: FilterBoxProps) {
+  const tr = useText();
   const selectedValuesSet = React.useMemo(() => {
     if (!filterValue) return new Set<string>();
     const values = filterValue.split('.');
@@ -86,7 +88,8 @@ export function DataTableFilterBox({
                     variant="secondary"
                     className="rounded-sm px-1 font-normal"
                   >
-                    {selectedValuesSet.size} selected
+                    {selectedValuesSet.size}
+                    {tr('selected')}
                   </Badge>
                 ) : (
                   Array.from(selectedValuesSet).map((value) => (
@@ -109,7 +112,7 @@ export function DataTableFilterBox({
         <Command>
           <CommandInput placeholder={title} />
           <CommandList>
-            <CommandEmpty>No results found.</CommandEmpty>
+            <CommandEmpty>{tr('No results found.')}</CommandEmpty>
             <CommandGroup>
               {options.map((option) => (
                 <CommandItem
@@ -144,7 +147,7 @@ export function DataTableFilterBox({
                     onSelect={resetFilter}
                     className="justify-center text-center"
                   >
-                    Clear filters
+                    {tr('Clear filters')}
                   </CommandItem>
                 </CommandGroup>
               </>

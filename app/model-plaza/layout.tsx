@@ -6,7 +6,7 @@ import { useSystemConfig } from '@/hooks/use-system-config';
 import ThemeToggle from '@/components/layout/ThemeToggle/theme-toggle';
 import LanguageToggle from '@/components/layout/language-toggle';
 import { UserNav } from '@/components/layout/user-nav';
-import { docsHref } from '@/lib/public-navigation';
+import { SiteNavLinks } from '@/components/layout/site-nav-links';
 
 export default function ModelPlazaLayout({
   children
@@ -14,13 +14,13 @@ export default function ModelPlazaLayout({
   children: React.ReactNode;
 }) {
   const { t } = useLocale();
-  const { systemName, docsAddress } = useSystemConfig();
+  const { systemName } = useSystemConfig();
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="mx-auto flex h-14 items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-4">
+    <div className="flex h-dvh flex-col overflow-hidden bg-background">
+      <header className="z-50 shrink-0 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="mx-auto flex min-h-14 flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
+          <div className="flex flex-wrap items-center gap-4">
             <Link href="/" className="flex items-center gap-2">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -36,19 +36,11 @@ export default function ModelPlazaLayout({
               </svg>
               <span className="text-lg font-bold">{systemName}</span>
             </Link>
-            <nav className="hidden items-center gap-4 md:flex">
-              <Link
-                href="/"
-                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-              >
-                {t.modelPlaza.backHome}
-              </Link>
-              <a
-                href={docsHref(docsAddress)}
-                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-              >
-                {t.nav.docs}
-              </a>
+            <nav
+              aria-label={t.nav.marketplace}
+              className="flex flex-wrap items-center gap-3 text-xs sm:text-sm"
+            >
+              <SiteNavLinks className="text-muted-foreground hover:text-foreground" />
             </nav>
           </div>
 
@@ -60,7 +52,7 @@ export default function ModelPlazaLayout({
         </div>
       </header>
 
-      {children}
+      <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
     </div>
   );
 }

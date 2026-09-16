@@ -1,4 +1,5 @@
 'use client';
+import { useText } from '@/components/locale-text';
 import { AlertModal } from '@/components/modal/alert-modal';
 import { Button } from '@/components/ui/button';
 import {
@@ -10,7 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Token } from '@/lib/types/token';
 import { Edit, MoreHorizontal, Trash, Ban, CircleSlash2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -19,9 +20,11 @@ interface CellActionProps {
 }
 
 export const CellAction: React.FC<CellActionProps> = ({ data }) => {
+  const tr = useText();
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const router = useRouter();
+  const model = useSearchParams().get('model');
 
   const onConfirm = async (token: Token) => {
     deleteToken(token);
@@ -42,9 +45,9 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
     const { success, message } = await res.json();
     if (success) {
       router.refresh();
-      toast.success('Operation completed successfully!');
+      toast.success(tr('Operation completed successfully!'));
     } else {
-      toast.error(message || 'Operation failed!');
+      toast.error(message || tr('Operation failed!'));
     }
   };
 
@@ -54,8 +57,7 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
       method: 'DELETE',
       credentials: 'include'
     });
-    const { data, success } = await res.json();
-    console.log('data', data);
+    const { success } = await res.json();
     if (success) {
       setOpen(false);
       router.refresh();
@@ -73,29 +75,39 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 w-8 p-0">
-            <span className="sr-only">Open menu</span>
+            <span className="sr-only">{tr('Open menu')}</span>
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+          <DropdownMenuLabel>{tr('Actions')}</DropdownMenuLabel>
 
           <DropdownMenuItem
-            onClick={() => router.push(`/dashboard/token/${data.id}`)}
+            onClick={() =>
+              router.push(
+                `/dashboard/token/${data.id}${
+                  model ? `?${new URLSearchParams({ model })}` : ''
+                }`
+              )
+            }
           >
-            <Edit className="mr-2 h-4 w-4" /> Update
+            <Edit className="mr-2 h-4 w-4" />
+            {tr('Update')}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setOpen(true)}>
-            <Trash className="mr-2 h-4 w-4" /> Delete
+            <Trash className="mr-2 h-4 w-4" />
+            {tr('Delete')}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => manageToken(data)}>
             {data.status === 1 ? (
               <>
-                <Ban className="mr-2 h-4 w-4" /> Disable
+                <Ban className="mr-2 h-4 w-4" />
+                {tr('Disable')}
               </>
             ) : (
               <>
-                <CircleSlash2 className="mr-2 h-4 w-4" /> Enable
+                <CircleSlash2 className="mr-2 h-4 w-4" />
+                {tr('Enable')}
               </>
             )}
           </DropdownMenuItem>

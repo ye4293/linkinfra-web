@@ -1,15 +1,11 @@
+import { TokenPageHeader } from '../token-page-header';
 import { auth } from '@/auth';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import PageContainer from '@/components/layout/page-container';
 import TokenTable from '../tables';
-import { buttonVariants } from '@/components/ui/button';
-import { Heading } from '@/components/ui/heading';
 import { Separator } from '@/components/ui/separator';
 import { Token } from '@/lib/types/token';
 import { searchParamsCache } from '@/lib/searchparams';
-import { cn } from '@/lib/utils';
-import { Plus } from 'lucide-react';
-import Link from 'next/link';
 import { ApiConnectionGuide } from '@/components/api-connection-guide';
 import { GettingStartedCard } from '@/components/getting-started-guide';
 
@@ -51,23 +47,11 @@ export default async function TokenListingPage({}: TTokenListingPage) {
       <div className="space-y-4">
         <Breadcrumbs items={breadcrumbItems} />
 
-        <div className="flex items-start justify-between">
-          <Heading
-            title={`Token (${totalData})`}
-            description="Manage API keys and their spending limits."
-          />
-
-          <Link
-            href={'/dashboard/token/create'}
-            className={cn(buttonVariants({ variant: 'default' }))}
-          >
-            <Plus className="mr-2 h-4 w-4" /> Add New
-          </Link>
-        </div>
+        <TokenPageHeader total={totalData} />
         <Separator />
-        <ApiConnectionGuide />
-        <GettingStartedCard />
+        <ApiConnectionGuide compact />
         <TokenTable data={token} totalData={totalData} />
+        <GettingStartedCard compact />
       </div>
     </PageContainer>
   );

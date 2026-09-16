@@ -1,37 +1,27 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { apiKeyHref } from '@/lib/api-key-navigation';
-import { docsHref, SHOW_PUBLIC_USER_TIERS } from '@/lib/public-navigation';
+import { apiKeyHref, consoleHref } from '@/lib/api-key-navigation';
+import { docsHref } from '@/lib/public-navigation';
 import {
   ArrowUpRight,
   ArrowRight,
   Globe2,
   Layers3,
   Menu,
-  Search,
   X,
-  Activity,
-  Braces,
   RefreshCw
 } from 'lucide-react';
 import { useLocale } from '@/components/providers/locale-provider';
 import { useSystemConfig } from '@/hooks/use-system-config';
 import { ProviderLogoMark } from '@/sections/model-plaza/components/provider-logo';
 import type { ModelPlazaResponse } from '@/lib/types/model-plaza';
-import type { ModelMetricsMini } from '@/lib/types/model-metrics';
-import { ModelMetrics } from './model-metrics';
-import {
-  fetchCatalog,
-  formatPrice,
-  matchesModel,
-  modelPrices,
-  modelTitle
-} from './catalog';
+import { fetchCatalog, modelTitle } from './catalog';
 import { HomeFeatures, HomeSections } from './home-sections';
 import s from './home.module.css';
+import { SiteNavLinks } from '@/components/layout/site-nav-links';
 
 const emptyCatalog: ModelPlazaResponse = {
   models: [],
@@ -49,37 +39,13 @@ export function LandingHome() {
   const { data: session } = useSession();
   const { systemName, docsAddress } = useSystemConfig();
   const brand = systemName.trim() || 'LinkInfra';
-  const start = apiKeyHref(Boolean(session));
+  const start = apiKeyHref(Boolean(session), undefined, lang);
   const [menu, setMenu] = useState(false);
   const [catalog, setCatalog] = useState(emptyCatalog);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [reload, setReload] = useState(0);
-  const [provider, setProvider] = useState('all');
-  const [query, setQuery] = useState('');
-  const [group, setGroup] = useState('');
-  const [sort, setSort] = useState('featured');
-  const [billing, setBilling] = useState('all');
-  const [metrics, setMetrics] = useState<Record<string, ModelMetricsMini>>({});
-
-  useEffect(() => {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
-    fetch('/api/model-plaza/metrics/all', { signal: controller.signal })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((result) => {
-        if (!controller.signal.aborted && result?.success && result.data)
-          setMetrics(result.data);
-      })
-      .catch(() => {
-        /* Monitoring is optional; cards without observations stay compact. */
-      })
-      .finally(() => clearTimeout(timeout));
-    return () => {
-      clearTimeout(timeout);
-      controller.abort();
-    };
-  }, [reload]);
+  const [paused, setPaused] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -105,33 +71,6 @@ export function LandingHome() {
     };
   }, [reload]);
 
-  const selectedGroup = catalog.groups.some((item) => item.group_key === group)
-    ? group
-    : catalog.groups[0]?.group_key || '';
-  const filtered = useMemo(() => {
-    const models = catalog.models.filter(
-      (model) =>
-        (provider === 'all' || model.provider === provider) &&
-        (billing === 'all' || model.price_type === billing) &&
-        matchesModel(model, query)
-    );
-    if (sort === 'price')
-      models.sort((a, b) => {
-        // Token and per-call prices use different units; keep them separate.
-        if (a.price_type !== b.price_type)
-          return a.price_type === 'ratio' ? -1 : 1;
-        const ap = modelPrices(a, selectedGroup),
-          bp = modelPrices(b, selectedGroup);
-        return a.price_type === 'ratio'
-          ? ap.input - bp.input
-          : ap.fixed - bp.fixed;
-      });
-    if (sort === 'name')
-      models.sort((a, b) =>
-        a.model_name.localeCompare(b.model_name, 'en', { numeric: true })
-      );
-    return models;
-  }, [catalog.models, provider, query, sort, selectedGroup, billing]);
   const featured = catalog.models[0];
 
   return (
@@ -155,14 +94,7 @@ export function LandingHome() {
             className={s.desktopNav}
             aria-label={c('主导航', 'Main navigation')}
           >
-            <a href="#models">{c('模型', 'Models')}</a>
-            <Link href="/dashboard/playground">
-              {c('在线体验', 'Playground')}
-            </Link>
-            <a href="#models">{c('价格', 'Pricing')}</a>
-            <a href={docsHref(docsAddress)}>
-              {c('文档', 'Docs')} <ArrowUpRight size={12} />
-            </a>
+            <SiteNavLinks includeConsole={false} />
           </nav>
           <div className={s.navActions}>
             <button
@@ -178,8 +110,11 @@ export function LandingHome() {
                 {c('登录', 'Sign in')}
               </Link>
             )}
-            <Link className={s.navCta} href={start}>
-              {c('获取 API Key', 'Get an API key')}
+            <Link
+              className={s.navCta}
+              href={consoleHref(Boolean(session), lang)}
+            >
+              Console
               <ArrowUpRight size={15} />
             </Link>
             <button
@@ -199,18 +134,10 @@ export function LandingHome() {
             className={s.mobileNav}
             aria-label={c('移动导航', 'Mobile navigation')}
           >
-            {[
-              ['#models', c('模型广场', 'Models')],
-              ['/dashboard/playground', c('在线体验', 'Playground')],
-              ['#platform', c('平台能力', 'Platform')],
-              [docsHref(docsAddress), c('文档', 'Docs')],
-              ['/getting-started', c('新手指引', 'Getting started')]
-            ].map(([href, label]) => (
-              <a key={href} href={href} onClick={() => setMenu(false)}>
-                {label}
-                <ArrowUpRight size={16} />
-              </a>
-            ))}
+            <SiteNavLinks onNavigate={() => setMenu(false)} />
+            <Link href="/getting-started" onClick={() => setMenu(false)}>
+              {c('新手指引', 'Getting started')}
+            </Link>
           </nav>
         )}
       </header>
@@ -249,10 +176,10 @@ export function LandingHome() {
                 {c('获取 API Key', 'Get API key')}
                 <ArrowUpRight size={16} />
               </Link>
-              <a href="#models" className={s.secondary}>
-                {c('发现模型', 'Discover models')}
+              <Link href="/model-plaza" className={s.secondary}>
+                {c('进入模型广场', 'Explore models')}
                 <ArrowRight size={16} />
-              </a>
+              </Link>
             </div>
           </div>
           <div className={s.stats}>
@@ -277,300 +204,87 @@ export function LandingHome() {
           </div>
         </section>
         <HomeFeatures />
-        <section id="models" className={`${s.container} ${s.section}`}>
-          <div className={s.sectionHeader}>
+        <section
+          className={s.showcase}
+          aria-label={c('平台模型展示', 'Model showcase')}
+        >
+          <div className={s.showcaseHeading}>
             <div>
-              <h2>{c('发现模型', 'Explore models')}</h2>
+              <h2>
+                {c('多种模型，一个入口。', 'Many models. One connection.')}
+              </h2>
               <p>
                 {c(
-                  '比较模型与价格，为你的应用找到合适的选择。',
-                  'Compare models and pricing. Find the right fit for your application.'
+                  '前往模型广场，查看价格与运行指标。',
+                  'Explore pricing and performance in the marketplace.'
                 )}
               </p>
             </div>
-            <Link href="/model-plaza" scroll={true} className={s.textLink}>
-              {c('查看完整模型广场', 'Explore all models')}
-              <ArrowUpRight size={17} />
-            </Link>
-          </div>
-          <div>
-            <div className={s.filterBar}>
-              <div
-                className={s.providerTabs}
-                aria-label={c('厂商筛选', 'Filter by provider')}
+            <div className={s.showcaseActions}>
+              <button
+                type="button"
+                onClick={() => setPaused(!paused)}
+                aria-pressed={paused}
               >
-                <button
-                  className={provider === 'all' ? s.activeTab : ''}
-                  onClick={() => setProvider('all')}
-                  aria-pressed={provider === 'all'}
-                >
-                  <Layers3 size={14} />
-                  {c('全部模型', 'All models')}
-                  <span>{loading || error ? '—' : catalog.total}</span>
-                </button>
-                {catalog.providers.map((p) => (
-                  <button
-                    key={p.name}
-                    className={provider === p.name ? s.activeTab : ''}
-                    onClick={() => setProvider(p.name)}
-                    aria-pressed={provider === p.name}
-                  >
-                    <ProviderLogoMark provider={p.name} size={14} />
-                    {p.name === 'Zhipu' ? 'Z.ai' : p.name}
-                    <span>{p.count}</span>
-                  </button>
-                ))}
-              </div>
-              <div className={s.search}>
-                <Search size={16} />
-                <input
-                  id="model-search"
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder={c('搜索模型…', 'Search models…')}
-                  aria-label={c('搜索模型', 'Search models')}
-                />
-                {query && (
-                  <button
-                    onClick={() => setQuery('')}
-                    aria-label={c('清空搜索', 'Clear search')}
-                  >
-                    <X size={14} />
-                  </button>
-                )}
-              </div>
-            </div>
-            <div className={s.resultBar}>
-              <span aria-live="polite">
-                {loading
-                  ? c('正在读取模型目录…', 'Loading model catalog…')
-                  : error
-                  ? c('暂时无法读取目录', 'Catalog currently unavailable')
-                  : c(
-                      `找到 ${filtered.length} 个模型，展示前 ${Math.min(
-                        filtered.length,
-                        6
-                      )} 个`,
-                      `${filtered.length} models · showing ${Math.min(
-                        filtered.length,
-                        6
-                      )}`
-                    )}
-              </span>
-              <div>
-                <select
-                  aria-label={c('计费方式', 'Billing type')}
-                  value={billing}
-                  onChange={(e) => setBilling(e.target.value)}
-                >
-                  <option value="all">
-                    {c('全部计费方式', 'All billing types')}
-                  </option>
-                  <option value="ratio">{c('按 Token', 'Per token')}</option>
-                  <option value="fixed">{c('按次调用', 'Per call')}</option>
-                </select>
-                {SHOW_PUBLIC_USER_TIERS && catalog.groups.length > 0 && (
-                  <label>
-                    {c('价格分组', 'Price group')}
-                    <select
-                      aria-label={c('价格分组', 'Price group')}
-                      value={selectedGroup}
-                      onChange={(e) => setGroup(e.target.value)}
-                    >
-                      {catalog.groups.map((g) => (
-                        <option key={g.group_key} value={g.group_key}>
-                          {g.display_name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                )}
-                <select
-                  aria-label={c('模型排序', 'Sort models')}
-                  value={sort}
-                  onChange={(e) => setSort(e.target.value)}
-                >
-                  <option value="featured">{c('精选排序', 'Featured')}</option>
-                  <option value="price">
-                    {c('价格从低到高', 'Price: low to high')}
-                  </option>
-                  <option value="name">{c('按名称排序', 'Name: A–Z')}</option>
-                </select>
-              </div>
-            </div>
-            {loading ? (
-              <div className={s.modelGrid}>
-                {Array.from({ length: 6 }, (_, index) => (
-                  <div key={index} className={s.skeleton} aria-hidden="true">
-                    <span />
-                    <span />
-                    <span />
-                  </div>
-                ))}
-              </div>
-            ) : error ? (
-              <div className={s.empty}>
-                <Layers3 size={30} />
-                <h3>
-                  {c(
-                    '模型目录暂时无法加载',
-                    'The model catalog is unavailable'
-                  )}
-                </h3>
-                <p>
-                  {c(
-                    '稍后重试，或前往模型广场查看。',
-                    'Try again or visit the model marketplace.'
-                  )}
-                </p>
-                <button
-                  className={s.secondary}
-                  onClick={() => setReload((value) => value + 1)}
-                >
-                  <RefreshCw size={15} />
-                  {c('重新加载', 'Try again')}
-                </button>
-              </div>
-            ) : !filtered.length ? (
-              <div className={s.empty}>
-                <Search size={28} />
-                <h3>{c('没有找到匹配的模型', 'No matching models')}</h3>
-                <p>
-                  {c(
-                    '试试其他名称，或重置筛选条件。',
-                    'Try another name or reset your filters.'
-                  )}
-                </p>
-                <button
-                  className={s.secondary}
-                  onClick={() => {
-                    setQuery('');
-                    setProvider('all');
-                    setBilling('all');
-                  }}
-                >
-                  {c('重置筛选', 'Reset filters')}
-                </button>
-              </div>
-            ) : (
-              <div className={s.modelGrid}>
-                {filtered.slice(0, 6).map((model, index) => {
-                  const prices = modelPrices(model, selectedGroup);
-                  return (
-                    <Link
-                      key={model.model_name}
-                      href={`/model-plaza/${encodeURIComponent(
-                        model.model_name
-                      )}`}
-                      className={s.modelCard}
-                    >
-                      <div className={s.cardTop}>
-                        <span className={s.providerIcon}>
-                          <ProviderLogoMark
-                            provider={model.provider}
-                            size={25}
-                          />
-                        </span>
-                        <span className={s.modelProvider}>
-                          {model.provider === 'Zhipu' ? 'Z.ai' : model.provider}
-                        </span>
-                        {index === 0 &&
-                          sort === 'featured' &&
-                          provider === 'all' &&
-                          !query && (
-                            <span className={s.featuredTag}>
-                              {c('精选', 'SPOTLIGHT')}
-                            </span>
-                          )}
-                        <span
-                          className={s.cardArrow}
-                          title={c('查看详情', 'View details')}
-                        >
-                          <ArrowUpRight size={17} aria-hidden="true" />
-                          <span className="sr-only">
-                            {c('查看详情', 'View details')}
-                          </span>
-                        </span>
-                      </div>
-                      <h3>{modelTitle(model.model_name)}</h3>
-                      <code className={s.modelId} title={model.model_name}>
-                        {model.model_name}
-                      </code>
-                      <div className={s.modelTags}>
-                        <span>
-                          <Braces size={11} />
-                          API
-                        </span>
-                        <span>
-                          {model.price_type === 'fixed'
-                            ? c('按次计费', 'Per-call billing')
-                            : c('按 Token 计费', 'Token billing')}
-                        </span>
-                        {model.model_name.includes('thinking') && (
-                          <span>Thinking</span>
-                        )}
-                        {model.model_name.startsWith('global.') && (
-                          <span>Global</span>
-                        )}
-                      </div>
-                      <div className={s.modelPrice}>
-                        {model.price_type === 'fixed' ? (
-                          <div>
-                            <span>{c('每次调用', 'Per call')}</span>
-                            <strong>
-                              {formatPrice(prices.fixed)}
-                              <small> / {c('次', 'call')}</small>
-                            </strong>
-                          </div>
-                        ) : (
-                          <>
-                            <div>
-                              <span>{c('输入', 'INPUT')}</span>
-                              <strong>
-                                {formatPrice(prices.input)}
-                                <small> / M</small>
-                              </strong>
-                            </div>
-                            <div>
-                              <span>{c('输出', 'OUTPUT')}</span>
-                              <strong>
-                                {formatPrice(prices.output)}
-                                <small> / M</small>
-                              </strong>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                      {metrics[model.model_name]?.total_requests_24h > 0 &&
-                        metrics[model.model_name]?.status !== 'no_data' && (
-                          <ModelMetrics metrics={metrics[model.model_name]} />
-                        )}
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-            <div className={s.catalogFoot}>
-              <span>
-                <Activity size={13} />
-                {c(
-                  '目录价格 · USD / 百万 Tokens（按次模型除外）',
-                  'Catalog pricing · USD / 1M tokens, except per-call models'
-                )}
-              </span>
-              <Link href="/model-plaza">
-                {c('价格与运行指标', 'Pricing & metrics')}
-                <ArrowRight size={13} />
+                {paused
+                  ? c('播放动画', 'Play animation')
+                  : c('暂停动画', 'Pause animation')}
+              </button>
+              <Link href="/model-plaza" className={s.textLink}>
+                {c('进入模型广场', 'Explore models')}
+                <ArrowUpRight size={16} />
               </Link>
             </div>
           </div>
+          {loading ? (
+            <p role="status">{c('正在读取模型…', 'Loading models…')}</p>
+          ) : error ? (
+            <div role="alert">
+              {c('暂时无法读取模型', 'Models are temporarily unavailable')}{' '}
+              <button
+                onClick={() => setReload((v) => v + 1)}
+                className={s.textLink}
+              >
+                <RefreshCw size={14} />
+                {c('重试', 'Retry')}
+              </button>
+            </div>
+          ) : catalog.models.length === 0 ? (
+            <p>{c('暂无公开模型', 'No public models yet')}</p>
+          ) : (
+            <div className={s.modelViewport} data-paused={paused}>
+              <div className={s.modelTrack}>
+                {[0, 1].map((copy) => (
+                  <div
+                    key={copy}
+                    className={s.modelStrip}
+                    aria-hidden={copy === 1 ? true : undefined}
+                  >
+                    {catalog.models.slice(0, 10).map((model) => (
+                      <Link
+                        key={model.model_name}
+                        tabIndex={copy === 1 ? -1 : undefined}
+                        href={`/model-plaza/${encodeURIComponent(
+                          model.model_name
+                        )}`}
+                        className={s.modelChip}
+                      >
+                        <ProviderLogoMark provider={model.provider} size={24} />
+                        <span>{modelTitle(model.model_name)}</span>
+                        <ArrowUpRight size={14} />
+                      </Link>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </section>
         <HomeSections
           sampleModel={
             catalog.models.find((m) => m.price_type === 'ratio')?.model_name ||
             'YOUR_MODEL_ID'
           }
-          start={start}
         />
       </main>
       <footer className={`${s.container} ${s.footer}`}>

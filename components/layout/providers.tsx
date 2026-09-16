@@ -6,9 +6,11 @@ import { LocaleProvider } from '@/components/providers/locale-provider';
 import { DefaultTitle } from './default-title';
 export default function Providers({
   session,
+  initialLang,
   children
 }: {
   session: SessionProviderProps['session'];
+  initialLang?: 'zh' | 'en';
   children: React.ReactNode;
 }) {
   return (
@@ -16,7 +18,7 @@ export default function Providers({
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <SessionProvider session={session}>
           <DefaultTitle />
-          <LocaleProvider>{children}</LocaleProvider>
+          <LocaleProvider initialLang={initialLang}>{children}</LocaleProvider>
         </SessionProvider>
       </ThemeProvider>
     </>

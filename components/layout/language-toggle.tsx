@@ -18,7 +18,9 @@ export default function LanguageToggle() {
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="icon">
           <GlobeIcon className="h-[1.2rem] w-[1.2rem]" />
-          <span className="sr-only">Toggle language</span>
+          <span className="sr-only">
+            {lang === 'zh' ? '切换语言' : 'Toggle language'}
+          </span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

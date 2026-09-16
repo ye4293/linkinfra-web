@@ -1,3 +1,5 @@
+'use client';
+import { LocaleText } from '@/components/locale-text';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -22,7 +24,9 @@ export function Breadcrumbs({ items }: { items: BreadcrumbItemProps[] }) {
           <Fragment key={item.title}>
             {index !== items.length - 1 && (
               <BreadcrumbItem>
-                <BreadcrumbLink href={item.link}>{item.title}</BreadcrumbLink>
+                <BreadcrumbLink href={item.link}>
+                  <LocaleText>{item.title}</LocaleText>
+                </BreadcrumbLink>
               </BreadcrumbItem>
             )}
             {index < items.length - 1 && (
@@ -31,7 +35,9 @@ export function Breadcrumbs({ items }: { items: BreadcrumbItemProps[] }) {
               </BreadcrumbSeparator>
             )}
             {index === items.length - 1 && (
-              <BreadcrumbPage>{item.title}</BreadcrumbPage>
+              <BreadcrumbPage>
+                <LocaleText>{item.title}</LocaleText>
+              </BreadcrumbPage>
             )}
           </Fragment>
         ))}

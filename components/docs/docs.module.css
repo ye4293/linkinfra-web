@@ -1,6 +1,6 @@
 .docs {
-  --doc-accent: #e45c30;
-  --doc-accent-bg: #fff2ec;
+  --doc-accent: #7347eb;
+  --doc-accent-bg: #f3efff;
   --doc-text: #23252c;
   --doc-muted: #777982;
   --doc-border: #eaeaec;
@@ -17,8 +17,8 @@
 }
 
 :global(.dark) .docs {
-  --doc-accent: #ff956f;
-  --doc-accent-bg: #34221e;
+  --doc-accent: #b49aff;
+  --doc-accent-bg: #29213e;
   --doc-text: #e4e6ed;
   --doc-muted: #a0a5b2;
   --doc-border: #262c38;

@@ -1,6 +1,7 @@
 'use client';
+import { useText } from '@/components/locale-text';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { SHOW_PUBLIC_USER_TIERS } from '@/lib/public-navigation';
 import { useLocale } from '@/components/providers/locale-provider';
@@ -85,6 +86,7 @@ function ModelPriceCard({
   metrics?: ModelMetricsMini;
   onClick?: () => void;
 }) {
+  const tr = useText();
   const groupPrice = model.group_prices?.find(
     (gp) => gp.group_key === selectedGroup
   );
@@ -147,6 +149,14 @@ function ModelPriceCard({
         </div>
       </div>
 
+      {metrics &&
+        Number.isFinite(metrics.total_requests_24h) &&
+        metrics.total_requests_24h >= 0 && (
+          <p className="px-4 pb-2 text-xs text-muted-foreground">
+            {tr('Requests in the last 24 hours')}:{' '}
+            {metrics.total_requests_24h.toLocaleString()}
+          </p>
+        )}
       {/* 价格区域 */}
       <div className="mt-auto border-t border-border/60 px-4 py-3.5">
         {model.price_type === 'fixed' ? (
@@ -210,7 +220,9 @@ function ModelPriceCard({
       {/* 监控指标 mini */}
       {metrics && metrics.status !== 'no_data' && (
         <div className="flex items-center justify-between border-t border-border/30 px-4 py-1.5 text-[10px] text-muted-foreground">
-          <span>{metrics.avg_latency.toFixed(1)}s latency</span>
+          <span>
+            {metrics.avg_latency.toFixed(1)}s {tr('Latency')}
+          </span>
           <span>{metrics.avg_speed.toFixed(0)} t/s</span>
         </div>
       )}
@@ -307,8 +319,9 @@ function FilterBadge({
 
 // --- 主视图 ---
 export default function ModelPlazaView() {
+  const tr = useText();
   const { t } = useLocale();
-  useDocumentTitle('Model marketplace');
+  useDocumentTitle(t.modelPlaza.title);
   const router = useRouter();
   useEffect(() => {
     // Next.js 可能跳过 sticky 顶栏并沿用前一页滚动位置；进入目录时明确复位。
@@ -320,6 +333,9 @@ export default function ModelPlazaView() {
   const [providers, setProviders] = useState<ProviderInfo[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [retry, setRetry] = useState(0);
+  const resultsRef = useRef<HTMLDivElement>(null);
   const [metricsMap, setMetricsMap] = useState<
     Record<string, ModelMetricsMini>
   >({});
@@ -329,7 +345,7 @@ export default function ModelPlazaView() {
   const [selectedPriceType, setSelectedPriceType] = useState('');
   const [selectedGroup, setSelectedGroup] = useState('');
   const [page, setPage] = useState(1);
-  const [pageSize] = useState(48);
+  const pageSize = 12;
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
@@ -342,47 +358,56 @@ export default function ModelPlazaView() {
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      params.set('page', String(page));
-      params.set('pagesize', String(pageSize));
-      if (keyword) params.set('keyword', keyword);
-      if (selectedProvider) params.set('provider', selectedProvider);
-      if (selectedPriceType) params.set('price_type', selectedPriceType);
-
-      const res = await fetch(`/api/model-plaza?${params.toString()}`);
-      const json = await res.json();
-
-      if (json.success && json.data) {
-        const data: ModelPlazaResponse = json.data;
-        setModels(data.models || []);
-        setGroups(data.groups || []);
-        setProviders(data.providers || []);
-        setTotal(data.total);
-
-        if (!selectedGroup && data.groups?.length > 0) {
-          setSelectedGroup(data.groups[0].group_key);
-        }
-      }
-    } catch (err) {
-      console.error('Failed to fetch model plaza data:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [
-    page,
-    pageSize,
-    keyword,
-    selectedProvider,
-    selectedPriceType,
-    selectedGroup
-  ]);
-
   useEffect(() => {
+    const controller = new AbortController();
+    let active = true;
+    resultsRef.current?.scrollTo({ top: 0 });
+    const fetchData = async () => {
+      setLoading(true);
+      setError(false);
+      try {
+        const params = new URLSearchParams();
+        params.set('page', String(page));
+        params.set('pagesize', String(pageSize));
+        if (keyword) params.set('keyword', keyword);
+        if (selectedProvider) params.set('provider', selectedProvider);
+        if (selectedPriceType) params.set('price_type', selectedPriceType);
+
+        const res = await fetch(`/api/model-plaza?${params.toString()}`, {
+          signal: controller.signal
+        });
+        const json = await res.json();
+        if (!active) return;
+        if (!res.ok || !json.success || !json.data)
+          throw new Error('Catalog unavailable');
+        if (json.success && json.data) {
+          const data: ModelPlazaResponse = json.data;
+          setModels(data.models || []);
+          setGroups(data.groups || []);
+          setProviders(data.providers || []);
+          setTotal(data.total);
+
+          setSelectedGroup((current) =>
+            data.groups?.some((g) => g.group_key === current)
+              ? current
+              : data.groups?.[0]?.group_key || ''
+          );
+        }
+      } catch (err) {
+        if (active) {
+          setError(true);
+          setModels([]);
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
     fetchData();
-  }, [fetchData]);
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [page, pageSize, keyword, selectedProvider, selectedPriceType, retry]);
 
   // 获取模型监控迷你摘要
   useEffect(() => {
@@ -489,9 +514,9 @@ export default function ModelPlazaView() {
   );
 
   return (
-    <div className="flex min-h-[calc(100vh-3.5rem)]">
+    <div className="flex h-full min-h-0">
       {/* 左侧筛选栏 - 桌面 */}
-      <aside className="hidden w-64 shrink-0 overflow-y-auto border-r bg-muted/20 p-4 lg:block">
+      <aside className="hidden w-64 shrink-0 overflow-y-auto overscroll-contain border-r bg-muted/20 p-4 lg:block">
         {filterContent}
       </aside>
 
@@ -515,9 +540,9 @@ export default function ModelPlazaView() {
       )}
 
       {/* 主内容区 */}
-      <main className="min-w-0 flex-1">
+      <main className="flex min-h-0 min-w-0 flex-1 flex-col">
         {/* 顶栏 */}
-        <div className="sticky top-0 z-10 border-b bg-background/95 px-4 py-3 backdrop-blur lg:px-6">
+        <div className="z-10 shrink-0 border-b bg-background/95 px-4 py-3 backdrop-blur lg:px-6">
           <div className="flex items-center gap-3">
             {/* 移动端筛选按钮 */}
             <Button
@@ -525,7 +550,7 @@ export default function ModelPlazaView() {
               size="sm"
               className="shrink-0 lg:hidden"
               onClick={() => setShowMobileFilters(true)}
-              aria-label="Filter models"
+              aria-label={tr('Filter models')}
             >
               <SlidersHorizontal className="h-4 w-4" />
             </Button>
@@ -538,6 +563,7 @@ export default function ModelPlazaView() {
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 className="h-9 pl-9"
+                aria-label={t.modelPlaza.search}
               />
             </div>
 
@@ -550,6 +576,8 @@ export default function ModelPlazaView() {
             <div className="flex shrink-0 overflow-hidden rounded-md border">
               <button
                 onClick={() => setViewMode('card')}
+                aria-label={tr('Card view')}
+                aria-pressed={viewMode === 'card'}
                 className={`px-2 py-1.5 transition-colors ${
                   viewMode === 'card'
                     ? 'bg-primary text-primary-foreground'
@@ -560,6 +588,8 @@ export default function ModelPlazaView() {
               </button>
               <button
                 onClick={() => setViewMode('table')}
+                aria-label={tr('Table view')}
+                aria-pressed={viewMode === 'table'}
                 className={`border-l px-2 py-1.5 transition-colors ${
                   viewMode === 'table'
                     ? 'bg-primary text-primary-foreground'
@@ -573,7 +603,11 @@ export default function ModelPlazaView() {
         </div>
 
         {/* 内容区 */}
-        <div className="p-4 lg:p-6">
+        <div
+          ref={resultsRef}
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 lg:p-6"
+          aria-busy={loading}
+        >
           {loading ? (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
               {Array.from({ length: 12 }).map((_, i) => (
@@ -735,7 +769,15 @@ export default function ModelPlazaView() {
           )}
 
           {/* 空状态 */}
-          {!loading && models.length === 0 && (
+          {error && (
+            <div role="alert" className="py-12 text-center">
+              <p>{tr('Unable to load models.')}</p>
+              <Button className="mt-3" onClick={() => setRetry((v) => v + 1)}>
+                {tr('Retry')}
+              </Button>
+            </div>
+          )}
+          {!loading && !error && models.length === 0 && (
             <div className="flex flex-col items-center justify-center py-24">
               <Search className="mb-4 h-12 w-12 text-muted-foreground/30" />
               <p className="text-lg font-medium text-muted-foreground">
@@ -743,60 +785,61 @@ export default function ModelPlazaView() {
               </p>
             </div>
           )}
-
-          {/* 分页 */}
-          {totalPages > 1 && (
-            <div className="mt-6 flex items-center justify-center gap-1">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page <= 1}
-                onClick={() => setPage(page - 1)}
-                className="gap-1"
-              >
-                <ChevronLeft className="h-4 w-4" />
-                {t.modelPlaza.prevPage}
-              </Button>
-              <div className="flex items-center gap-1 px-2">
-                {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => {
-                  let pageNum: number;
-                  if (totalPages <= 5) {
-                    pageNum = i + 1;
-                  } else if (page <= 3) {
-                    pageNum = i + 1;
-                  } else if (page >= totalPages - 2) {
-                    pageNum = totalPages - 4 + i;
-                  } else {
-                    pageNum = page - 2 + i;
-                  }
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() => setPage(pageNum)}
-                      className={`inline-flex h-8 w-8 items-center justify-center rounded-md text-sm transition-colors ${
-                        page === pageNum
-                          ? 'bg-primary text-primary-foreground'
-                          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                })}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page >= totalPages}
-                onClick={() => setPage(page + 1)}
-                className="gap-1"
-              >
-                {t.modelPlaza.nextPage}
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
         </div>
+        {/* 分页始终位于结果滚动区之外。 */}
+        {totalPages > 1 && (
+          <div className="flex shrink-0 flex-wrap items-center justify-center gap-1 border-t bg-background px-2 py-3">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={loading || page <= 1}
+              onClick={() => setPage(page - 1)}
+              className="gap-1"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              {t.modelPlaza.prevPage}
+            </Button>
+            <div className="flex items-center gap-1 px-2">
+              {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => {
+                let pageNum: number;
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (page <= 3) {
+                  pageNum = i + 1;
+                } else if (page >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = page - 2 + i;
+                }
+                return (
+                  <button
+                    key={pageNum}
+                    disabled={loading}
+                    aria-current={page === pageNum ? 'page' : undefined}
+                    onClick={() => setPage(pageNum)}
+                    className={`inline-flex h-8 w-8 items-center justify-center rounded-md text-sm transition-colors ${
+                      page === pageNum
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={loading || page >= totalPages}
+              onClick={() => setPage(page + 1)}
+              className="gap-1"
+            >
+              {t.modelPlaza.nextPage}
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </main>
     </div>
   );

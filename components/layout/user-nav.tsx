@@ -1,4 +1,5 @@
 'use client';
+import { useText } from '@/components/locale-text';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,7 @@ import { signOut, useSession } from 'next-auth/react';
 import { useLocale } from '@/components/providers/locale-provider';
 
 export function UserNav() {
+  const tr = useText();
   const { data: session, status } = useSession();
   const { t } = useLocale();
 
@@ -42,7 +44,7 @@ export function UserNav() {
         <Button
           variant="ghost"
           className="relative h-8 w-8 rounded-full"
-          aria-label="Account menu"
+          aria-label={tr('Account menu')}
         >
           <Avatar className="h-8 w-8">
             <AvatarImage
@@ -67,7 +69,7 @@ export function UserNav() {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
-            <Link href="/dashboard">{t.nav.dashboard}</Link>
+            <Link href="/dashboard">Console</Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link href="/dashboard/profile">{t.userMenu.profile}</Link>

@@ -17,13 +17,7 @@ import { docsHref } from '@/lib/public-navigation';
 import s from './home.module.css';
 import { ProviderLogoMark } from '@/sections/model-plaza/components/provider-logo';
 
-export function HomeSections({
-  sampleModel,
-  start
-}: {
-  sampleModel: string;
-  start: string;
-}) {
+export function HomeSections({ sampleModel }: { sampleModel: string }) {
   const { lang } = useLocale();
   const c = (cn: string, en: string) => (lang === 'zh' ? cn : en);
   const { docsAddress, serverAddress } = useSystemConfig();
@@ -211,84 +205,6 @@ export function HomeSections({
           </div>
         </div>
       </section>
-
-      <section className={`${s.container} ${s.faqSection}`}>
-        <div>
-          <h2>{c('常见问题', 'Frequently asked questions')}</h2>
-          <p>
-            {c(
-              '关于接入、计费和模型选择。',
-              'On integration, pricing, and choosing models.'
-            )}
-          </p>
-        </div>
-        <div className={s.faqList}>
-          {[
-            [
-              c(
-                '平台现在支持哪些模型？',
-                'Which models are available right now?'
-              ),
-              c(
-                '首页模型区直接读取平台公开目录，可以按厂商和名称筛选。完整模型广场提供具体模型的价格与运行指标；实际可调用范围以你的账号权限和渠道配置为准。',
-                'The model explorer reads the public platform catalog. Filter by provider or name, then visit the marketplace for pricing and metrics. Actual access depends on your account and channel configuration.'
-              )
-            ],
-            [
-              c('如何计算调用费用？', 'How does pricing work?'),
-              c(
-                'Token 模型分别展示每百万输入和输出 Tokens 的美元价格；按次模型单独标明每次调用费用。可切换价格分组比较，实际结算以账号所属分组和调用记录为准。',
-                'Token models list USD prices per million input and output tokens. Per-call models show their cost per request. Compare price groups in the explorer; your account group and request records determine actual billing.'
-              )
-            ],
-            [
-              c(
-                '现有项目需要改多少代码？',
-                'How much of my existing code needs to change?'
-              ),
-              c(
-                '使用 OpenAI 兼容接口时，通常需要调整 base_url、API Key 和模型 ID。不同模型的参数和功能支持可能不同，建议先用示例或 Playground 验证。',
-                'For the OpenAI-compatible interface, usually the base URL, API key, and model ID. Parameters and supported features vary by model, so validate with the example or Playground first.'
-              )
-            ],
-            [
-              c(
-                '在哪里查看用量和调用问题？',
-                'Where can I track usage and debug requests?'
-              ),
-              c(
-                '登录后可在用量统计中查看消耗，在调用日志中定位请求问题，在令牌管理中管理密钥。模型详情页也提供平台已采集的运行指标。',
-                'After signing in, use statistics to review consumption, request logs to investigate issues, and token management to manage keys. Model detail pages show operational metrics when available.'
-              )
-            ]
-          ].map(([question, answer]) => (
-            <details key={question}>
-              <summary>
-                {question}
-                <span className={s.faqPlus}>+</span>
-              </summary>
-              <p>{answer}</p>
-            </details>
-          ))}
-        </div>
-      </section>
-      <section className={`${s.container} ${s.finalCta}`}>
-        <div>
-          <h2>
-            {c('开始构建你的下一个应用。', 'Build your next application.')}
-          </h2>
-          <p>
-            {c(
-              '一个账户，一把密钥，多种模型。',
-              'One account. One key. More possibilities.'
-            )}
-          </p>
-        </div>
-        <Link href={start} className={s.primary}>
-          {c('获取 API Key', 'Get API key')}
-          <ArrowUpRight size={16} />
-        </Link>
-      </section>
     </>
   );
 }
@@ -303,7 +219,7 @@ export function HomeFeatures() {
         '通过熟悉的 API 接入平台模型，快速切换，减少重复集成。',
         'Access models through a familiar API. Switch easily and spend less time on integration.'
       ),
-      href: '#models',
+      href: '/model-plaza',
       action: c('浏览模型', 'Browse models')
     },
     {
@@ -312,7 +228,7 @@ export function HomeFeatures() {
         '输入、输出与分组价格清晰可查，按实际用量付费。',
         'Compare input, output, and group pricing. Pay for what you use.'
       ),
-      href: '#models',
+      href: '/model-plaza',
       action: c('比较价格', 'Compare pricing')
     },
     {

@@ -8,7 +8,7 @@ const en: Locale = {
     docs: 'Docs',
     marketplace: 'Model Plaza',
     signIn: 'Sign In',
-    dashboard: 'Dashboard'
+    dashboard: 'Console'
   },
   // User Menu
   userMenu: {
@@ -183,6 +183,42 @@ const en: Locale = {
     keyIndex: 'Key Index'
   },
   // Pricing settings page
+  durationPricing: {
+    title: 'Duration Pricing',
+    description:
+      'Configure audio transcription billing by the duration reported by the provider. Prices are in USD per minute; fractional minutes are billed proportionally and group discounts apply. Video models use the Video Pricing tab.',
+    models: 'Model names',
+    modelsHint:
+      'One model per line. All entered models receive the same price. Use the exact model name requested by the client.',
+    model: 'Model name',
+    price: 'Duration price ($/minute)',
+    priceHint:
+      'Enter 0 for free billing. Leaving this field empty does not set a price.',
+    example:
+      'Example: 90 seconds at $0.006/minute costs $0.009 before discounts.',
+    save: 'Save duration prices',
+    saving: 'Saving...',
+    saved: 'Duration pricing saved.',
+    saveFailed: 'Unable to save duration pricing.',
+    loadFailed:
+      'Unable to load duration pricing. Please refresh and try again.',
+    unsupported:
+      'This backend does not support duration pricing. Update the backend first.',
+    invalid: 'Enter at least one model and a finite, non-negative price.',
+    remove: 'Disable duration billing',
+    removeHint:
+      'Disabling removes the duration price and restores any existing per-call or token settings. Models that require duration billing will need a duration price before use.',
+    refresh: 'Refresh',
+    search: 'Search duration models...',
+    billingType: 'Billing type',
+    perDuration: 'Per-duration',
+    actions: 'Actions',
+    edit: 'Edit',
+    loading: 'Loading...',
+    empty: 'No duration prices found.',
+    configure: 'Configure duration billing',
+    configureSelected: 'Set duration price for selected models'
+  },
   pricing: {
     title: 'Model Pricing Settings',
     tabRatioSettings: 'Ratio Settings',
@@ -232,7 +268,7 @@ const en: Locale = {
       enterprise: 'Enterprise',
       signIn: 'Sign in',
       startBuilding: 'Start building',
-      dashboard: 'Dashboard'
+      dashboard: 'Console'
     },
     hero: {
       badgeTag: 'New',
@@ -338,7 +374,7 @@ const en: Locale = {
       links: {
         models: 'Models',
         pricing: 'Pricing',
-        dashboard: 'Dashboard',
+        dashboard: 'Console',
         changelog: 'Changelog',
         documentation: 'Documentation',
         apiReference: 'API reference',

@@ -7,6 +7,8 @@ import NextTopLoader from 'nextjs-toploader';
 import { Inter, JetBrains_Mono, Instrument_Serif } from 'next/font/google';
 import './globals.css';
 import { auth } from '@/auth';
+import { cookies } from 'next/headers';
+import { isLanguage, LOCALE_COOKIE } from '@/lib/locale-preference';
 
 const sans = Inter({ subsets: ['latin'], variable: '--font-sans' });
 const mono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' });
@@ -47,14 +49,16 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const session = await auth();
+  const preference = cookies().get(LOCALE_COOKIE)?.value;
+  const initialLang = isLanguage(preference) ? preference : 'en';
   return (
-    <html lang="en">
+    <html lang={initialLang === 'zh' ? 'zh-CN' : 'en'} suppressHydrationWarning>
       <body
         className={`${sans.variable} ${mono.variable} ${instrumentSerif.variable} font-sans`}
         suppressHydrationWarning={true}
       >
         <NextTopLoader showSpinner={false} />
-        <Providers session={session}>
+        <Providers session={session} initialLang={initialLang}>
           <Toaster position="top-right" />
           {children}
         </Providers>

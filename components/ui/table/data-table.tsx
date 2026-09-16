@@ -1,3 +1,5 @@
+'use client';
+import { useText } from '@/components/locale-text';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -76,6 +78,7 @@ export function DataTable<TData, TValue>({
   renderExpandedRow,
   expandAllByDefault = false
 }: DataTableProps<TData, TValue>) {
+  const tr = useText();
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
     initialColumnVisibility || {}
@@ -237,7 +240,7 @@ export function DataTable<TData, TValue>({
               table.getRowModel().rows.map((row) => (
                 <React.Fragment key={row.id}>
                   <TableRow
-                    data-state={row.getIsSelected() && 'selected'}
+                    data-state={row.getIsSelected() && tr('selected')}
                     className={`touch-manipulation border-b border-border/50 last:border-0 hover:bg-muted/50 ${
                       enableExpanding ? 'cursor-pointer' : ''
                     }`}
@@ -300,7 +303,7 @@ export function DataTable<TData, TValue>({
                   colSpan={columns.length + (enableExpanding ? 1 : 0)}
                   className="h-24 text-center text-muted-foreground"
                 >
-                  No results found.
+                  {tr('No results found.')}
                 </TableCell>
               </TableRow>
             )}
@@ -312,7 +315,7 @@ export function DataTable<TData, TValue>({
         <div className="flex flex-wrap items-center justify-between gap-4 sm:justify-start">
           <div className="flex items-center gap-2">
             <p className="text-xs font-medium text-muted-foreground sm:text-sm">
-              Rows
+              {tr('Rows')}
             </p>
             <Select
               value={`${pageSize}`}
@@ -342,7 +345,7 @@ export function DataTable<TData, TValue>({
             {data.length > 0 ? (
               <span>
                 {(currentPage - 1) * pageSize + 1}-
-                {Math.min(currentPage * pageSize, totalItems || data.length)} of{' '}
+                {Math.min(currentPage * pageSize, totalItems || data.length)} /{' '}
                 {totalItems || data.length}
               </span>
             ) : (
@@ -353,7 +356,10 @@ export function DataTable<TData, TValue>({
 
         <div className="flex items-center justify-between gap-2 sm:justify-end">
           <span className="text-xs text-muted-foreground sm:hidden">
-            Page {currentPage}/{pageCount || 1}
+            {tr('Page {page} of {count}', {
+              page: currentPage,
+              count: pageCount || 1
+            })}
           </span>
           <div className="flex items-center gap-1">
             <Button
@@ -380,7 +386,10 @@ export function DataTable<TData, TValue>({
             </Button>
 
             <span className="hidden text-xs font-medium sm:block sm:px-2">
-              Page {currentPage} of {pageCount || 1}
+              {tr('Page {page} of {count}', {
+                page: currentPage,
+                count: pageCount || 1
+              })}
             </span>
 
             <Button

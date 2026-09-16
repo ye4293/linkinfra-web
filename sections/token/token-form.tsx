@@ -1,13 +1,13 @@
 'use client';
+import { useText } from '@/components/locale-text';
 
 import React, { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Popover,
   PopoverContent,
@@ -28,18 +28,21 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { CalendarIcon } from '@radix-ui/react-icons';
 import { addDays, format, addMonths, addHours, addMinutes } from 'date-fns';
-import { renderQuotaWithPrompt, renderQuotaNum } from '@/utils/render';
+import { renderQuotaNum } from '@/utils/render';
 import { Token } from '@/lib/types/token';
+import { useLocale } from '@/components/providers/locale-provider';
+import { zhCN, enUS } from 'date-fns/locale';
 import { toast } from 'sonner';
 
-const formSchema = z.object({
-  name: z.string().min(1, {
-    message: 'Name is required.'
-  }),
-  expired_time: z.date().optional(),
-  remain_quota: z.number().optional(), // 新增: 剩余配额
-  unlimited_quota: z.boolean().optional() // 新增: 是否是无限配额
-});
+const makeFormSchema = (required: string) =>
+  z.object({
+    name: z.string().min(1, {
+      message: required
+    }),
+    expired_time: z.date().optional(),
+    remain_quota: z.number().optional(), // 新增: 剩余配额
+    unlimited_quota: z.boolean().optional() // 新增: 是否是无限配额
+  });
 
 interface ParamsOption extends Partial<Token> {
   // group?: string;
@@ -47,11 +50,18 @@ interface ParamsOption extends Partial<Token> {
 }
 
 export default function TokenForm() {
+  const tr = useText();
   const router = useRouter();
+  const { lang } = useLocale();
+  const selectedModel = useSearchParams().get('model');
+  const listHref = `/dashboard/token${
+    selectedModel ? `?${new URLSearchParams({ model: selectedModel })}` : ''
+  }`;
+  const formSchema = makeFormSchema(tr('Name is required.'));
   const { tokenId } = useParams();
 
   const [isLoading, setIsLoading] = useState(true);
-  const [isExpired, setIsExpired] = useState<Boolean | null>(null);
+  const [isExpired, setIsExpired] = useState<boolean>(true);
   const [tokenData, setTokenData] = useState<Object | null>(null);
   const [displayValue, setDisplayValue] = useState<string>(''); // 用于管理显示的美元金额
 
@@ -152,7 +162,7 @@ export default function TokenForm() {
       ...values,
       expired_time: values.expired_time
         ? Math.floor(values.expired_time.getTime() / 1000)
-        : undefined
+        : -1
     };
     // if (params.expired_time) {
     //   // params.expired_time = isExpired ? -1 : Math.floor(params.expired_time.getTime() / 1000);
@@ -168,10 +178,10 @@ export default function TokenForm() {
     const { success, message } = await res.json();
     // console.log('data', data);
     if (success) {
-      router.push('/dashboard/token');
+      router.push(listHref);
       router.refresh();
     } else {
-      toast.error(message || 'Submit failed');
+      toast.error(message || tr('Submit failed'));
     }
   }
 
@@ -179,7 +189,7 @@ export default function TokenForm() {
     <Card className="mx-auto w-full">
       <CardHeader>
         <CardTitle className="text-left text-2xl font-bold">
-          Token Information
+          {tr('Token Information')}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -191,9 +201,9 @@ export default function TokenForm() {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Name</FormLabel>
+                    <FormLabel>{tr('Name')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter your name" {...field} />
+                      <Input placeholder={tr('Enter your name')} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -206,7 +216,7 @@ export default function TokenForm() {
                 name="expired_time"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Date of birth</FormLabel>
+                    <FormLabel>{tr('Expiration date')}</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
@@ -216,12 +226,17 @@ export default function TokenForm() {
                               'w-[240px] pl-3 text-left font-normal',
                               !field.value && 'text-muted-foreground'
                             )}
-                            disabled={isExpired === true}
                           >
                             {field.value ? (
-                              format(field.value, 'PPP')
+                              format(field.value, 'PPP', {
+                                locale: lang === 'zh' ? zhCN : enUS
+                              })
                             ) : (
-                              <span>Pick a date</span>
+                              <span>
+                                {tr(
+                                  isExpired ? 'Never expires' : 'Pick a date'
+                                )}
+                              </span>
                             )}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
@@ -229,9 +244,13 @@ export default function TokenForm() {
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
+                          locale={lang === 'zh' ? zhCN : enUS}
                           mode="single"
                           selected={field.value}
-                          onSelect={field.onChange}
+                          onSelect={(date) => {
+                            field.onChange(date);
+                            setIsExpired(!date);
+                          }}
                           disabled={(date) =>
                             // date > new Date() || date < new Date("1900-01-01")
                             date < new Date()
@@ -252,7 +271,7 @@ export default function TokenForm() {
                     setIsExpired(true);
                   }}
                 >
-                  Never expires
+                  {tr('Never expires')}
                 </Button>
                 <Button
                   type="button"
@@ -261,7 +280,7 @@ export default function TokenForm() {
                     setIsExpired(false);
                   }}
                 >
-                  Expires in one month
+                  {tr('Expires in one month')}
                 </Button>
                 <Button
                   type="button"
@@ -270,7 +289,7 @@ export default function TokenForm() {
                     setIsExpired(false);
                   }}
                 >
-                  Expires in one day
+                  {tr('Expires in one day')}
                 </Button>
                 <Button
                   type="button"
@@ -279,7 +298,7 @@ export default function TokenForm() {
                     setIsExpired(false);
                   }}
                 >
-                  Expires in one hour
+                  {tr('Expires in one hour')}
                 </Button>
                 <Button
                   type="button"
@@ -288,7 +307,7 @@ export default function TokenForm() {
                     setIsExpired(false);
                   }}
                 >
-                  Expires in one minute
+                  {tr('Expires in one minute')}
                 </Button>
               </div>
             </div>
@@ -319,9 +338,7 @@ export default function TokenForm() {
                 name="remain_quota"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>
-                      Amount {renderQuotaWithPrompt(field.value || 0)}
-                    </FormLabel>
+                    <FormLabel>{tr('Amount')} (USD)</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -348,9 +365,9 @@ export default function TokenForm() {
                       />
                     </FormControl>
                     <FormDescription>
-                      Note that the token quota is only used to limit the
-                      maximum usage of the token itself, and the actual usage is
-                      limited by the remaining quota of the account.
+                      {tr(
+                        'Note that the token quota is only used to limit the maximum usage of the token itself, and the actual usage is limited by the remaining quota of the account.'
+                      )}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -372,16 +389,16 @@ export default function TokenForm() {
                   }}
                 >
                   {form.getValues('unlimited_quota')
-                    ? 'Cancel Unlimited Quota'
-                    : 'Set to Unlimited Quota'}
+                    ? tr('Cancel Unlimited Quota')
+                    : tr('Set to Unlimited Quota')}
                 </Button>
               </div>
             </div>
             <div className="flex gap-4">
-              <Button type="button" onClick={() => window.history.back()}>
-                Go Back
+              <Button type="button" onClick={() => router.push(listHref)}>
+                {tr('Go Back')}
               </Button>
-              <Button type="submit">Submit</Button>
+              <Button type="submit">{tr('Submit')}</Button>
             </div>
           </form>
         </Form>

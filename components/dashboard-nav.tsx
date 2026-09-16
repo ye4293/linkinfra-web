@@ -1,4 +1,5 @@
 'use client';
+import { LocaleText } from '@/components/locale-text';
 
 import { Icons } from '@/components/icons';
 import { useBreakpoint } from '@/hooks/useBreakPoints';
@@ -54,7 +55,11 @@ const NavItemContent = React.memo(
         )}
       >
         <Icon className="size-5 flex-none" />
-        {!isMinimized && <span className="mr-2 truncate">{item.title}</span>}
+        {!isMinimized && (
+          <span className="mr-2 truncate">
+            <LocaleText>{item.title}</LocaleText>
+          </span>
+        )}
         {hasChildren && !isMinimized && (
           <ChevronRight
             className={cn('ml-auto h-4 w-4', isExpanded && 'rotate-90')}
@@ -111,9 +116,10 @@ export function DashboardNav({
   isMobileNav = false
 }: DashboardNavProps) {
   const path = usePathname();
-  const { isMinimized } = useSidebar();
+  const { isMinimized: sidebarMinimized } = useSidebar();
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const { isAboveLg } = useBreakpoint('lg');
+  const isMinimized = sidebarMinimized && isAboveLg && !isMobileNav;
   const { data: session } = useSession();
   const userRole = (session?.user as any)?.role as number;
 
@@ -171,7 +177,9 @@ export function DashboardNav({
               side="right"
               sideOffset={20}
             >
-              <DropdownMenuLabel>{item.title}</DropdownMenuLabel>
+              <DropdownMenuLabel>
+                <LocaleText>{item.title}</LocaleText>
+              </DropdownMenuLabel>
               {filteredChildren.map((child) => (
                 <DropdownMenuItem key={child.title} asChild>
                   {child.href && (
@@ -180,7 +188,7 @@ export function DashboardNav({
                       onClick={handleSetOpen}
                       className="cursor-pointer"
                     >
-                      {child.title}
+                      <LocaleText>{child.title}</LocaleText>
                     </Link>
                   )}
                 </DropdownMenuItem>
@@ -244,7 +252,7 @@ export function DashboardNav({
               sideOffset={8}
               className={!isMinimized ? 'hidden' : 'inline-block'}
             >
-              {item.title}
+              <LocaleText>{item.title}</LocaleText>
             </TooltipContent>
           </Tooltip>
         ))}

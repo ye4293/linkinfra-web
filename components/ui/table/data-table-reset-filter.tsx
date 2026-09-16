@@ -1,4 +1,5 @@
 'use client';
+import { useText } from '@/components/locale-text';
 import { Button } from '../button';
 
 type DataTableResetFilterProps = {
@@ -10,11 +11,12 @@ export function DataTableResetFilter({
   isFilterActive,
   onReset
 }: DataTableResetFilterProps) {
+  const tr = useText();
   return (
     <>
       {isFilterActive ? (
         <Button variant="outline" onClick={onReset}>
-          Reset Filters
+          {tr('Reset Filters')}
         </Button>
       ) : null}
     </>

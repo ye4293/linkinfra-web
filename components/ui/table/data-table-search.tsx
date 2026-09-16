@@ -1,4 +1,5 @@
 'use client';
+import { useText } from '@/components/locale-text';
 
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,7 @@ export function DataTableSearch({
   setSearchQuery,
   setPage
 }: DataTableSearchProps) {
+  const tr = useText();
   const [isLoading, startTransition] = useTransition();
   const [localSearchValue, setLocalSearchValue] = useState(searchQuery ?? '');
 
@@ -55,7 +57,7 @@ export function DataTableSearch({
     <div className="flex w-full items-center space-x-2 md:max-w-sm">
       <div className="relative flex-1">
         <Input
-          placeholder={`Search ${searchKey}...`}
+          placeholder={tr('Search {key}...', { key: searchKey })}
           value={localSearchValue}
           onChange={(e) => setLocalSearchValue(e.target.value)}
           onKeyPress={handleKeyPress}

@@ -1,6 +1,14 @@
 'use client';
+import { useText } from '@/components/locale-text';
 
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import {
+  ClientModel,
+  parseClientModels,
+  modelMatchesApp,
+  setupSelection
+} from '@/lib/client-models';
 import { Copy, ExternalLink, Settings2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -26,13 +34,14 @@ import {
 type Target = 'ccswitch' | 'cherry' | 'manual';
 
 export function ClientSetupDialog({ token }: { token: Token }) {
+  const tr = useText();
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <Settings2 className="mr-2 h-4 w-4" />
-          Set up client
+          {tr('Set up client')}
         </Button>
       </DialogTrigger>
       {open && <ClientSetupContent token={token} />}
@@ -41,17 +50,23 @@ export function ClientSetupDialog({ token }: { token: Token }) {
 }
 
 function ClientSetupContent({ token }: { token: Token }) {
+  const tr = useText();
+  const selectedModel = useSearchParams().get('model') || '';
+  const selection = setupSelection([], selectedModel);
+  const selectionChanged = useRef(false);
   const id = useId();
   const {
     serverAddress,
     systemName,
     loading: configLoading
   } = useSystemConfig();
-  const [target, setTarget] = useState<Target>('ccswitch');
-  const [app, setApp] = useState<CodingApp>('claude');
+  const [target, setTarget] = useState<Target>(
+    selectedModel ? selection.target : 'ccswitch'
+  );
+  const [app, setApp] = useState<CodingApp>(selection.app || 'claude');
   const [name, setName] = useState<string | null>(null);
-  const [models, setModels] = useState<string[]>([]);
-  const [model, setModel] = useState('');
+  const [models, setModels] = useState<ClientModel[]>([]);
+  const [model, setModel] = useState(selectedModel);
   const [optionalModels, setOptionalModels] = useState({
     haikuModel: '',
     sonnetModel: '',
@@ -71,7 +86,7 @@ function ClientSetupContent({ token }: { token: Token }) {
     ({ root, openai } = apiAddresses(serverAddress));
   } catch (err) {
     addressError =
-      err instanceof Error ? err.message : 'API address unavailable.';
+      err instanceof Error ? err.message : tr('API address unavailable.');
   }
   let keyError = '';
   try {
@@ -85,6 +100,31 @@ function ClientSetupContent({ token }: { token: Token }) {
     token.expired_time <= Date.now() / 1000;
   const inactive = token.status !== 1 || expired;
   const endpoint = target === 'ccswitch' && app !== 'codex' ? root : openai;
+  const availableModels =
+    target === 'ccswitch'
+      ? models.filter((item) => modelMatchesApp(item, app))
+      : models;
+  const matches = (id: string) =>
+    modelMatchesApp(
+      models.find((item) => item.id === id.trim()) ?? { id: id.trim() },
+      app
+    );
+  const invalidModel =
+    target === 'ccswitch' &&
+    ((!!model.trim() &&
+      (!matches(model) ||
+        (!loading &&
+          !modelError &&
+          !models.some((item) => item.id === model.trim())))) ||
+      (app === 'claude' &&
+        Object.values(optionalModels).some(
+          (id) =>
+            id.trim() &&
+            (!matches(id) ||
+              (!loading &&
+                !modelError &&
+                !models.some((item) => item.id === id.trim())))
+        )));
 
   useEffect(() => {
     const controller = new AbortController();
@@ -98,12 +138,15 @@ function ClientSetupContent({ token }: { token: Token }) {
         const body = await res.json();
         if (!res.ok || !body.success || !Array.isArray(body.data))
           throw new Error();
-        if (!controller.signal.aborted)
-          setModels(
-            body.data.filter(
-              (item: unknown): item is string => typeof item === 'string'
-            )
-          );
+        if (!controller.signal.aborted) {
+          const entries = parseClientModels(body.data);
+          setModels(entries);
+          if (selectedModel && !selectionChanged.current) {
+            const initial = setupSelection(entries, selectedModel);
+            setTarget(initial.target);
+            if (initial.app) setApp(initial.app);
+          }
+        }
       })
       .catch(() => {
         if (!controller.signal.aborted) setModelError(true);
@@ -112,18 +155,18 @@ function ClientSetupContent({ token }: { token: Token }) {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [retry]);
+  }, [retry, selectedModel]);
 
   const copy = async (value: string, label: string) => {
     try {
       await navigator.clipboard.writeText(value);
-      toast.success(`${label} copied`);
+      toast.success(tr('{label} copied', { label }));
     } catch {
-      toast.error(`Unable to copy ${label.toLowerCase()}`);
+      toast.error(tr('Unable to copy {label}', { label }));
     }
   };
   const launch = () => {
-    if (inactive || addressError || keyError) return;
+    if (inactive || addressError || keyError || invalidModel) return;
     try {
       const url = buildClientImport(target === 'cherry' ? 'cherry' : app, {
         serverAddress,
@@ -136,28 +179,30 @@ function ClientSetupContent({ token }: { token: Token }) {
       window.location.assign(url);
       setOpened(true);
     } catch (err) {
-      toast.error((err as Error).message);
+      toast.error(tr((err as Error).message));
     }
   };
 
   return (
-    <DialogContent className="max-h-[calc(100dvh-32px)] w-[calc(100vw-32px)] max-w-xl overflow-y-auto p-4 sm:p-6">
+    <DialogContent className="flex h-[min(740px,calc(100dvh-32px))] w-[calc(100vw-32px)] max-w-xl flex-col overflow-hidden p-4 sm:p-6">
       <DialogHeader className="pr-6 text-left">
-        <DialogTitle>Set up your client</DialogTitle>
+        <DialogTitle>{tr('Set up your client')}</DialogTitle>
         <DialogDescription className="break-words">
-          Use {token.name || 'this API key'} with your favorite app. Your key
-          stays universal across models.
+          {tr(
+            'Use {name} with your favorite app. Your key stays universal across models.',
+            { name: token.name || tr('this API key') }
+          )}
         </DialogDescription>
       </DialogHeader>
       <div
-        className="grid grid-cols-1 gap-2 sm:grid-cols-3"
-        aria-label="Client"
+        className="grid shrink-0 grid-cols-1 gap-2 sm:grid-cols-3"
+        aria-label={tr('Client')}
       >
         {(
           [
             ['ccswitch', 'CC Switch'],
             ['cherry', 'Cherry Studio'],
-            ['manual', 'Chatbox / Other']
+            ['manual', tr('Chatbox / Other')]
           ] as const
         ).map(([value, label]) => (
           <Button
@@ -165,6 +210,7 @@ function ClientSetupContent({ token }: { token: Token }) {
             variant={target === value ? 'default' : 'outline'}
             aria-pressed={target === value}
             onClick={() => {
+              selectionChanged.current = true;
               setTarget(value);
               setOpened(false);
             }}
@@ -173,227 +219,280 @@ function ClientSetupContent({ token }: { token: Token }) {
           </Button>
         ))}
       </div>
-      {inactive && (
-        <p role="alert" className="text-sm text-destructive">
-          This key is disabled, expired or exhausted. Enable or renew it before
-          importing.
-        </p>
-      )}
-      {keyError && (
-        <p role="alert" className="text-sm text-destructive">
-          {keyError}
-        </p>
-      )}
-      {configLoading ? (
-        <p className="text-sm text-muted-foreground">Loading API address…</p>
-      ) : (
-        addressError && (
+      <div
+        className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pr-2"
+        key={target}
+      >
+        {inactive && (
           <p role="alert" className="text-sm text-destructive">
-            {addressError}
+            {tr(
+              'This key is disabled, expired or exhausted. Enable or renew it before importing.'
+            )}
           </p>
-        )
-      )}
-      {target !== 'manual' && (
-        <div className="space-y-2">
-          <Label htmlFor={`${id}-name`}>Provider name</Label>
-          <Input
-            id={`${id}-name`}
-            value={providerName}
-            onChange={(e) => setName(e.target.value)}
-            maxLength={100}
-          />
-        </div>
-      )}
-      {target === 'ccswitch' && (
-        <div className="space-y-2">
-          <Label htmlFor={`${id}-app`}>Application in CC Switch</Label>
-          <select
-            id={`${id}-app`}
-            value={app}
-            onChange={(e) => {
-              setApp(e.target.value as CodingApp);
-              setModel('');
-              setOpened(false);
-            }}
-            className="h-10 w-full rounded-md border bg-background px-3 text-sm"
-          >
-            <option value="claude">Claude Code</option>
-            <option value="codex">Codex</option>
-            <option value="gemini">Gemini CLI</option>
-          </select>
-          <p className="text-xs text-muted-foreground">
-            {app === 'claude'
-              ? 'Choose a model that supports the Anthropic Messages API.'
-              : app === 'codex'
-              ? 'Choose a model that supports the OpenAI Responses API.'
-              : 'Choose a model that supports the native Gemini API.'}
+        )}
+        {keyError && (
+          <p role="alert" className="text-sm text-destructive">
+            {tr(keyError)}
           </p>
-        </div>
-      )}
-      <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <p className="text-xs text-muted-foreground">
-              {target === 'ccswitch'
-                ? 'API endpoint'
-                : 'OpenAI-compatible Base URL'}
+        )}
+        {configLoading ? (
+          <p className="text-sm text-muted-foreground">
+            {tr('Loading API address…')}
+          </p>
+        ) : (
+          addressError && (
+            <p role="alert" className="text-sm text-destructive">
+              {tr(addressError)}
             </p>
-            <code className="break-all text-sm">
-              {endpoint || 'Not configured'}
-            </code>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Copy API address"
-            disabled={!endpoint}
-            onClick={() => copy(endpoint, 'API address')}
-          >
-            <Copy className="h-4 w-4" />
-          </Button>
-        </div>
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <p className="text-xs text-muted-foreground">API key</p>
-            <span aria-label="API key hidden" className="font-mono text-sm">
-              ••••••••••••••••
-            </span>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Copy API key"
-            disabled={!!keyError || inactive}
-            onClick={() => copy(clientApiKey(token.key), 'API key')}
-          >
-            <Copy className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-      {target !== 'cherry' && (
-        <div className="space-y-2">
-          <Label htmlFor={`${id}-model`}>
-            {target === 'ccswitch' ? 'Primary model' : 'Model ID'}
-          </Label>
-          <div className="flex gap-2">
+          )
+        )}
+        {target !== 'manual' && (
+          <div className="space-y-2">
+            <Label htmlFor={`${id}-name`}>{tr('Provider name')}</Label>
             <Input
-              id={`${id}-model`}
-              list={`${id}-models`}
-              placeholder="Search or enter a model ID"
-              value={model}
-              onChange={(e) => setModel(e.target.value)}
+              id={`${id}-name`}
+              value={providerName}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={100}
             />
+          </div>
+        )}
+        {target === 'ccswitch' && (
+          <div className="space-y-2">
+            <Label htmlFor={`${id}-app`}>
+              {tr('Application in CC Switch')}
+            </Label>
+            <select
+              id={`${id}-app`}
+              value={app}
+              onChange={(e) => {
+                selectionChanged.current = true;
+                setApp(e.target.value as CodingApp);
+                const nextApp = e.target.value as CodingApp;
+                if (
+                  !modelMatchesApp(
+                    models.find((item) => item.id === model) ?? { id: model },
+                    nextApp
+                  )
+                )
+                  setModel('');
+                setOptionalModels({
+                  haikuModel: '',
+                  sonnetModel: '',
+                  opusModel: ''
+                });
+                setOpened(false);
+              }}
+              className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+            >
+              <option value="claude">Claude Code</option>
+              <option value="codex">Codex</option>
+              <option value="gemini">Gemini CLI</option>
+            </select>
+            <p className="text-xs text-muted-foreground">
+              {app === 'claude'
+                ? tr('Choose a model that supports the Anthropic Messages API.')
+                : app === 'codex'
+                ? tr('Choose a model that supports the OpenAI Responses API.')
+                : tr('Choose a model that supports the native Gemini API.')}
+            </p>
+          </div>
+        )}
+        <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground">
+                {target === 'ccswitch'
+                  ? tr('API endpoint')
+                  : tr('OpenAI-compatible Base URL')}
+              </p>
+              <code className="break-all text-sm">
+                {endpoint || tr('Not configured')}
+              </code>
+            </div>
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
-              aria-label="Copy model ID"
-              disabled={!model.trim()}
-              onClick={() => copy(model.trim(), 'Model ID')}
+              aria-label={tr('Copy API address')}
+              disabled={!endpoint}
+              onClick={() => copy(endpoint, tr('API address'))}
             >
               <Copy className="h-4 w-4" />
             </Button>
           </div>
-          <datalist id={`${id}-models`}>
-            {models.map((name) => (
-              <option key={name} value={name} />
-            ))}
-          </datalist>
-          {loading ? (
-            <p className="text-xs text-muted-foreground">
-              Loading your models… You can also enter an ID.
-            </p>
-          ) : modelError ? (
-            <p className="text-xs text-muted-foreground">
-              Model list unavailable. Enter an ID manually or{' '}
-              <button
-                type="button"
-                className="underline"
-                onClick={() => setRetry((v) => v + 1)}
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <p className="text-xs text-muted-foreground">{tr('API key')}</p>
+              <span
+                aria-label={tr('API key hidden')}
+                className="font-mono text-sm"
               >
-                retry
-              </button>
-              .
-            </p>
-          ) : (
-            <p className="text-xs text-muted-foreground">
-              {models.length} configured models. Choose one compatible with this
-              application.
-            </p>
-          )}
+                ••••••••••••••••
+              </span>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={tr('Copy API key')}
+              disabled={!!keyError || inactive}
+              onClick={() => copy(clientApiKey(token.key), tr('API key'))}
+            >
+              <Copy className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-      )}
-      {target === 'ccswitch' && app === 'claude' && (
-        <details className="rounded-lg border p-3">
-          <summary className="cursor-pointer text-sm">
-            Optional Claude model mappings
-          </summary>
-          <div className="mt-3 space-y-3">
-            {(['haikuModel', 'sonnetModel', 'opusModel'] as const).map(
-              (field) => (
-                <div key={field} className="space-y-1">
-                  <Label htmlFor={`${id}-${field}`}>
-                    {field.replace('Model', '')}
-                  </Label>
-                  <Input
-                    id={`${id}-${field}`}
-                    list={`${id}-models`}
-                    placeholder="Use app default"
-                    value={optionalModels[field]}
-                    onChange={(e) =>
-                      setOptionalModels({
-                        ...optionalModels,
-                        [field]: e.target.value
-                      })
-                    }
-                  />
-                </div>
-              )
+        {target !== 'cherry' && (
+          <div className="space-y-2">
+            <Label htmlFor={`${id}-model`}>
+              {target === 'ccswitch' ? tr('Primary model') : tr('Model ID')}
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                id={`${id}-model`}
+                list={`${id}-models`}
+                placeholder={tr('Search or enter a model ID')}
+                value={model}
+                onChange={(e) => {
+                  selectionChanged.current = true;
+                  setModel(e.target.value);
+                }}
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label={tr('Copy model ID')}
+                disabled={!model.trim()}
+                onClick={() => copy(model.trim(), tr('Model ID'))}
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+            <datalist id={`${id}-models`}>
+              {availableModels.map(({ id }) => (
+                <option key={id} value={id} />
+              ))}
+            </datalist>
+            {loading ? (
+              <p className="text-xs text-muted-foreground">
+                {tr('Loading your models… You can also enter an ID.')}
+              </p>
+            ) : modelError ? (
+              <p className="text-xs text-muted-foreground">
+                {tr('Model list unavailable. Enter an ID manually or')}{' '}
+                <button
+                  type="button"
+                  className="underline"
+                  onClick={() => setRetry((v) => v + 1)}
+                >
+                  {tr('retry')}
+                </button>
+                .
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                {tr('{count} models available for this selection.', {
+                  count: availableModels.length
+                })}
+              </p>
             )}
           </div>
-        </details>
-      )}
-      {target === 'manual' ? (
-        <div className="space-y-2 text-sm text-muted-foreground">
-          <p>
-            In Chatbox, open Settings → Model Provider and add an
-            OpenAI-compatible provider.
+        )}
+        {invalidModel && (
+          <p role="alert" className="text-sm text-destructive">
+            {tr(
+              'Choose an available model compatible with this application, including optional mappings.'
+            )}
           </p>
-          <p>
-            Paste the Base URL and API key above, then select or add your model
-            ID. The same fields work in other OpenAI-compatible clients.
-          </p>
-        </div>
-      ) : (
-        <>
-          <p className="text-xs text-muted-foreground">
-            Install {target === 'cherry' ? 'Cherry Studio' : 'CC Switch'} first.
-            Opening the app passes this key and API address to it; review and
-            confirm the import there.
-            {target === 'cherry' &&
-              ' Then fetch or add models in the provider settings.'}
-          </p>
-          <Button
-            disabled={
-              configLoading ||
-              !!addressError ||
-              !!keyError ||
-              inactive ||
-              !providerName.trim() ||
-              (target === 'ccswitch' && !model.trim())
-            }
-            onClick={launch}
-          >
-            <ExternalLink className="mr-2 h-4 w-4" />
-            Open {target === 'cherry' ? 'Cherry Studio' : 'CC Switch'}
-          </Button>
-          {opened && (
-            <p role="status" className="text-sm text-muted-foreground">
-              If the app did not open, allow the browser’s app prompt or use
-              Chatbox / Other to copy the settings manually.
+        )}
+        {target === 'ccswitch' &&
+          !loading &&
+          models.some((item) => item.protocols === undefined) && (
+            <p className="text-xs text-muted-foreground">
+              {tr(
+                'Suggestions are based on model families. Channel protocol compatibility has not been verified. For a custom model, use manual setup.'
+              )}
             </p>
           )}
-        </>
-      )}
+        {target === 'ccswitch' && app === 'claude' && (
+          <details className="rounded-lg border p-3">
+            <summary className="cursor-pointer text-sm">
+              {tr('Optional Claude model mappings')}
+            </summary>
+            <div className="mt-3 space-y-3">
+              {(['haikuModel', 'sonnetModel', 'opusModel'] as const).map(
+                (field) => (
+                  <div key={field} className="space-y-1">
+                    <Label htmlFor={`${id}-${field}`}>
+                      {field.replace('Model', '')}
+                    </Label>
+                    <Input
+                      id={`${id}-${field}`}
+                      list={`${id}-models`}
+                      placeholder={tr('Use app default')}
+                      value={optionalModels[field]}
+                      onChange={(e) =>
+                        setOptionalModels({
+                          ...optionalModels,
+                          [field]: e.target.value
+                        })
+                      }
+                    />
+                  </div>
+                )
+              )}
+            </div>
+          </details>
+        )}
+        {target === 'manual' ? (
+          <div className="space-y-2 text-sm text-muted-foreground">
+            <p>
+              {tr(
+                'In Chatbox, open Settings → Model Provider and add an OpenAI-compatible provider.'
+              )}
+            </p>
+            <p>
+              {tr(
+                'Paste the Base URL and API key above, then select or add your model ID. The same fields work in other OpenAI-compatible clients.'
+              )}
+            </p>
+          </div>
+        ) : (
+          <>
+            <p className="text-xs text-muted-foreground">
+              {tr(
+                'Install {app} first. Opening the app passes this key and API address to it; review and confirm the import there.',
+                { app: target === 'cherry' ? 'Cherry Studio' : 'CC Switch' }
+              )}
+              {target === 'cherry' &&
+                tr(' Then fetch or add models in the provider settings.')}
+            </p>
+            <Button
+              disabled={
+                configLoading ||
+                !!addressError ||
+                !!keyError ||
+                inactive ||
+                invalidModel ||
+                !providerName.trim() ||
+                (target === 'ccswitch' && (loading || !model.trim()))
+              }
+              onClick={launch}
+            >
+              <ExternalLink className="mr-2 h-4 w-4" />
+              {tr('Open {app}', {
+                app: target === 'cherry' ? 'Cherry Studio' : 'CC Switch'
+              })}
+            </Button>
+            {opened && (
+              <p role="status" className="text-sm text-muted-foreground">
+                {tr(
+                  'If the app did not open, allow the browser’s app prompt or use Chatbox / Other to copy the settings manually.'
+                )}
+              </p>
+            )}
+          </>
+        )}
+      </div>
     </DialogContent>
   );
 }

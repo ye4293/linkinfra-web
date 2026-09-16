@@ -1,4 +1,5 @@
 'use client';
+import { useText } from '@/components/locale-text';
 
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -48,10 +49,11 @@ function formatPrice(price: number): string {
 }
 
 export default function ModelDetailView() {
+  const tr = useText();
   const params = useParams();
   const router = useRouter();
   const { data: session } = useSession();
-  const { t } = useLocale();
+  const { t, lang } = useLocale();
   useDocumentTitle('Model details');
 
   const modelName = decodeURIComponent(params.model as string);
@@ -169,8 +171,9 @@ export default function ModelDetailView() {
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           <Button asChild>
-            <Link href={apiKeyHref(Boolean(session))}>
-              <KeyRound className="mr-2 h-4 w-4" /> Get API key
+            <Link href={apiKeyHref(Boolean(session), modelName, lang)}>
+              <KeyRound className="mr-2 h-4 w-4" />
+              {tr('Get API key')}
             </Link>
           </Button>
           <Button
@@ -178,16 +181,18 @@ export default function ModelDetailView() {
             onClick={() =>
               navigator.clipboard
                 .writeText(modelName)
-                .then(() => toast.success('Model ID copied'))
-                .catch(() => toast.error('Unable to copy model ID'))
+                .then(() => toast.success(tr('Model ID copied')))
+                .catch(() => toast.error(tr('Unable to copy model ID')))
             }
           >
-            <Copy className="mr-2 h-4 w-4" /> Copy model ID
+            <Copy className="mr-2 h-4 w-4" />
+            {tr('Copy model ID')}
           </Button>
         </div>
         <p className="mt-2 text-sm text-muted-foreground">
-          Already have a key? Use it with this model ID. The same key works
-          across models available to your account.
+          {tr(
+            'Already have a key? Use it with this model ID. The same key works across models available to your account.'
+          )}
         </p>
       </div>
 
@@ -241,7 +246,7 @@ export default function ModelDetailView() {
           {/* Performance metrics */}
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-lg font-semibold">
-              {t.modelDetail?.performance || 'Performance'}
+              {t.modelDetail?.performance || tr('Performance')}
             </h2>
             <div className="flex items-center gap-2">
               <TimeRangeSelector value={period} onChange={setPeriod} />
@@ -331,7 +336,7 @@ export default function ModelDetailView() {
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium">
-                      {t.modelDetail?.speedTrend || 'Speed (TPS)'}
+                      {t.modelDetail?.speedTrend || tr('Speed (TPS)')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -436,13 +441,13 @@ export default function ModelDetailView() {
                             {t.modelDetail?.userTier || 'Tier'}
                           </th>
                           <th className="pb-2 text-right font-medium text-muted-foreground">
-                            {t.modelDetail?.inputPrice || 'Input'}
+                            {t.modelDetail?.inputPrice || tr('Input')}
                           </th>
                           <th className="pb-2 text-right font-medium text-muted-foreground">
-                            {t.modelDetail?.outputPrice || 'Output'}
+                            {t.modelDetail?.outputPrice || tr('Output')}
                           </th>
                           <th className="pb-2 text-right font-medium text-muted-foreground">
-                            {t.modelPlaza?.discount || 'Discount'}
+                            {t.modelPlaza?.discount || tr('Discount')}
                           </th>
                         </tr>
                       </thead>
