@@ -147,6 +147,20 @@ export const navItems: NavItem[] = [
     roles: [1, 10, 100]
   },
   {
+    title: 'Images',
+    href: '/dashboard/image',
+    icon: 'images',
+    label: 'image',
+    roles: [1, 10, 100]
+  },
+  {
+    title: 'Videos',
+    href: '/dashboard/video',
+    icon: 'video',
+    label: 'video',
+    roles: [1, 10, 100]
+  },
+  {
     title: 'Statistics',
     href: '/dashboard/statistics',
     icon: 'chart',
@@ -154,33 +168,11 @@ export const navItems: NavItem[] = [
     roles: [1, 10, 100]
   },
   {
-    title: 'Tools',
+    title: 'Playground',
+    href: '/dashboard/playground',
     icon: 'playground',
-    label: 'tools',
-    roles: [1, 10, 100],
-    children: [
-      {
-        title: 'Playground',
-        href: '/dashboard/playground',
-        icon: 'playground',
-        label: 'playground',
-        roles: [1, 10, 100]
-      },
-      {
-        title: 'Videos',
-        href: '/dashboard/video',
-        icon: 'video',
-        label: 'video',
-        roles: [1, 10, 100]
-      },
-      {
-        title: 'Images',
-        href: '/dashboard/image',
-        icon: 'images',
-        label: 'image',
-        roles: [1, 10, 100]
-      }
-    ]
+    label: 'playground',
+    roles: [1, 10, 100]
   },
   // {
   //   title: 'File',
