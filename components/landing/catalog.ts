@@ -76,10 +76,17 @@ export function matchesModel(model: ModelPlazaItem, query: string) {
 }
 export function modelPrices(model: ModelPlazaItem, group: string) {
   const price = model.group_prices?.find((item) => item.group_key === group);
+  const discount = (model.model_discount ?? 1) * (model.channel_discount ?? 1);
   return {
-    input: price?.final_input_price ?? model.base_input_price,
-    output: price?.final_output_price ?? model.base_output_price,
-    fixed: price?.final_fixed_price ?? model.base_fixed_price
+    input: price?.final_input_price ?? model.base_input_price * discount,
+    output: price?.final_output_price ?? model.base_output_price * discount,
+    fixed: price?.final_fixed_price ?? model.base_fixed_price * discount,
+    duration:
+      price?.final_duration_price_per_minute ??
+      (model.base_duration_price_per_minute == null
+        ? undefined
+        : model.base_duration_price_per_minute * discount),
+    discount: price?.combined_discount ?? discount
   };
 }
 export function formatPrice(value: number | undefined) {

@@ -1,6 +1,7 @@
 'use client';
 import { useText } from '@/components/locale-text';
 import { DurationPrice } from '@/components/duration-price';
+import { modelPrices } from '@/components/landing/catalog';
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -88,20 +89,12 @@ function ModelPriceCard({
   onClick?: () => void;
 }) {
   const tr = useText();
-  const groupPrice = model.group_prices?.find(
-    (gp) => gp.group_key === selectedGroup
-  );
-  const combinedDiscount =
-    groupPrice?.combined_discount ?? model.channel_discount ?? 1;
-  const discountPercent = getDiscountPercent(combinedDiscount);
-  const hasDiscount = discountPercent > 0;
-
-  const finalInputPrice =
-    groupPrice?.final_input_price ?? model.base_input_price ?? 0;
-  const finalOutputPrice =
-    groupPrice?.final_output_price ?? model.base_output_price ?? 0;
-  const finalFixedPrice =
-    groupPrice?.final_fixed_price ?? model.base_fixed_price ?? 0;
+  const prices = modelPrices(model, selectedGroup);
+  const discountPercent = Number(((1 - prices.discount) * 100).toFixed(2));
+  const hasDiscount = prices.discount < 1;
+  const finalInputPrice = prices.input;
+  const finalOutputPrice = prices.output;
+  const finalFixedPrice = prices.fixed;
 
   return (
     <Card
@@ -146,7 +139,7 @@ function ModelPriceCard({
           {metrics && <StatusBadge status={metrics.status} />}
           {hasDiscount && (
             <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold leading-none text-emerald-700 ring-1 ring-inset ring-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/30">
-              -{discountPercent}%
+              {discountPercent}% OFF
             </span>
           )}
         </div>
@@ -168,12 +161,12 @@ function ModelPriceCard({
               {t.durationPricing.price}
             </span>
             <div className="text-lg font-bold tabular-nums">
-              <DurationPrice
-                value={
-                  groupPrice?.final_duration_price_per_minute ??
-                  model.base_duration_price_per_minute
-                }
-              />
+              {hasDiscount && (
+                <span className="mr-2 text-xs font-normal text-muted-foreground/70 line-through">
+                  <DurationPrice value={model.base_duration_price_per_minute} />
+                </span>
+              )}
+              <DurationPrice value={prices.duration} />
             </div>
           </div>
         ) : model.price_type === 'fixed' ? (
@@ -693,16 +686,11 @@ export default function ModelPlazaView() {
                 </thead>
                 <tbody>
                   {models.map((model) => {
-                    const groupPrice = model.group_prices?.find(
-                      (gp) => gp.group_key === selectedGroup
+                    const prices = modelPrices(model, selectedGroup);
+                    const discountPercent = Number(
+                      ((1 - prices.discount) * 100).toFixed(2)
                     );
-                    const combinedDiscount =
-                      groupPrice?.combined_discount ??
-                      model.channel_discount ??
-                      1;
-                    const discountPercent =
-                      getDiscountPercent(combinedDiscount);
-                    const hasDiscount = discountPercent > 0;
+                    const hasDiscount = prices.discount < 1;
 
                     return (
                       <tr
@@ -732,12 +720,16 @@ export default function ModelPlazaView() {
                         </td>
                         <td className="px-4 py-3 text-right tabular-nums">
                           {model.price_type === 'duration' ? (
-                            <DurationPrice
-                              value={
-                                groupPrice?.final_duration_price_per_minute ??
-                                model.base_duration_price_per_minute
-                              }
-                            />
+                            <span>
+                              {hasDiscount && (
+                                <span className="mr-2 text-muted-foreground/60 line-through">
+                                  <DurationPrice
+                                    value={model.base_duration_price_per_minute}
+                                  />
+                                </span>
+                              )}
+                              <DurationPrice value={prices.duration} />
+                            </span>
                           ) : model.price_type === 'fixed' ? (
                             <span>
                               {hasDiscount && (
@@ -746,10 +738,7 @@ export default function ModelPlazaView() {
                                 </span>
                               )}
                               <span className="font-medium">
-                                {formatPrice(
-                                  groupPrice?.final_fixed_price ??
-                                    model.base_fixed_price
-                                )}
+                                {formatPrice(prices.fixed)}
                               </span>
                             </span>
                           ) : (
@@ -760,10 +749,7 @@ export default function ModelPlazaView() {
                                 </span>
                               )}
                               <span className="font-medium">
-                                {formatPrice(
-                                  groupPrice?.final_input_price ??
-                                    model.base_input_price
-                                )}
+                                {formatPrice(prices.input)}
                               </span>
                             </span>
                           )}
@@ -777,10 +763,7 @@ export default function ModelPlazaView() {
                                 </span>
                               )}
                               <span className="font-medium">
-                                {formatPrice(
-                                  groupPrice?.final_output_price ??
-                                    model.base_output_price
-                                )}
+                                {formatPrice(prices.output)}
                               </span>
                             </span>
                           ) : (
@@ -790,7 +773,7 @@ export default function ModelPlazaView() {
                         <td className="px-4 py-3 text-right">
                           {hasDiscount ? (
                             <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold leading-none text-emerald-700 ring-1 ring-inset ring-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/30">
-                              -{discountPercent}%
+                              {discountPercent}% OFF
                             </span>
                           ) : (
                             <span className="text-muted-foreground">-</span>

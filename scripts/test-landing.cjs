@@ -19,6 +19,43 @@ const compiled = ts.transpileModule(source, {
 const catalog = {};
 new Function('exports', compiled.outputText)(catalog);
 
+test('model discount preserves original prices and applies once across price types', () => {
+  const item = {
+    base_input_price: 5,
+    base_output_price: 30,
+    base_fixed_price: 0.1,
+    base_duration_price_per_minute: 0.006,
+    channel_discount: 1,
+    model_discount: 0.53,
+    group_prices: []
+  };
+  const prices = catalog.modelPrices(item, '');
+  assert.equal(catalog.formatPrice(prices.input), '$2.65');
+  assert.equal(catalog.formatPrice(prices.output), '$15.9');
+  assert.equal(catalog.formatPrice(prices.fixed), '$0.053');
+  assert.equal(catalog.formatPrice(prices.duration), '$0.00318');
+  assert.equal(item.base_input_price, 5);
+  item.group_prices = [
+    {
+      group_key: 'test',
+      combined_discount: 0.4,
+      final_input_price: 2,
+      final_output_price: 12,
+      final_fixed_price: 0.04,
+      final_duration_price_per_minute: 0.0024
+    }
+  ];
+  assert.equal(catalog.modelPrices(item, 'test').input, 2);
+  assert.equal(catalog.modelPrices(item, 'test').discount, 0.4);
+  assert.equal(
+    catalog.modelPrices(
+      { ...item, model_discount: undefined, group_prices: [] },
+      ''
+    ).input,
+    5
+  );
+});
+
 function model(model_name, overrides = {}) {
   return {
     model_name,
@@ -147,12 +184,16 @@ test('zero and group prices are respected and invalid display prices are not sho
   assert.deepEqual(catalog.modelPrices(item, 'discount'), {
     input: 0,
     output: 12.5,
-    fixed: 0.2
+    fixed: 0.2,
+    duration: undefined,
+    discount: 1
   });
   assert.deepEqual(catalog.modelPrices(item, 'base'), {
     input: 5,
     output: 25,
-    fixed: 0
+    fixed: 0,
+    duration: undefined,
+    discount: 1
   });
   assert.equal(catalog.formatPrice(0), '$0');
   assert.equal(catalog.formatPrice(Infinity), '—');

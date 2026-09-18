@@ -10,6 +10,7 @@ export interface GroupPrice {
 }
 
 export interface ModelPlazaItem {
+  model_discount?: number;
   model_name: string;
   provider: string;
   price_type: 'ratio' | 'fixed' | 'duration';

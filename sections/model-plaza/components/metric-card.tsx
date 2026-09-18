@@ -1,10 +1,11 @@
 'use client';
 
 import { Card, CardContent } from '@/components/ui/card';
+import type { ReactNode } from 'react';
 
 interface MetricCardProps {
   title: string;
-  value: string;
+  value: ReactNode;
   subtitle?: string;
 }
 

@@ -1,6 +1,7 @@
 'use client';
 import { useText } from '@/components/locale-text';
-import { formatPrice as formatCatalogPrice } from '@/components/landing/catalog';
+import { modelPrices } from '@/components/landing/catalog';
+import { DiscountPrice } from '@/components/discount-price';
 import { DurationPrice } from '@/components/duration-price';
 
 import { useCallback, useEffect, useState } from 'react';
@@ -124,6 +125,7 @@ export default function ModelDetailView() {
   const current = detail?.current;
   const period24h = detail?.period_24h;
   const pricing = detail?.pricing;
+  const prices = pricing ? modelPrices(pricing, '') : null;
 
   // Prepare chart data
   const chartData = timeSeries.map((p) => ({
@@ -219,21 +221,43 @@ export default function ModelDetailView() {
                     : t.modelDetail?.inputPrice || 'Input Price'
                 }
                 value={
-                  pricing.price_type === 'duration'
-                    ? `${formatCatalogPrice(
-                        pricing.base_duration_price_per_minute
-                      )} / min`
-                    : pricing.price_type === 'fixed'
-                    ? formatPrice(pricing.base_fixed_price)
-                    : `${formatPrice(pricing.base_input_price)}/M`
+                  <DiscountPrice
+                    original={
+                      pricing.price_type === 'duration'
+                        ? pricing.base_duration_price_per_minute
+                        : pricing.price_type === 'fixed'
+                        ? pricing.base_fixed_price
+                        : pricing.base_input_price
+                    }
+                    final={
+                      pricing.price_type === 'duration'
+                        ? prices?.duration
+                        : pricing.price_type === 'fixed'
+                        ? prices?.fixed
+                        : prices?.input
+                    }
+                    unit={
+                      pricing.price_type === 'duration'
+                        ? ' / min'
+                        : pricing.price_type === 'fixed'
+                        ? ' / call'
+                        : '/M'
+                    }
+                  />
                 }
               />
               <MetricCard
                 title={t.modelDetail?.outputPrice || 'Output Price'}
                 value={
-                  pricing.price_type !== 'ratio'
-                    ? '-'
-                    : `${formatPrice(pricing.base_output_price)}/M`
+                  pricing.price_type !== 'ratio' ? (
+                    '-'
+                  ) : (
+                    <DiscountPrice
+                      original={pricing.base_output_price}
+                      final={prices?.output}
+                      unit="/M"
+                    />
+                  )
                 }
               />
               <MetricCard

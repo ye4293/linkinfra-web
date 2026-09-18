@@ -48,6 +48,7 @@ import {
 } from 'lucide-react';
 import { useLocale } from '@/components/providers/locale-provider';
 import DurationPricing from '@/sections/setting/duration-pricing';
+import ModelDiscountInput from '@/sections/setting/model-discount-input';
 
 interface Option {
   key: string;
@@ -55,6 +56,7 @@ interface Option {
 }
 
 interface ModelPriceInfo {
+  model_discount?: number;
   duration_price_per_minute?: number;
   model_name: string;
   model_ratio: number;
@@ -1369,6 +1371,7 @@ export default function PricingPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[220px]">Model name</TableHead>
+                    <TableHead className="w-[160px]">模型折扣</TableHead>
                     <TableHead className="w-[160px]">
                       {t.durationPricing.price}
                     </TableHead>
@@ -1388,13 +1391,13 @@ export default function PricingPage() {
                 <TableBody>
                   {isConfiguredLoading ? (
                     <TableRow>
-                      <TableCell colSpan={13} className="h-24 text-center">
+                      <TableCell colSpan={14} className="h-24 text-center">
                         Loading...
                       </TableCell>
                     </TableRow>
                   ) : configuredModels.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={13} className="h-24 text-center">
+                      <TableCell colSpan={14} className="h-24 text-center">
                         No data
                       </TableCell>
                     </TableRow>
@@ -1403,6 +1406,13 @@ export default function PricingPage() {
                       <TableRow key={model.model_name}>
                         <TableCell className="font-mono text-xs">
                           {model.model_name}
+                        </TableCell>
+                        <TableCell>
+                          <ModelDiscountInput
+                            modelName={model.model_name}
+                            discount={model.model_discount ?? 1}
+                            onSaved={fetchConfiguredModels}
+                          />
                         </TableCell>
                         <TableCell className="text-sm">
                           {model.price_type === 'duration' &&
