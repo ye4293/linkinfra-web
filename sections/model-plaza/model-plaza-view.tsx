@@ -1,7 +1,11 @@
 'use client';
 import { useText } from '@/components/locale-text';
 import { DurationPrice } from '@/components/duration-price';
-import { modelPrices } from '@/components/landing/catalog';
+import {
+  modelPrices,
+  modelEntryKey,
+  modelDetailHref
+} from '@/components/landing/catalog';
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -89,6 +93,7 @@ function ModelPriceCard({
   onClick?: () => void;
 }) {
   const tr = useText();
+  const { lang } = useLocale();
   const prices = modelPrices(model, selectedGroup);
   const discountPercent = Number(((1 - prices.discount) * 100).toFixed(2));
   const hasDiscount = prices.discount < 1;
@@ -151,6 +156,8 @@ function ModelPriceCard({
           <p className="px-4 pb-2 text-xs text-muted-foreground">
             {tr('Requests in the last 24 hours')}:{' '}
             {metrics.total_requests_24h.toLocaleString()}
+            {' · '}
+            {lang === 'zh' ? '所有渠道合计' : 'All channels'}
           </p>
         )}
       {/* 价格区域 */}
@@ -444,7 +451,7 @@ export default function ModelPlazaView() {
               setPage(1);
             }}
             label={t.modelPlaza.all}
-            count={total}
+            count={providers.reduce((sum, provider) => sum + provider.count, 0)}
           />
           {providers.map((p) => (
             <FilterRow
@@ -646,16 +653,12 @@ export default function ModelPlazaView() {
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
               {models.map((model) => (
                 <ModelPriceCard
-                  key={model.model_name}
+                  key={modelEntryKey(model)}
                   model={model}
                   selectedGroup={selectedGroup}
                   t={t}
                   metrics={metricsMap[model.model_name]}
-                  onClick={() =>
-                    router.push(
-                      `/model-plaza/${encodeURIComponent(model.model_name)}`
-                    )
-                  }
+                  onClick={() => router.push(modelDetailHref(model))}
                 />
               ))}
             </div>
@@ -694,7 +697,7 @@ export default function ModelPlazaView() {
 
                     return (
                       <tr
-                        key={model.model_name}
+                        key={modelEntryKey(model)}
                         className="group border-b transition-colors hover:bg-muted/30"
                       >
                         <td className="px-4 py-3">

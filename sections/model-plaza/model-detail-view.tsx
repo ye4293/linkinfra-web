@@ -51,7 +51,7 @@ function formatPrice(price: number): string {
   return `$${price.toFixed(2)}`;
 }
 
-export default function ModelDetailView() {
+export default function ModelDetailView({ channelId }: { channelId?: string }) {
   const tr = useText();
   const params = useParams();
   const router = useRouter();
@@ -72,7 +72,8 @@ export default function ModelDetailView() {
   const fetchDetail = useCallback(async () => {
     try {
       const res: any = await get('/api/model-plaza/metrics/detail', {
-        model_name: modelName
+        model_name: modelName,
+        ...(channelId ? { channel_id: channelId } : {})
       });
       if (res?.success && res.data) {
         setDetail(res.data);
@@ -82,7 +83,7 @@ export default function ModelDetailView() {
     } finally {
       setLoading(false);
     }
-  }, [modelName]);
+  }, [modelName, channelId]);
 
   // Fetch time series
   const fetchTimeSeries = useCallback(async () => {
@@ -283,6 +284,11 @@ export default function ModelDetailView() {
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-lg font-semibold">
               {t.modelDetail?.performance || tr('Performance')}
+              <span className="ml-2 text-xs font-normal text-muted-foreground">
+                {lang === 'zh'
+                  ? '该模型所有渠道的汇总'
+                  : 'All channels for this model'}
+              </span>
             </h2>
             <div className="flex items-center gap-2">
               <TimeRangeSelector value={period} onChange={setPeriod} />

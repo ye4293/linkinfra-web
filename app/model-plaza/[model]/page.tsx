@@ -5,6 +5,10 @@ export const metadata = {
   description: 'View model performance metrics'
 };
 
-export default function ModelDetailPage() {
-  return <ModelDetailView />;
+export default function ModelDetailPage({
+  searchParams
+}: {
+  searchParams: { channel_id?: string };
+}) {
+  return <ModelDetailView channelId={searchParams.channel_id} />;
 }

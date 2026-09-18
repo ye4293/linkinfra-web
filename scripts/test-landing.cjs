@@ -251,6 +251,61 @@ test('nullable empty collections are safe to render', async (t) => {
   assert.deepEqual(result.providers, []);
 });
 
+test('same model from different channels keeps separate prices and detail links', async (t) => {
+  const official = model('deepseek-v3.2', {
+    channel_id: 1,
+    provider: 'DeepSeek',
+    channel_discount: 0.8
+  });
+  const qianfan = model('deepseek-v3.2', {
+    channel_id: 2,
+    provider: 'Baidu',
+    channel_discount: 0.7
+  });
+  const secondOfficial = model('deepseek-v3.2', {
+    channel_id: 3,
+    provider: 'DeepSeek',
+    channel_discount: 0.9
+  });
+  t.mock.method(globalThis, 'fetch', async (url) => ({
+    ok: true,
+    json: async () => ({
+      success: true,
+      data: {
+        models:
+          new URL(url, 'http://localhost').searchParams.get('page') === '1'
+            ? [official, qianfan]
+            : [qianfan, secondOfficial],
+        groups: [],
+        providers: [],
+        total: 4,
+        page_size: 2
+      }
+    })
+  }));
+  const result = await catalog.fetchCatalog(new AbortController().signal);
+  assert.equal(result.models.length, 3);
+  assert.equal(new Set(result.models.map(catalog.modelEntryKey)).size, 3);
+  assert.deepEqual(
+    result.models
+      .map((m) => [m.channel_id, catalog.modelPrices(m, '').input])
+      .sort(),
+    [
+      [1, 4],
+      [2, 3.5],
+      [3, 4.5]
+    ]
+  );
+  assert.equal(
+    catalog.modelDetailHref(qianfan),
+    '/model-plaza/deepseek-v3.2?channel_id=2'
+  );
+  assert.equal(
+    catalog.modelDetailHref(model('org/model')),
+    '/model-plaza/org%2Fmodel'
+  );
+});
+
 test('malformed catalog entries, prices and pagination use the error path', async (t) => {
   let data;
   t.mock.method(globalThis, 'fetch', async () => ({

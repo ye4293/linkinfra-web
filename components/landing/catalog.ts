@@ -3,6 +3,15 @@ import type {
   ModelPlazaResponse
 } from '@/lib/types/model-plaza';
 
+export function modelEntryKey(model: ModelPlazaItem) {
+  return JSON.stringify([model.channel_id ?? model.provider, model.model_name]);
+}
+
+export function modelDetailHref(model: ModelPlazaItem) {
+  const path = `/model-plaza/${encodeURIComponent(model.model_name)}`;
+  return model.channel_id ? `${path}?channel_id=${model.channel_id}` : path;
+}
+
 // Order families, not specific releases. Numeric sorting includes future versions.
 const families = [
   'claude-fable',
@@ -183,7 +192,7 @@ export async function fetchCatalog(
   return {
     ...first,
     models: orderModels(
-      Array.from(new Map(models.map((m) => [m.model_name, m])).values())
+      Array.from(new Map(models.map((m) => [modelEntryKey(m), m])).values())
     )
   };
 }

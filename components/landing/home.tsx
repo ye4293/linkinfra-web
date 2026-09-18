@@ -18,7 +18,12 @@ import { useLocale } from '@/components/providers/locale-provider';
 import { useSystemConfig } from '@/hooks/use-system-config';
 import { ProviderLogoMark } from '@/sections/model-plaza/components/provider-logo';
 import type { ModelPlazaResponse } from '@/lib/types/model-plaza';
-import { fetchCatalog, modelTitle } from './catalog';
+import {
+  fetchCatalog,
+  modelTitle,
+  modelEntryKey,
+  modelDetailHref
+} from './catalog';
 import { HomeFeatures, HomeSections } from './home-sections';
 import s from './home.module.css';
 import { SiteNavLinks } from '@/components/layout/site-nav-links';
@@ -148,11 +153,7 @@ export function LandingHome() {
           <div className={s.heroCopy}>
             <Link
               className={s.announcement}
-              href={
-                featured
-                  ? `/model-plaza/${encodeURIComponent(featured.model_name)}`
-                  : '/model-plaza'
-              }
+              href={featured ? modelDetailHref(featured) : '/model-plaza'}
             >
               <span className={s.announcementTag}>
                 {c('模型精选', 'Featured')}
@@ -264,11 +265,9 @@ export function LandingHome() {
                   >
                     {catalog.models.slice(0, 10).map((model) => (
                       <Link
-                        key={model.model_name}
+                        key={modelEntryKey(model)}
                         tabIndex={copy === 1 ? -1 : undefined}
-                        href={`/model-plaza/${encodeURIComponent(
-                          model.model_name
-                        )}`}
+                        href={modelDetailHref(model)}
                         className={s.modelChip}
                       >
                         <ProviderLogoMark provider={model.provider} size={24} />

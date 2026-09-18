@@ -10,6 +10,7 @@ export interface GroupPrice {
 }
 
 export interface ModelPlazaItem {
+  channel_id?: number;
   model_discount?: number;
   model_name: string;
   provider: string;
