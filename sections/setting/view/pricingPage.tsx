@@ -48,7 +48,9 @@ import {
 } from 'lucide-react';
 import { useLocale } from '@/components/providers/locale-provider';
 import DurationPricing from '@/sections/setting/duration-pricing';
-import ModelDiscountInput from '@/sections/setting/model-discount-input';
+import ModelDiscountInput, {
+  isValidModelDiscount
+} from '@/sections/setting/model-discount-input';
 
 interface Option {
   key: string;
@@ -211,6 +213,84 @@ export default function PricingPage() {
   const [configuredPage, setConfiguredPage] = useState(1);
   const [configuredPageSize, setConfiguredPageSize] = useState(20);
   const [configuredKeyword, setConfiguredKeyword] = useState('');
+  // 按模型名保留草稿，翻页、搜索和刷新列表时不丢失修改。
+  const [discountDrafts, setDiscountDrafts] = useState<Record<string, string>>(
+    {}
+  );
+  const [isDiscountSaving, setIsDiscountSaving] = useState(false);
+  const pendingDiscountCount = Object.keys(discountDrafts).length;
+  const invalidDiscountCount = Object.values(discountDrafts).filter(
+    (value) => !isValidModelDiscount(value)
+  ).length;
+
+  const updateDiscountDraft = (model: ModelPriceInfo, value: string) => {
+    setDiscountDrafts((previous) => {
+      const next = { ...previous };
+      if (
+        isValidModelDiscount(value) &&
+        Number(value) === (model.model_discount ?? 1)
+      ) {
+        delete next[model.model_name];
+      } else {
+        next[model.model_name] = value;
+      }
+      return next;
+    });
+  };
+
+  const saveDiscounts = async (names = Object.keys(discountDrafts)) => {
+    if (isDiscountSaving) return;
+    const entries = names
+      .filter((name) =>
+        Object.prototype.hasOwnProperty.call(discountDrafts, name)
+      )
+      .map((name) => [name, discountDrafts[name]] as const);
+    if (entries.length === 0) return;
+    if (entries.some(([, value]) => !isValidModelDiscount(value))) {
+      toast.error('模型折扣必须大于 0 且不超过 1');
+      return;
+    }
+    setIsDiscountSaving(true);
+    try {
+      const response = await fetch('/api/pricing/batch', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          models: entries.map(([model_name, value]) => ({
+            model_name,
+            model_discount: Number(value)
+          }))
+        })
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success)
+        throw new Error(result.message || '保存失败');
+      const saved = new Map(
+        entries.map(([name, value]) => [name, Number(value)])
+      );
+      setConfiguredModels((models) =>
+        models.map((model) =>
+          saved.has(model.model_name)
+            ? { ...model, model_discount: saved.get(model.model_name)! }
+            : model
+        )
+      );
+      setDiscountDrafts((previous) => {
+        const next = { ...previous };
+        for (const [name, value] of entries) {
+          if (next[name] === value) delete next[name];
+        }
+        return next;
+      });
+      toast.success(`已保存 ${entries.length} 个模型的折扣`);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : '保存失败，修改已保留'
+      );
+    } finally {
+      setIsDiscountSaving(false);
+    }
+  };
 
   // ==================== 未设置倍率模型状态 ====================
   const [unsetModels, setUnsetModels] = useState<ModelPriceInfo[]>([]);
@@ -1340,7 +1420,7 @@ export default function PricingPage() {
 
           {/* ==================== 可视化倍率设置 Tab ==================== */}
           <TabsContent value="visual-pricing" className="space-y-4">
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="relative max-w-sm flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -1354,6 +1434,21 @@ export default function PricingPage() {
                 />
               </div>
               <Button
+                onClick={() => saveDiscounts()}
+                disabled={
+                  isDiscountSaving ||
+                  pendingDiscountCount === 0 ||
+                  invalidDiscountCount > 0
+                }
+              >
+                <Save className="mr-2 h-4 w-4" />
+                {isDiscountSaving
+                  ? '保存中…'
+                  : `统一保存${
+                      pendingDiscountCount ? `（${pendingDiscountCount}）` : ''
+                    }`}
+              </Button>
+              <Button
                 variant="outline"
                 onClick={() => {
                   fetchConfiguredModels();
@@ -1365,6 +1460,14 @@ export default function PricingPage() {
                 Refresh
               </Button>
             </div>
+
+            <p className="text-sm text-muted-foreground" role="status">
+              {invalidDiscountCount > 0
+                ? `有 ${invalidDiscountCount} 个模型的折扣无效，请输入大于 0、不超过 1 的数值。`
+                : pendingDiscountCount > 0
+                ? `已修改 ${pendingDiscountCount} 个模型（包含其他分页），点击“统一保存”后生效。`
+                : '可修改多个模型的折扣，再点击“统一保存”；翻页和搜索会保留未保存的修改。'}
+            </p>
 
             <div className="rounded-md border">
               <Table>
@@ -1411,7 +1514,15 @@ export default function PricingPage() {
                           <ModelDiscountInput
                             modelName={model.model_name}
                             discount={model.model_discount ?? 1}
-                            onSaved={fetchConfiguredModels}
+                            value={
+                              discountDrafts[model.model_name] ??
+                              String(model.model_discount ?? 1)
+                            }
+                            saving={isDiscountSaving}
+                            onChange={(value) =>
+                              updateDiscountDraft(model, value)
+                            }
+                            onSave={() => saveDiscounts([model.model_name])}
                           />
                         </TableCell>
                         <TableCell className="text-sm">
