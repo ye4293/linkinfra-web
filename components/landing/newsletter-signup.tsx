@@ -95,13 +95,16 @@ export function NewsletterSignup({ brand }: { brand: string }) {
       </form>
       <p id="newsletter-note" className={s.newsletterNote}>
         {c(
-          '点击订阅，即表示你同意接收我们的模型、产品及平台更新邮件。',
-          'By subscribing, you agree to receive emails about our models, products, and platform updates.'
+          '点击订阅，即表示你同意接收我们的模型、产品及平台更新邮件。你可以通过邮件中的链接退订。',
+          'By subscribing, you agree to receive our model, product, and platform updates. You can unsubscribe using the link in any newsletter.'
         )}
       </p>
       <p className={s.newsletterStatus} role="status" aria-live="polite">
         {status === 'success'
-          ? c('订阅成功，感谢关注！', 'You’re subscribed. Thanks for joining!')
+          ? c(
+              '已收到你的订阅申请，感谢关注！',
+              'Your signup has been received. Thanks for joining!'
+            )
           : status === 'limited'
           ? c(
               '请求过于频繁，请稍后再试。',
