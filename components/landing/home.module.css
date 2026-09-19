@@ -1179,6 +1179,9 @@
   margin-top: 12px;
   font-size: 11px;
 }
+.newsletterStatus:empty {
+  display: none;
+}
 .footerBottom {
   display: flex;
   align-items: center;
