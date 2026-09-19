@@ -29,8 +29,16 @@ import { HomeFeatures, HomeSections } from './home-sections';
 import s from './home.module.css';
 import { SiteNavLinks } from '@/components/layout/site-nav-links';
 import { SiteNotice } from '@/components/site-notice';
+import { NewsletterSignup } from './newsletter-signup';
 
-const discordInvite = 'https://discord.gg/sUsmHckkA9';
+// Add future community channels here to keep the footer links together.
+const socialLinks = [
+  {
+    label: 'Discord',
+    href: 'https://discord.gg/sUsmHckkA9',
+    icon: '/discord.svg'
+  }
+];
 
 const emptyCatalog: ModelPlazaResponse = {
   models: [],
@@ -294,53 +302,6 @@ export function LandingHome() {
             'YOUR_MODEL_ID'
           }
         />
-        <section
-          id="contact"
-          className={`${s.container} ${s.contactSection}`}
-          aria-labelledby="contact-heading"
-        >
-          <div className={s.contactCard}>
-            <div className={s.contactCopy}>
-              <span className={s.sectionKicker}>
-                {c('保持联系', 'Stay connected')}
-              </span>
-              <h2 id="contact-heading">{c('联系我们', 'Contact us')}</h2>
-              <p>
-                {c(
-                  '有接入问题、产品建议或合作想法？加入我们的 Discord 社区，与我们交流。',
-                  'Have questions, feedback, or ideas for working together? Join our Discord community and talk with us.'
-                )}
-              </p>
-              <a
-                href={discordInvite}
-                className={s.contactAddress}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {discordInvite}
-              </a>
-              <a
-                href={discordInvite}
-                className={s.primary}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {c('加入 Discord', 'Join Discord')}
-                <ArrowUpRight size={16} aria-hidden="true" />
-              </a>
-            </div>
-            <div className={s.contactVisual}>
-              <Image
-                src="/discord.svg"
-                alt={c('Discord 标志', 'Discord logo')}
-                width={96}
-                height={96}
-              />
-              <strong>Discord</strong>
-              <span>{c('期待与你交流', 'Let’s talk')}</span>
-            </div>
-          </div>
-        </section>
       </main>
       <footer className={`${s.container} ${s.footer}`}>
         <div className={s.footerTop}>
@@ -378,7 +339,23 @@ export function LandingHome() {
             <Link href="/dashboard">{c('控制台', 'Dashboard')}</Link>
             <Link href="/dashboard/token">API Keys</Link>
           </div>
+          <div id="contact" className={s.footerContact}>
+            <strong>{c('联系我们', 'Connect')}</strong>
+            {socialLinks.map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                className={s.socialLink}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Image src={link.icon} alt="" width={16} height={16} />
+                {link.label}
+              </a>
+            ))}
+          </div>
         </div>
+        <NewsletterSignup brand={brand} />
         <div className={s.footerBottom}>
           <span>
             © {new Date().getFullYear()} {brand}. All rights reserved.
