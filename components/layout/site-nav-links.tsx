@@ -27,6 +27,11 @@ export function SiteNavLinks({
     },
     { href: '/docs', label: t.nav.docs, active: pathname.startsWith('/docs') },
     {
+      href: '/rankings',
+      label: lang === 'zh' ? '排行榜' : 'Rankings',
+      active: pathname.startsWith('/rankings')
+    },
+    {
       href: consoleHref(Boolean(session), lang),
       label: 'Console',
       active: pathname.startsWith('/dashboard')

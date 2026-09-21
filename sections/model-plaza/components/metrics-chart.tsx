@@ -79,6 +79,7 @@ export default function MetricsChart({
               key={dk.key}
               dataKey={dk.key}
               type="monotone"
+              stackId={dk.stacked ? 'usage' : undefined}
               fill={`var(--color-${dk.key})`}
               fillOpacity={0.15}
               stroke={`var(--color-${dk.key})`}
