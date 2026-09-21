@@ -65,6 +65,7 @@ const formSchema = z.object({
   base_url: z.string().optional(),
   other: z.string().optional(),
   region: z.string().optional(),
+  provider: z.string().trim().max(128).optional(),
   ak: z.string().optional(),
   sk: z.string().optional(),
   vertex_ai_project_id: z.string().optional(),
@@ -596,6 +597,7 @@ export default function ChannelForm() {
             base_url: channelData.base_url,
             other: channelData.other,
             region: config.region || '',
+            provider: config.provider || '',
             ak: config.ak || '',
             sk: config.sk || '',
             vertex_ai_project_id: config.vertex_ai_project_id || '',
@@ -724,6 +726,7 @@ export default function ChannelForm() {
       auto_enabled: true,
       test_model: '',
       support_count_tokens: false,
+      provider: '',
       beta_filter_mode: 'none'
     }
   });
@@ -1236,6 +1239,7 @@ export default function ChannelForm() {
 
       const buildConfig = () => {
         const config: any = {};
+        if (values.provider?.trim()) config.provider = values.provider.trim();
         if (values.region) config.region = values.region;
         if (values.ak) config.ak = values.ak;
         if (values.sk) config.sk = values.sk;
@@ -1582,6 +1586,27 @@ export default function ChannelForm() {
                                 {...field}
                               />
                             </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="provider"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Provider</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="例如 openai 或 azure"
+                                {...field}
+                              />
+                            </FormControl>
+                            <p className="text-sm text-muted-foreground">
+                              例如 openai 或 azure。请求失败时仅重试相同
+                              Provider 的渠道。 留空保留原有重试行为。
+                            </p>
                             <FormMessage />
                           </FormItem>
                         )}
