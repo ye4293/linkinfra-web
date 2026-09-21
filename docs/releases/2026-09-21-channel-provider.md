@@ -7,3 +7,5 @@
 会话绑定依据后台记录的状态来源，不需额外配置会话 ID。未知历史来源会明确报错；详情见后端 `docs/channel-provider.md`。
 
 验证：`tsc --noEmit --incremental false` 通过。未部署或修改线上渠道。
+
+代码审查：修复渠道表单原有 JSX 引号转义错误。TypeScript 与该文件 ESLint 检查通过（保留原有 console 和 Hook 依赖警告）。

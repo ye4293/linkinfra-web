@@ -2065,8 +2065,8 @@ export default function ChannelForm() {
                               </div>
                             </FormControl>
                             <div className="text-sm text-blue-700 dark:text-blue-300">
-                              💡 Click "Add to model list below" to add custom
-                              models directly to the selection list.
+                              💡 Click &quot;Add to model list below&quot; to
+                              add custom models directly to the selection list.
                             </div>
                             <FormMessage />
                           </FormItem>
@@ -3231,9 +3231,9 @@ ${type2secretPrompt(form.watch('type'))}`}
                     {form.watch('type') === '48' && (
                       <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950">
                         <div className="text-sm text-blue-700 dark:text-blue-300">
-                          💡 <strong>Vertex AI tip</strong>: Use the "Vertex AI
-                          JSON file upload" section above to upload multiple
-                          JSON files in batch.
+                          💡 <strong>Vertex AI tip</strong>: Use the
+                          &quot;Vertex AI JSON file upload&quot; section above
+                          to upload multiple JSON files in batch.
                         </div>
                       </div>
                     )}
@@ -3289,8 +3289,9 @@ ${type2secretPrompt(form.watch('type'))}`}
                                     <div className="rounded-lg border border-green-200 bg-green-50 p-3 dark:border-green-800 dark:bg-green-950">
                                       <div className="text-sm text-green-700 dark:text-green-300">
                                         💡 <strong>Vertex AI tip</strong>: Use
-                                        the "Vertex AI JSON file upload" section
-                                        above to upload multiple JSON files.
+                                        the &quot;Vertex AI JSON file
+                                        upload&quot; section above to upload
+                                        multiple JSON files.
                                         <br />
                                         🔧 Keys will be processed according to
                                         the current edit mode (
@@ -3726,7 +3727,7 @@ ${type2secretPrompt(form.watch('type'))}`}
                           </div>
                           <div className="text-[0.8rem] text-muted-foreground">
                             New models detected by patrol are automatically
-                            added to the channel's model list.
+                            added to the channel&apos;s model list.
                           </div>
                         </div>
                         <Checkbox
@@ -3746,7 +3747,7 @@ ${type2secretPrompt(form.watch('type'))}`}
                           </div>
                           <div className="text-[0.8rem] text-muted-foreground">
                             Models no longer provided upstream are automatically
-                            removed from the channel's model list.
+                            removed from the channel&apos;s model list.
                           </div>
                         </div>
                         <Checkbox
