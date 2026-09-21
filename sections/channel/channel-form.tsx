@@ -1604,8 +1604,10 @@ export default function ChannelForm() {
                               />
                             </FormControl>
                             <p className="text-sm text-muted-foreground">
-                              例如 openai 或 azure。请求失败时仅重试相同
-                              Provider 的渠道。 留空保留原有重试行为。
+                              例如 openai 或 azure。重试仅使用相同 Provider
+                              的渠道。 Responses 携带 thinking
+                              或压缩历史时，后续请求也绑定原 Provider。
+                              留空时，带状态的历史将绑定原渠道。
                             </p>
                             <FormMessage />
                           </FormItem>
