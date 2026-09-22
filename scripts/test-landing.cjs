@@ -122,6 +122,7 @@ test('model labels preserve version numbers and distinguish thinking variants', 
   assert.equal(catalog.modelTitle('deepseek-v3'), 'DeepSeek V3');
   assert.equal(catalog.modelTitle('deepseek-v3.2'), 'DeepSeek V3.2');
   assert.equal(catalog.modelTitle('claude-fable-5-1'), 'Claude Fable 5.1');
+  assert.equal(catalog.modelTitle('claude-opus-5-5'), 'Claude Opus 5.5');
   assert.equal(
     catalog.modelTitle('global.anthropic.claude-haiku-4-5-20251001-v1:0'),
     'Claude Haiku 4.5'
@@ -156,6 +157,19 @@ test('search accepts displayed labels, exact IDs, and the visible provider alias
     catalog.matchesModel(model('claude-fable-5-1'), 'unrelated'),
     false
   );
+});
+
+test('homepage features the newest direct Opus ahead of Fable', () => {
+  const models = [
+    model('claude-fable-5-1'),
+    model('claude-opus-5-1'),
+    model('global.anthropic.claude-opus-5-5'),
+    model('claude-opus-5-5-thinking'),
+    model('claude-opus-5-5')
+  ];
+  const featured = catalog.orderModels(models)[0];
+  assert.equal(featured.model_name, 'claude-opus-5-5');
+  assert.equal(catalog.modelDetailHref(featured), '/model-plaza/claude-opus-5-5');
 });
 
 test('numeric release ordering selects newer direct models without mutating input', () => {

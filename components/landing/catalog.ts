@@ -14,8 +14,8 @@ export function modelDetailHref(model: ModelPlazaItem) {
 
 // Order families, not specific releases. Numeric sorting includes future versions.
 const families = [
-  'claude-fable',
   'claude-opus',
+  'claude-fable',
   'claude-sonnet',
   'glm',
   'gpt',
