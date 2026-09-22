@@ -157,7 +157,9 @@ function ModelPriceCard({
             {tr('Requests in the last 24 hours')}:{' '}
             {metrics.total_requests_24h.toLocaleString()}
             {' · '}
-            {lang === 'zh' ? '所有渠道合计' : 'All channels'}
+            {lang === 'zh'
+              ? '当前来源全部渠道 · 上游调用'
+              : 'All channels for this source · upstream calls'}
           </p>
         )}
       {/* 价格区域 */}
@@ -238,9 +240,16 @@ function ModelPriceCard({
       {metrics && metrics.status !== 'no_data' && (
         <div className="flex items-center justify-between border-t border-border/30 px-4 py-1.5 text-[10px] text-muted-foreground">
           <span>
-            {metrics.avg_latency.toFixed(1)}s {tr('Latency')}
+            {metrics.avg_latency == null
+              ? '—'
+              : `${metrics.avg_latency.toFixed(1)}s`}{' '}
+            {tr('Latency')}
           </span>
-          <span>{metrics.avg_speed.toFixed(0)} t/s</span>
+          <span>
+            {metrics.avg_speed == null
+              ? '—'
+              : `${metrics.avg_speed.toFixed(0)} t/s`}
+          </span>
         </div>
       )}
     </Card>
@@ -431,7 +440,23 @@ export default function ModelPlazaView() {
     get<any>('/api/model-plaza/metrics/all')
       .then((res: any) => {
         if (res?.success && res.data) {
-          setMetricsMap(res.data);
+          setMetricsMap(
+            Array.isArray(res.data)
+              ? Object.fromEntries(
+                  res.data.map((item: any) => [
+                    JSON.stringify([item.source_key, item.model_name]),
+                    {
+                      ...item,
+                      status:
+                        Date.now() / 1000 - item.as_of > 900
+                          ? 'no_data'
+                          : item.status,
+                      total_requests_24h: item.total_requests
+                    }
+                  ])
+                )
+              : res.data
+          );
         }
       })
       .catch(() => {});
@@ -657,7 +682,7 @@ export default function ModelPlazaView() {
                   model={model}
                   selectedGroup={selectedGroup}
                   t={t}
-                  metrics={metricsMap[model.model_name]}
+                  metrics={metricsMap[modelEntryKey(model)]}
                   onClick={() => router.push(modelDetailHref(model))}
                 />
               ))}

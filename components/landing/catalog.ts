@@ -4,11 +4,17 @@ import type {
 } from '@/lib/types/model-plaza';
 
 export function modelEntryKey(model: ModelPlazaItem) {
+  if (model.source_key)
+    return JSON.stringify([model.source_key, model.model_name]);
   return JSON.stringify([model.channel_id ?? model.provider, model.model_name]);
 }
 
 export function modelDetailHref(model: ModelPlazaItem) {
   const path = `/model-plaza/${encodeURIComponent(model.model_name)}`;
+  if (model.source_key)
+    return `${path}?source_key=${encodeURIComponent(model.source_key)}${
+      model.channel_id ? `&channel_id=${model.channel_id}` : ''
+    }`;
   return model.channel_id ? `${path}?channel_id=${model.channel_id}` : path;
 }
 

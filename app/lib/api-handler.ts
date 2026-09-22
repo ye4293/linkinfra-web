@@ -56,6 +56,10 @@ export class ApiHandler {
 
       const authHeaders = this.requireAuth ? await this.getAuthHeaders() : {};
       const headers = new Headers();
+      const isMetrics = this.endpoint.startsWith('/api/model-plaza/metrics/');
+      if (isMetrics && req.headers.get('if-none-match')) {
+        headers.set('if-none-match', req.headers.get('if-none-match')!);
+      }
 
       // 合并认证头
       Object.entries(authHeaders).forEach(([key, value]) => {
@@ -68,6 +72,7 @@ export class ApiHandler {
         headers,
         redirect: 'follow'
       };
+      if (isMetrics) fetchOptions.cache = 'no-store';
 
       // 只对非 GET 请求处理请求体
       if (method !== 'GET') {
@@ -82,6 +87,19 @@ export class ApiHandler {
       }
 
       const response = await fetch(url.toString(), fetchOptions);
+      const responseHeaders = new Headers({
+        'Content-Type': 'application/json'
+      });
+      if (isMetrics) {
+        responseHeaders.set(
+          'Cache-Control',
+          response.headers.get('cache-control') || 'private, no-store'
+        );
+        const etag = response.headers.get('etag');
+        if (etag) responseHeaders.set('ETag', etag);
+        if (response.status === 304)
+          return new Response(null, { status: 304, headers: responseHeaders });
+      }
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
@@ -101,7 +119,7 @@ export class ApiHandler {
       const data = await response.json();
       return new Response(JSON.stringify(data), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' }
+        headers: responseHeaders
       });
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {

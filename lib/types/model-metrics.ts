@@ -1,30 +1,33 @@
 // 模型监控相关类型
 
 export interface ModelMetricsMini {
-  success_rate: number;
-  avg_latency: number;
-  avg_speed: number;
+  success_rate: number | null;
+  avg_latency: number | null;
+  avg_speed: number | null;
   total_requests_24h: number;
-  status: 'healthy' | 'degraded' | 'down' | 'no_data';
+  status: 'healthy' | 'degraded' | 'down' | 'no_data' | 'insufficient_data';
 }
 
 export interface ModelMetricsCurrentStats {
+  status?: ModelMetricsMini['status'];
   rpm: number;
   tpm: number;
-  success_rate: number;
-  avg_latency: number;
-  avg_speed: number;
-  avg_first_word: number;
-  p50_latency: number;
-  p95_latency: number;
-  p99_latency: number;
+  success_rate: number | null;
+  avg_latency: number | null;
+  avg_speed: number | null;
+  avg_first_word: number | null;
+  p50_latency: number | null;
+  p95_latency: number | null;
+  p99_latency: number | null;
+  percentile_capped?: boolean;
 }
 
 export interface ModelMetricsPeriod24h {
+  final_requests?: number;
   total_requests: number;
-  success_rate: number;
-  avg_latency: number;
-  avg_speed: number;
+  success_rate: number | null;
+  avg_latency: number | null;
+  avg_speed: number | null;
   total_tokens: number;
 }
 
@@ -38,6 +41,10 @@ export interface ChannelMetrics {
 }
 
 export interface ModelMetricsDetail {
+  source_key?: string;
+  as_of?: number;
+  stale?: boolean;
+  partial?: boolean;
   model_name: string;
   provider: string;
   current: ModelMetricsCurrentStats | null;
@@ -49,10 +56,10 @@ export interface ModelMetricsDetail {
 export interface MetricsTimeSeriesPoint {
   timestamp: number;
   total_requests: number;
-  success_rate: number;
-  avg_latency: number;
-  avg_speed: number;
-  avg_first_word: number;
+  success_rate: number | null;
+  avg_latency: number | null;
+  avg_speed: number | null;
+  avg_first_word: number | null;
   total_tokens: number;
   prompt_tokens: number;
   completion_tokens: number;

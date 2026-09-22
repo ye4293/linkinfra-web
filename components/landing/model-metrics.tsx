@@ -9,7 +9,11 @@ export function ModelMetrics({ metrics }: { metrics?: ModelMetricsMini }) {
   const zh = lang === 'zh';
   const hasData =
     metrics && metrics.status !== 'no_data' && metrics.total_requests_24h > 0;
-  const value = (number: number | undefined, digits: number, suffix: string) =>
+  const value = (
+    number: number | null | undefined,
+    digits: number,
+    suffix: string
+  ) =>
     hasData && typeof number === 'number' && Number.isFinite(number)
       ? `${number.toFixed(digits)}${suffix}`
       : '—';
@@ -30,7 +34,13 @@ export function ModelMetrics({ metrics }: { metrics?: ModelMetricsMini }) {
       <div>
         <span>{zh ? '成功率 · 24h' : 'SUCCESS · 24H'}</span>
         <strong>
-          {value(metrics ? metrics.success_rate * 100 : undefined, 1, '%')}
+          {value(
+            metrics?.success_rate != null
+              ? metrics.success_rate * 100
+              : undefined,
+            1,
+            '%'
+          )}
         </strong>
       </div>
       <div>

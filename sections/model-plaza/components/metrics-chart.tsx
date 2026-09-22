@@ -78,7 +78,8 @@ export default function MetricsChart({
             <Area
               key={dk.key}
               dataKey={dk.key}
-              type="monotone"
+              type="linear"
+              connectNulls={false}
               stackId={dk.stacked ? 'usage' : undefined}
               fill={`var(--color-${dk.key})`}
               fillOpacity={0.15}

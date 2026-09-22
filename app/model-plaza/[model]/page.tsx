@@ -8,7 +8,12 @@ export const metadata = {
 export default function ModelDetailPage({
   searchParams
 }: {
-  searchParams: { channel_id?: string };
+  searchParams: { channel_id?: string; source_key?: string };
 }) {
-  return <ModelDetailView channelId={searchParams.channel_id} />;
+  return (
+    <ModelDetailView
+      channelId={searchParams.channel_id}
+      sourceKey={searchParams.source_key}
+    />
+  );
 }

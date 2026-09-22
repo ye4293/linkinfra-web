@@ -4,7 +4,7 @@ import { modelPrices } from '@/components/landing/catalog';
 import { DiscountPrice } from '@/components/discount-price';
 import { DurationPrice } from '@/components/duration-price';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
@@ -51,7 +51,13 @@ function formatPrice(price: number): string {
   return `$${price.toFixed(2)}`;
 }
 
-export default function ModelDetailView({ channelId }: { channelId?: string }) {
+export default function ModelDetailView({
+  channelId,
+  sourceKey
+}: {
+  channelId?: string;
+  sourceKey?: string;
+}) {
   const tr = useText();
   const params = useParams();
   const router = useRouter();
@@ -68,47 +74,70 @@ export default function ModelDetailView({ channelId }: { channelId?: string }) {
   const [loading, setLoading] = useState(true);
   const [tsLoading, setTsLoading] = useState(true);
 
+  const detailGeneration = useRef(0);
+  const seriesGeneration = useRef(0);
+  const metric = (v: number | null | undefined, digits: number, unit = '') =>
+    typeof v === 'number' ? `${v.toFixed(digits)}${unit}` : '—';
+
   // Fetch detail
   const fetchDetail = useCallback(async () => {
+    const generation = ++detailGeneration.current;
     try {
       const res: any = await get('/api/model-plaza/metrics/detail', {
         model_name: modelName,
+        period,
+        ...(sourceKey ? { source_key: sourceKey } : {}),
         ...(channelId ? { channel_id: channelId } : {})
       });
-      if (res?.success && res.data) {
+      if (generation === detailGeneration.current && res?.success && res.data) {
         setDetail(res.data);
       }
     } catch {
       // ignore
     } finally {
-      setLoading(false);
+      if (generation === detailGeneration.current) setLoading(false);
     }
-  }, [modelName, channelId]);
+  }, [modelName, channelId, sourceKey, period]);
 
   // Fetch time series
   const fetchTimeSeries = useCallback(async () => {
+    const generation = ++seriesGeneration.current;
     setTsLoading(true);
     try {
       const res: any = await get('/api/model-plaza/metrics/timeseries', {
         model_name: modelName,
-        period
+        period,
+        ...(sourceKey ? { source_key: sourceKey } : {}),
+        ...(channelId ? { channel_id: channelId } : {})
       });
-      if (res?.success && res.data?.points) {
+      if (
+        generation === seriesGeneration.current &&
+        res?.success &&
+        res.data?.points
+      ) {
         setTimeSeries(res.data.points);
       }
     } catch {
       // ignore
     } finally {
-      setTsLoading(false);
+      if (generation === seriesGeneration.current) setTsLoading(false);
     }
-  }, [modelName, period]);
+  }, [modelName, period, sourceKey, channelId]);
 
   useEffect(() => {
+    setDetail(null);
     fetchDetail();
+    return () => {
+      detailGeneration.current++;
+    };
   }, [fetchDetail]);
 
   useEffect(() => {
+    setTimeSeries([]);
     fetchTimeSeries();
+    return () => {
+      seriesGeneration.current++;
+    };
   }, [fetchTimeSeries]);
 
   // Auto-refresh every 5 minutes
@@ -131,9 +160,10 @@ export default function ModelDetailView({ channelId }: { channelId?: string }) {
   // Prepare chart data
   const chartData = timeSeries.map((p) => ({
     time: formatTimestamp(p.timestamp, period),
-    latency: Number(p.avg_latency.toFixed(2)),
-    speed: Number(p.avg_speed.toFixed(1)),
-    success_rate: Number((p.success_rate * 100).toFixed(1)),
+    latency: p.avg_latency == null ? null : Number(p.avg_latency.toFixed(2)),
+    speed: p.avg_speed == null ? null : Number(p.avg_speed.toFixed(1)),
+    success_rate:
+      p.success_rate == null ? null : Number((p.success_rate * 100).toFixed(1)),
     requests: p.total_requests,
     prompt_tokens: p.prompt_tokens,
     completion_tokens: p.completion_tokens
@@ -161,11 +191,16 @@ export default function ModelDetailView({ channelId }: { channelId?: string }) {
           {detail && current && (
             <StatusBadge
               status={
-                current.success_rate >= 0.95
-                  ? 'healthy'
-                  : current.success_rate >= 0.8
-                  ? 'degraded'
-                  : 'down'
+                detail.stale
+                  ? 'no_data'
+                  : current.status ??
+                    (current.success_rate == null
+                      ? 'no_data'
+                      : current.success_rate >= 0.95
+                      ? 'healthy'
+                      : current.success_rate >= 0.8
+                      ? 'degraded'
+                      : 'down')
               }
               showLabel
             />
@@ -272,9 +307,22 @@ export default function ModelDetailView({ channelId }: { channelId?: string }) {
                 }
               />
               <MetricCard
-                title={t.modelDetail?.requests24h || '24h Requests'}
+                title={
+                  detail?.as_of
+                    ? lang === 'zh'
+                      ? '24h 上游调用'
+                      : '24h upstream calls'
+                    : t.modelDetail?.requests24h || '24h Requests'
+                }
                 value={
-                  period24h ? period24h.total_requests.toLocaleString() : '0'
+                  period24h ? period24h.total_requests.toLocaleString() : '—'
+                }
+                subtitle={
+                  period24h?.final_requests != null
+                    ? `${
+                        lang === 'zh' ? '最终请求' : 'Final requests'
+                      }: ${period24h.final_requests.toLocaleString()}`
+                    : undefined
                 }
               />
             </div>
@@ -286,7 +334,11 @@ export default function ModelDetailView({ channelId }: { channelId?: string }) {
               {t.modelDetail?.performance || tr('Performance')}
               <span className="ml-2 text-xs font-normal text-muted-foreground">
                 {lang === 'zh'
-                  ? '该模型所有渠道的汇总'
+                  ? detail?.source_key
+                    ? '当前来源全部渠道 · 上游调用统计'
+                    : '该模型所有渠道的汇总'
+                  : detail?.as_of
+                  ? 'All channels for this source · upstream attempts'
                   : 'All channels for this model'}
               </span>
             </h2>
@@ -306,40 +358,65 @@ export default function ModelDetailView({ channelId }: { channelId?: string }) {
             </div>
           </div>
 
+          {detail?.as_of && (
+            <p className="mb-3 text-xs text-muted-foreground">
+              {tr('Updated through')}:{' '}
+              {new Date(detail.as_of * 1000).toLocaleString()}
+              {detail.stale
+                ? ' · ' + (lang === 'zh' ? '数据延迟' : 'Data delayed')
+                : ''}
+              {detail.partial
+                ? ' · ' + (lang === 'zh' ? '部分覆盖' : 'Partial coverage')
+                : ''}
+            </p>
+          )}
           {/* Metric cards row 1 */}
           {current && (
             <>
               <div className="mb-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <MetricCard
                   title={t.modelDetail?.successRate || 'Success Rate'}
-                  value={`${(current.success_rate * 100).toFixed(1)}%`}
+                  value={metric(
+                    current.success_rate == null
+                      ? null
+                      : current.success_rate * 100,
+                    1,
+                    '%'
+                  )}
                 />
                 <MetricCard
                   title={t.modelDetail?.avgLatency || 'Avg Latency'}
-                  value={`${current.avg_latency.toFixed(2)}s`}
+                  value={metric(current.avg_latency, 2, 's')}
                 />
                 <MetricCard
                   title={t.modelDetail?.avgSpeed || 'Avg Speed'}
-                  value={`${current.avg_speed.toFixed(1)} t/s`}
+                  value={metric(current.avg_speed, 1, ' t/s')}
                 />
-                <MetricCard title="RPM" value={current.rpm.toFixed(1)} />
+                <MetricCard
+                  title={detail?.as_of ? tr('Calls/min') : 'RPM'}
+                  value={current.rpm.toFixed(1)}
+                />
               </div>
               <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <MetricCard
                   title="P50"
-                  value={`${current.p50_latency.toFixed(2)}s`}
+                  value={metric(current.p50_latency, 2, 's')}
                 />
                 <MetricCard
                   title="P95"
-                  value={`${current.p95_latency.toFixed(2)}s`}
+                  value={metric(current.p95_latency, 2, 's')}
                 />
                 <MetricCard
                   title="P99"
-                  value={`${current.p99_latency.toFixed(2)}s`}
+                  value={`${current.percentile_capped ? '≥ ' : ''}${metric(
+                    current.p99_latency,
+                    2,
+                    's'
+                  )}`}
                 />
                 <MetricCard
                   title="TTFT"
-                  value={`${current.avg_first_word.toFixed(2)}s`}
+                  value={metric(current.avg_first_word, 2, 's')}
                   subtitle={t.modelDetail?.ttftDesc || 'First Token'}
                 />
               </div>

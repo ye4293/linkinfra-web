@@ -19,6 +19,28 @@ const compiled = ts.transpileModule(source, {
 const catalog = {};
 new Function('exports', compiled.outputText)(catalog);
 
+test('source identity survives representative channel changes and separates sources', () => {
+  const openai = {
+    model_name: 'gpt-6-astra',
+    provider: 'OpenAI',
+    source_key: 'openai',
+    channel_id: 1
+  };
+  const replacement = { ...openai, channel_id: 5 };
+  const azure = {
+    ...openai,
+    provider: 'Azure',
+    source_key: 'azure',
+    channel_id: 2
+  };
+  assert.equal(
+    catalog.modelEntryKey(openai),
+    catalog.modelEntryKey(replacement)
+  );
+  assert.notEqual(catalog.modelEntryKey(openai), catalog.modelEntryKey(azure));
+  assert.match(catalog.modelDetailHref(azure), /source_key=azure/);
+});
+
 test('model discount preserves original prices and applies once across price types', () => {
   const item = {
     base_input_price: 5,
