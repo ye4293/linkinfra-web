@@ -18,7 +18,6 @@ import {
   Code2,
   Copy,
   FileText,
-  Globe2,
   Hash,
   ImageIcon,
   Info,
@@ -26,19 +25,16 @@ import {
   Layers3,
   Menu,
   MessageSquare,
-  Moon,
   Search,
   ShieldCheck,
   Sparkles,
-  Sun,
   Terminal,
   Zap
 } from 'lucide-react';
-import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
 import { useLocale } from '@/components/providers/locale-provider';
 import { useSystemConfig } from '@/hooks/use-system-config';
-import { apiKeyHref, consoleHref } from '@/lib/api-key-navigation';
+import { apiKeyHref } from '@/lib/api-key-navigation';
 import {
   allDocs,
   apiDocs,
@@ -67,7 +63,7 @@ import {
   SheetTitle
 } from '@/components/ui/sheet';
 import s from './docs.module.css';
-import { SiteNavLinks } from '@/components/layout/site-nav-links';
+import { SiteHeader } from '@/components/layout/site-header';
 
 const groupIcons = {
   text: MessageSquare,
@@ -214,9 +210,8 @@ function SectionTitle({
 
 export function DocsPage({ slug }: { slug: string }) {
   const router = useRouter();
-  const { lang, setLang } = useLocale();
+  const { lang } = useLocale();
   const c = (zh: string, en: string) => (lang === 'zh' ? zh : en);
-  const { resolvedTheme, setTheme } = useTheme();
   const { loading } = useSystemConfig();
   const { data: session } = useSession();
   const brand = 'Linkinfra API';
@@ -228,12 +223,12 @@ export function DocsPage({ slug }: { slug: string }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [language, setLanguage] = useState<CodeLanguage>('cURL');
   const [mounted, setMounted] = useState(false);
-  const dark = mounted && resolvedTheme === 'dark';
+
+  useEffect(() => setMounted(true), []);
   const pageIndex = allDocs.findIndex((item) => item.slug === slug);
   const previous = allDocs[pageIndex - 1];
   const next = allDocs[pageIndex + 1];
 
-  useEffect(() => setMounted(true), []);
   useEffect(() => {
     if (!loading) document.title = `${page.title[lang]} | ${brand} Docs`;
   }, [page, lang, brand, loading]);
@@ -347,60 +342,15 @@ export function DocsPage({ slug }: { slug: string }) {
       <a href="#doc-main" className={s.skipLink}>
         {c('跳到文档正文', 'Skip to content')}
       </a>
-      <header className={s.header}>
-        <div className={s.headerInner}>
-          <div className={s.brandArea}>
-            <Link href="/" className={s.brand}>
-              <span className={s.brandMark}>
-                <Layers3 size={19} strokeWidth={2.2} />
-              </span>
-              {brand}
-            </Link>
-            <span className={s.docsBadge}>docs</span>
-          </div>
-          <nav
-            className={s.topNav}
-            aria-label={c('文档导航', 'Documentation sections')}
-          >
-            <SiteNavLinks includeConsole={false} />
-          </nav>
-          <div className={s.headerActions}>
-            <button
-              className={`${s.iconButton} ${s.mobileSearch}`}
-              aria-label={c('搜索文档', 'Search documentation')}
-              onClick={() => setSearchOpen(true)}
-            >
-              <Search size={17} />
-            </button>
-            <button
-              className={s.localeButton}
-              onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')}
-              aria-label={c('Switch to English', '切换为中文')}
-            >
-              <Globe2 size={16} />
-              <span>{c('中', 'EN')}</span>
-            </button>
-            <button
-              className={s.iconButton}
-              onClick={() => setTheme(dark ? 'light' : 'dark')}
-              aria-label={
-                dark
-                  ? c('切换浅色模式', 'Switch to light mode')
-                  : c('切换深色模式', 'Switch to dark mode')
-              }
-            >
-              {dark ? <Sun size={17} /> : <Moon size={17} />}
-            </button>
-            <a
-              href={consoleHref(Boolean(session), lang)}
-              className={s.consoleLink}
-            >
-              Console
-              <ArrowUpRight size={14} />
-            </a>
-          </div>
-        </div>
-      </header>
+      <SiteHeader>
+        <button
+          className={`${s.iconButton} ${s.mobileSearch}`}
+          aria-label={c('搜索文档', 'Search documentation')}
+          onClick={() => setSearchOpen(true)}
+        >
+          <Search size={17} />
+        </button>
+      </SiteHeader>
 
       <div className={s.layout}>
         <aside className={s.sidebar}>{sidebar}</aside>

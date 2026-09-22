@@ -4,17 +4,9 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
-import { apiKeyHref, consoleHref } from '@/lib/api-key-navigation';
+import { apiKeyHref } from '@/lib/api-key-navigation';
 import { docsHref } from '@/lib/public-navigation';
-import {
-  ArrowUpRight,
-  ArrowRight,
-  Globe2,
-  Layers3,
-  Menu,
-  X,
-  RefreshCw
-} from 'lucide-react';
+import { ArrowUpRight, ArrowRight, Layers3, RefreshCw } from 'lucide-react';
 import { useLocale } from '@/components/providers/locale-provider';
 import { useSystemConfig } from '@/hooks/use-system-config';
 import { ProviderLogoMark } from '@/sections/model-plaza/components/provider-logo';
@@ -27,7 +19,7 @@ import {
 } from './catalog';
 import { HomeFeatures, HomeSections } from './home-sections';
 import s from './home.module.css';
-import { SiteNavLinks } from '@/components/layout/site-nav-links';
+import { SiteHeader } from '@/components/layout/site-header';
 import { SiteNotice } from '@/components/site-notice';
 import { NewsletterSignup } from './newsletter-signup';
 
@@ -50,14 +42,13 @@ const emptyCatalog: ModelPlazaResponse = {
 };
 
 export function LandingHome() {
-  const { lang, setLang } = useLocale();
+  const { lang } = useLocale();
   const zh = lang === 'zh';
   const c = (cn: string, en: string) => (zh ? cn : en);
   const { data: session } = useSession();
   const { systemName } = useSystemConfig();
   const brand = systemName.trim() || 'LinkInfra';
   const start = apiKeyHref(Boolean(session), undefined, lang);
-  const [menu, setMenu] = useState(false);
   const [catalog, setCatalog] = useState(emptyCatalog);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -95,73 +86,7 @@ export function LandingHome() {
       <a href="#main-content" className={s.skip}>
         {c('跳转到主要内容', 'Skip to content')}
       </a>
-      <header className={s.header}>
-        <div className={s.navInner}>
-          <Link
-            href="/"
-            className={s.brand}
-            aria-label={`${brand} ${c('首页', 'home')}`}
-          >
-            <span className={s.brandMark}>
-              <Layers3 size={23} />
-            </span>
-            {brand}
-          </Link>
-          <nav
-            className={s.desktopNav}
-            aria-label={c('主导航', 'Main navigation')}
-          >
-            <SiteNavLinks includeConsole={false} />
-            <a href="#contact">{c('联系我们', 'Contact us')}</a>
-          </nav>
-          <div className={s.navActions}>
-            <button
-              className={s.language}
-              onClick={() => setLang(zh ? 'en' : 'zh')}
-              aria-label={zh ? 'Switch to English' : '切换为中文'}
-            >
-              <Globe2 size={16} />
-              <span>{zh ? 'EN' : '中文'}</span>
-            </button>
-            {!session && (
-              <Link className={s.signIn} href="/sign-in">
-                {c('登录', 'Sign in')}
-              </Link>
-            )}
-            <Link
-              className={s.navCta}
-              href={consoleHref(Boolean(session), lang)}
-            >
-              Console
-              <ArrowUpRight size={15} />
-            </Link>
-            <button
-              className={s.menuButton}
-              onClick={() => setMenu(!menu)}
-              aria-expanded={menu}
-              aria-controls="landing-mobile-nav"
-              aria-label={c('切换导航菜单', 'Toggle navigation')}
-            >
-              {menu ? <X size={22} /> : <Menu size={22} />}
-            </button>
-          </div>
-        </div>
-        {menu && (
-          <nav
-            id="landing-mobile-nav"
-            className={s.mobileNav}
-            aria-label={c('移动导航', 'Mobile navigation')}
-          >
-            <SiteNavLinks onNavigate={() => setMenu(false)} />
-            <a href="#contact" onClick={() => setMenu(false)}>
-              {c('联系我们', 'Contact us')}
-            </a>
-            <Link href="/getting-started" onClick={() => setMenu(false)}>
-              {c('新手指引', 'Getting started')}
-            </Link>
-          </nav>
-        )}
-      </header>
+      <SiteHeader />
       <main id="main-content">
         <SiteNotice className="mx-4 mt-4 sm:mx-8 lg:mx-12" />
         <section className={s.hero}>
