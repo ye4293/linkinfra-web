@@ -4,7 +4,7 @@ const zh = {
     home: '首页',
     models: '模型',
     docs: '文档',
-    marketplace: '模型广场',
+    marketplace: '模型',
     signIn: '登录',
     dashboard: 'Console'
   },

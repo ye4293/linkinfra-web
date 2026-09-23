@@ -6,7 +6,7 @@ const en: Locale = {
     home: 'Home',
     models: 'Models',
     docs: 'Docs',
-    marketplace: 'Model Plaza',
+    marketplace: 'Model',
     signIn: 'Sign In',
     dashboard: 'Console'
   },

@@ -56,7 +56,6 @@ export function SiteHeader({
           aria-label={zh ? '主导航' : 'Main navigation'}
         >
           <SiteNavLinks includeConsole={false} />
-          <Link href="/#contact">{zh ? '联系我们' : 'Contact us'}</Link>
         </nav>
         <div className={s.actions}>
           {children}
@@ -95,9 +94,6 @@ export function SiteHeader({
           aria-label={zh ? '移动导航' : 'Mobile navigation'}
         >
           <SiteNavLinks onNavigate={() => setOpen(false)} />
-          <Link href="/#contact" onClick={() => setOpen(false)}>
-            {zh ? '联系我们' : 'Contact us'}
-          </Link>
           <Link href="/getting-started" onClick={() => setOpen(false)}>
             {zh ? '新手指引' : 'Getting started'}
           </Link>
