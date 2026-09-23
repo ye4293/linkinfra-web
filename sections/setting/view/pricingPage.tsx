@@ -1039,8 +1039,8 @@ export default function PricingPage() {
     }
   };
 
-  // 批量设置选中模型的默认倍率（1.0）
-  const batchSetDefaultRatio = async () => {
+  // 批量设置选中模型的输入和输出价格为 $2 / 1M tokens
+  const batchSetDefaultPrice = async () => {
     if (selectedModels.size === 0) {
       toast.error('Select a model to configure first.');
       return;
@@ -1062,7 +1062,9 @@ export default function PricingPage() {
 
       const result = await response.json();
       if (result.success) {
-        toast.success(`Set ${selectedModels.size} model(s) to default ratio.`);
+        toast.success(
+          `Set input/output prices to $2 per 1M tokens for ${selectedModels.size} model(s).`
+        );
         setSelectedModels(new Set());
         fetchConfiguredModels();
         fetchUnsetModels();
@@ -1786,17 +1788,6 @@ export default function PricingPage() {
                         </div>
                       </div>
                     </div>
-
-                    {/* 过渡期：展示换算出的倍率，方便核对 */}
-                    <div className="rounded bg-muted/50 p-2 font-mono text-xs text-muted-foreground">
-                      Ratio: model {editingRow.model_ratio || '-'} · completion{' '}
-                      {editingRow.completion_ratio || '-'} · cache{' '}
-                      {editingRow.cache_ratio || '-'} · image in{' '}
-                      {editingRow.image_input_ratio || '-'} · image out{' '}
-                      {editingRow.image_output_ratio || '-'} · audio in{' '}
-                      {editingRow.audio_input_ratio || '-'} · audio out{' '}
-                      {editingRow.audio_output_ratio || '-'}
-                    </div>
                   </div>
                 )}
                 <DialogFooter>
@@ -1823,28 +1814,8 @@ export default function PricingPage() {
                     Configure official model pricing
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    Enter prices in USD per 1M tokens. Billing ratios are
-                    calculated instantly and can still be adjusted manually.
-                  </p>
-                </div>
-              </div>
-              <div className="mt-4 grid gap-3 text-sm md:grid-cols-3">
-                <div className="rounded-lg border bg-muted/30 p-3">
-                  <p className="font-medium">1. Base price</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Model ratio = text input price / 2
-                  </p>
-                </div>
-                <div className="rounded-lg border bg-muted/30 p-3">
-                  <p className="font-medium">2. Output & cache</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Each ratio = its price / text input price
-                  </p>
-                </div>
-                <div className="rounded-lg border bg-muted/30 p-3">
-                  <p className="font-medium">3. Optional modalities</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Leave image or audio fields blank when unsupported
+                    Enter prices in USD per 1M tokens. Leave image or audio
+                    fields blank when unsupported.
                   </p>
                 </div>
               </div>
@@ -1887,10 +1858,10 @@ export default function PricingPage() {
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={batchSetDefaultRatio}
+                  onClick={batchSetDefaultPrice}
                   disabled={isLoading || selectedModels.size === 0}
                 >
-                  Set to 1.0 ({selectedModels.size})
+                  Set input/output to $2 ({selectedModels.size})
                 </Button>
                 <Button
                   onClick={saveAllUnsetModels}
@@ -1905,11 +1876,10 @@ export default function PricingPage() {
             <div className="space-y-2">
               <div className="flex items-center gap-2 px-1 text-xs text-muted-foreground">
                 <Info className="h-3.5 w-3.5" />
-                Scroll horizontally to configure optional modalities and review
-                calculated ratios.
+                All prices are in USD per 1M tokens.
               </div>
               <div className="overflow-x-auto rounded-xl border bg-card shadow-sm [&_input]:h-9 [&_input]:min-w-[92px] [&_td]:py-2">
-                <Table className="w-full min-w-[2250px] table-fixed">
+                <Table className="w-full min-w-[1200px] table-fixed">
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-12 px-3">
@@ -1940,12 +1910,6 @@ export default function PricingPage() {
                       >
                         Price input ($/1M tokens)
                       </TableHead>
-                      <TableHead
-                        colSpan={8}
-                        className="border-l bg-green-50/60 px-3 py-3 text-center text-sm font-semibold text-green-900 dark:bg-green-950/30 dark:text-green-200"
-                      >
-                        Ratio (auto-calculated)
-                      </TableHead>
                     </TableRow>
                     <TableRow>
                       <TableHead className="w-12 px-3"></TableHead>
@@ -1974,42 +1938,18 @@ export default function PricingPage() {
                       <TableHead className="w-[70px] bg-blue-50/50 px-1 text-center text-xs dark:bg-blue-950/30">
                         Audio out
                       </TableHead>
-                      <TableHead className="w-[100px] border-l bg-green-50/50 px-2 text-center text-xs dark:bg-green-950/30">
-                        Model
-                      </TableHead>
-                      <TableHead className="w-[65px] bg-green-50/50 px-1 text-center text-xs dark:bg-green-950/30">
-                        Completion
-                      </TableHead>
-                      <TableHead className="w-[65px] bg-green-50/50 px-1 text-center text-xs dark:bg-green-950/30">
-                        Cache read
-                      </TableHead>
-                      <TableHead className="w-[75px] bg-green-50/50 px-1 text-center text-xs dark:bg-green-950/30">
-                        Cache write / 5m
-                      </TableHead>
-                      <TableHead className="w-[65px] bg-green-50/50 px-1 text-center text-xs dark:bg-green-950/30">
-                        Image in
-                      </TableHead>
-                      <TableHead className="w-[65px] bg-green-50/50 px-1 text-center text-xs dark:bg-green-950/30">
-                        Image out
-                      </TableHead>
-                      <TableHead className="w-[65px] bg-green-50/50 px-1 text-center text-xs dark:bg-green-950/30">
-                        Audio in
-                      </TableHead>
-                      <TableHead className="w-[65px] bg-green-50/50 px-1 text-center text-xs dark:bg-green-950/30">
-                        Audio out
-                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {isUnsetLoading ? (
                       <TableRow>
-                        <TableCell colSpan={18} className="h-24 text-center">
+                        <TableCell colSpan={10} className="h-24 text-center">
                           Loading...
                         </TableCell>
                       </TableRow>
                     ) : unsetModels.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={18} className="h-24 text-center">
+                        <TableCell colSpan={10} className="h-24 text-center">
                           🎉 All models are configured!
                         </TableCell>
                       </TableRow>
@@ -2188,151 +2128,6 @@ export default function PricingPage() {
                                 )
                               }
                               className="h-7 px-1 text-center text-xs"
-                            />
-                          </TableCell>
-                          {/* 倍率显示区域（自动计算，也可手动修改） */}
-                          <TableCell className="border-l bg-green-50/30 px-0.5 dark:bg-green-950/20">
-                            <Input
-                              type="text"
-                              placeholder="auto"
-                              value={
-                                unsetEditData[model.model_name]?.model_ratio ||
-                                ''
-                              }
-                              onChange={(e) =>
-                                updateUnsetEditData(
-                                  model.model_name,
-                                  'model_ratio',
-                                  e.target.value
-                                )
-                              }
-                              className="h-7 bg-muted/30 px-1 text-center text-xs"
-                            />
-                          </TableCell>
-                          <TableCell className="bg-green-50/30 px-0.5 dark:bg-green-950/20">
-                            <Input
-                              type="text"
-                              placeholder="auto"
-                              value={
-                                unsetEditData[model.model_name]
-                                  ?.completion_ratio || ''
-                              }
-                              onChange={(e) =>
-                                updateUnsetEditData(
-                                  model.model_name,
-                                  'completion_ratio',
-                                  e.target.value
-                                )
-                              }
-                              className="h-7 bg-muted/30 px-1 text-center text-xs"
-                            />
-                          </TableCell>
-                          <TableCell className="bg-green-50/30 px-0.5 dark:bg-green-950/20">
-                            <Input
-                              type="text"
-                              placeholder="auto"
-                              value={
-                                unsetEditData[model.model_name]?.cache_ratio ||
-                                ''
-                              }
-                              onChange={(e) =>
-                                updateUnsetEditData(
-                                  model.model_name,
-                                  'cache_ratio',
-                                  e.target.value
-                                )
-                              }
-                              className="h-7 bg-muted/30 px-1 text-center text-xs"
-                            />
-                          </TableCell>
-                          <TableCell className="bg-green-50/30 px-0.5 dark:bg-green-950/20">
-                            <Input
-                              type="text"
-                              placeholder="auto"
-                              value={
-                                unsetEditData[model.model_name]
-                                  ?.create_cache_ratio || ''
-                              }
-                              onChange={(e) =>
-                                updateUnsetEditData(
-                                  model.model_name,
-                                  'create_cache_ratio',
-                                  e.target.value
-                                )
-                              }
-                              className="h-7 bg-muted/30 px-1 text-center text-xs"
-                            />
-                          </TableCell>
-                          <TableCell className="bg-green-50/30 px-0.5 dark:bg-green-950/20">
-                            <Input
-                              type="text"
-                              placeholder="auto"
-                              value={
-                                unsetEditData[model.model_name]
-                                  ?.image_input_ratio || ''
-                              }
-                              onChange={(e) =>
-                                updateUnsetEditData(
-                                  model.model_name,
-                                  'image_input_ratio',
-                                  e.target.value
-                                )
-                              }
-                              className="h-7 bg-muted/30 px-1 text-center text-xs"
-                            />
-                          </TableCell>
-                          <TableCell className="bg-green-50/30 px-0.5 dark:bg-green-950/20">
-                            <Input
-                              type="text"
-                              placeholder="auto"
-                              value={
-                                unsetEditData[model.model_name]
-                                  ?.image_output_ratio || ''
-                              }
-                              onChange={(e) =>
-                                updateUnsetEditData(
-                                  model.model_name,
-                                  'image_output_ratio',
-                                  e.target.value
-                                )
-                              }
-                              className="h-7 bg-muted/30 px-1 text-center text-xs"
-                            />
-                          </TableCell>
-                          <TableCell className="bg-green-50/30 px-0.5 dark:bg-green-950/20">
-                            <Input
-                              type="text"
-                              placeholder="auto"
-                              value={
-                                unsetEditData[model.model_name]
-                                  ?.audio_input_ratio || ''
-                              }
-                              onChange={(e) =>
-                                updateUnsetEditData(
-                                  model.model_name,
-                                  'audio_input_ratio',
-                                  e.target.value
-                                )
-                              }
-                              className="h-7 bg-muted/30 px-1 text-center text-xs"
-                            />
-                          </TableCell>
-                          <TableCell className="bg-green-50/30 px-0.5 dark:bg-green-950/20">
-                            <Input
-                              type="text"
-                              placeholder="auto"
-                              value={
-                                unsetEditData[model.model_name]
-                                  ?.audio_output_ratio || ''
-                              }
-                              onChange={(e) =>
-                                updateUnsetEditData(
-                                  model.model_name,
-                                  'audio_output_ratio',
-                                  e.target.value
-                                )
-                              }
-                              className="h-7 bg-muted/30 px-1 text-center text-xs"
                             />
                           </TableCell>
                         </TableRow>
