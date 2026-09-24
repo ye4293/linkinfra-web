@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { Info } from 'lucide-react';
 
 const FIXED_AMOUNTS = [10, 20, 50, 100, 200, 500];
 
@@ -110,13 +111,20 @@ export default function PaymentSection() {
               <div className="mt-0 font-medium text-foreground">
                 You pay: {payAmount ? `$${payAmount}` : '--'}
               </div>
-              <p className="mt-1 text-xs">
-                Credited balance is based on the net amount Stripe receives
-                after processing fees, so it may be slightly less than the
-                amount paid.
-              </p>
             </div>
           )}
+        </div>
+
+        <div className="flex items-start gap-2 rounded-lg border bg-muted/20 p-3 text-sm text-muted-foreground">
+          <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          <p>
+            <span className="font-medium text-foreground">
+              Stripe processing fee:
+            </span>{' '}
+            Stripe charges a processing fee for each top-up. This fee is
+            deducted from your payment, and the remaining amount is credited to
+            your balance.
+          </p>
         </div>
 
         <Button
