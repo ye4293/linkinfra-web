@@ -12,6 +12,7 @@ export const CHANNEL_OPTIONS = [
   { key: 35, text: 'Cohere', value: 35, color: 'green' },
   { key: 36, text: 'together', value: 36, color: 'blue' },
   { key: 37, text: 'Deepseek', value: 37, color: 'green' },
+  { key: 50, text: 'TypeSafe', value: 50, color: 'purple' },
   { key: 38, text: 'Stability', value: 38, color: 'blue' },
   { key: 39, text: 'Novita', value: 39, color: 'blue' },
   { key: 40, text: 'Replicate', value: 40, color: 'blue' },

@@ -130,6 +130,7 @@ interface ModelTypesOption {
   key: string;
   value: string;
   text: string;
+  base_url?: string;
 }
 
 // 使用 Omit 来从 Channel 接口中排除 type 字段，然后重新定义它。这样可以避免类型冲突。
@@ -736,7 +737,14 @@ export default function ChannelForm() {
       form.setValue('other', '');
     }
     if (value !== '3' && value !== '8') {
-      form.setValue('base_url', '');
+      const selectedType = modelTypes.find(
+        (option) => String(option.value) === value
+      );
+      form.setValue('base_url', selectedType?.base_url || '');
+    }
+    if (value === '50') {
+      form.setValue('models', relatedModels[value] || []);
+      form.setValue('test_model', 'jev-latest');
     }
     // 如果选择Vertex AI渠道，自动设置region为global
     if (value === '48') {
@@ -3365,13 +3373,17 @@ ${type2secretPrompt(form.watch('type'))}`}
                     name="base_url"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Agent</FormLabel>
+                        <FormLabel>
+                          {form.watch('type') === '50' ? 'Base URL' : 'Agent'}
+                        </FormLabel>
                         <FormControl>
                           <Textarea
                             className="h-auto max-h-64 min-h-32 resize-none overflow-auto"
                             placeholder={
                               form.watch('type') === '15'
                                 ? 'Default: https://qianfan.baidubce.com (also accepts /v2 or /anthropic).'
+                                : form.watch('type') === '50'
+                                ? 'Default: https://api.typesafe.ai (also accepts /v1 or /v1/systemone).'
                                 : 'This option is used to make API calls through the proxy station, please enter the proxy address in the format https://domain.com'
                             }
                             {...field}
