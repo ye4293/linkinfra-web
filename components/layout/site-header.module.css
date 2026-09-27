@@ -18,6 +18,9 @@
   margin: auto;
   padding: 0 32px;
 }
+.fullWidth {
+  max-width: none;
+}
 .brand {
   display: inline-flex;
   align-items: center;

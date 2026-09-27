@@ -16,10 +16,12 @@ import s from './site-header.module.css';
 
 export function SiteHeader({
   leading,
-  children
+  children,
+  fullWidth = false
 }: {
   leading?: ReactNode;
   children?: ReactNode;
+  fullWidth?: boolean;
 }) {
   const { lang } = useLocale();
   const { systemName } = useSystemConfig();
@@ -41,7 +43,7 @@ export function SiteHeader({
 
   return (
     <header className={s.header}>
-      <div className={s.inner}>
+      <div className={fullWidth ? `${s.inner} ${s.fullWidth}` : s.inner}>
         {leading}
         <Link
           href="/"
