@@ -88,65 +88,67 @@ export function LandingHome() {
       </a>
       <SiteHeader />
       <main id="main-content">
-        <SiteNotice className="mx-4 mt-4 sm:mx-8 lg:mx-12" />
-        <section className={s.hero}>
-          <div className={s.heroCopy}>
-            <Link
-              className={s.announcement}
-              href={featured ? modelDetailHref(featured) : '/model-plaza'}
-            >
-              <span className={s.announcementTag}>
-                {c('模型精选', 'Featured')}
-              </span>
-              {featured
-                ? modelTitle(featured.model_name)
-                : c('探索平台模型', 'Explore the model catalog')}
-              <ArrowRight size={13} />
-            </Link>
-            <h1>
-              {c('连接智能，', 'Connect to intelligence.')}
-              <br />
-              {c('构建新可能。', 'Build what’s next.')}
-            </h1>
-            <p className={s.heroDescription}>
-              {c(
-                '统一接入多种模型，透明的价格，熟悉的开发体验。',
-                'Your models, connected. Transparent pricing. A familiar developer experience.'
-              )}
-            </p>
-            <div className={s.heroButtons}>
-              <Link href={start} className={s.primary}>
-                {c('获取 API Key', 'Get API key')}
-                <ArrowUpRight size={16} />
+        <div className={s.intro}>
+          <SiteNotice className="mx-4 mt-4 sm:mx-8 lg:mx-12" />
+          <section className={s.hero}>
+            <div className={s.heroCopy}>
+              <Link
+                className={s.announcement}
+                href={featured ? modelDetailHref(featured) : '/model-plaza'}
+              >
+                <span className={s.announcementTag}>
+                  {c('模型精选', 'Featured')}
+                </span>
+                {featured
+                  ? modelTitle(featured.model_name)
+                  : c('探索平台模型', 'Explore the model catalog')}
+                <ArrowRight size={13} />
               </Link>
-              <Link href="/model-plaza" className={s.secondary}>
-                {c('进入模型广场', 'Explore models')}
-                <ArrowRight size={16} />
-              </Link>
+              <h1>
+                {c('连接智能，', 'Connect to intelligence.')}
+                <br />
+                {c('构建新可能。', 'Build what’s next.')}
+              </h1>
+              <p className={s.heroDescription}>
+                {c(
+                  '统一接入多种模型，透明的价格，熟悉的开发体验。',
+                  'Your models, connected. Transparent pricing. A familiar developer experience.'
+                )}
+              </p>
+              <div className={s.heroButtons}>
+                <Link href={start} className={s.primary}>
+                  {c('获取 API Key', 'Get API key')}
+                  <ArrowUpRight size={16} />
+                </Link>
+                <Link href="/model-plaza" className={s.secondary}>
+                  {c('进入模型广场', 'Explore models')}
+                  <ArrowRight size={16} />
+                </Link>
+              </div>
             </div>
-          </div>
-          <div className={s.stats}>
-            <div>
-              <strong>{loading || error ? '—' : catalog.total}</strong>
-              <p>{c('可用模型', 'Models in the catalog')}</p>
+            <div className={s.stats}>
+              <div>
+                <strong>{loading || error ? '—' : catalog.total}</strong>
+                <p>{c('可用模型', 'Models in the catalog')}</p>
+              </div>
+              <div>
+                <strong>
+                  {loading || error ? '—' : catalog.providers.length}
+                </strong>
+                <p>{c('模型厂商', 'Model providers')}</p>
+              </div>
+              <div>
+                <strong>1</strong>
+                <p>{c('统一 API Key', 'Unified API key')}</p>
+              </div>
+              <div>
+                <strong>{c('按量', 'Pay as you go')}</strong>
+                <p>{c('透明计费', 'Transparent pricing')}</p>
+              </div>
             </div>
-            <div>
-              <strong>
-                {loading || error ? '—' : catalog.providers.length}
-              </strong>
-              <p>{c('模型厂商', 'Model providers')}</p>
-            </div>
-            <div>
-              <strong>1</strong>
-              <p>{c('统一 API Key', 'Unified API key')}</p>
-            </div>
-            <div>
-              <strong>{c('按量', 'Pay as you go')}</strong>
-              <p>{c('透明计费', 'Transparent pricing')}</p>
-            </div>
-          </div>
-        </section>
-        <HomeFeatures />
+          </section>
+          <HomeFeatures />
+        </div>
         <section
           className={s.showcase}
           aria-label={c('平台模型展示', 'Model showcase')}

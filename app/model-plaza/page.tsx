@@ -1,4 +1,5 @@
 import ModelPlazaView from '@/sections/model-plaza/model-plaza-view';
+import { Suspense } from 'react';
 
 export const metadata = {
   title: 'Model marketplace',
@@ -6,5 +7,9 @@ export const metadata = {
 };
 
 export default function ModelPlazaPage() {
-  return <ModelPlazaView />;
+  return (
+    <Suspense>
+      <ModelPlazaView />
+    </Suspense>
+  );
 }

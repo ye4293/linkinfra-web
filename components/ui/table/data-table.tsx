@@ -56,6 +56,7 @@ interface DataTableProps<TData, TValue> {
   showColumnToggle?: boolean;
   initialColumnVisibility?: VisibilityState;
   minWidth?: string; // 添加 minWidth 属性
+  scrollMode?: 'table' | 'page';
   // 展开行功能
   renderExpandedRow?: (row: Row<TData>) => React.ReactNode;
   expandAllByDefault?: boolean;
@@ -75,6 +76,7 @@ export function DataTable<TData, TValue>({
   showColumnToggle = false,
   initialColumnVisibility,
   minWidth = '100%', // 默认为 100%
+  scrollMode = 'table',
   renderExpandedRow,
   expandAllByDefault = false
 }: DataTableProps<TData, TValue>) {
@@ -191,11 +193,11 @@ export function DataTable<TData, TValue>({
       <div
         className="mobile-table-container w-full overflow-auto rounded-md border shadow-sm"
         style={{
-          maxHeight: 'calc(100vh - 320px)',
+          maxHeight: scrollMode === 'table' ? 'calc(100vh - 320px)' : undefined,
           minHeight: '200px',
           touchAction: 'pan-x pan-y',
           WebkitOverflowScrolling: 'touch',
-          overscrollBehavior: 'contain'
+          overscrollBehavior: scrollMode === 'table' ? 'contain' : 'auto'
         }}
       >
         <Table
@@ -311,11 +313,11 @@ export function DataTable<TData, TValue>({
         </Table>
       </div>
 
-      <div className="flex flex-col gap-4 px-2 py-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4 rounded-md border bg-muted/20 px-4 py-4">
         <div className="flex flex-wrap items-center justify-between gap-4 sm:justify-start">
           <div className="flex items-center gap-2">
             <p className="text-xs font-medium text-muted-foreground sm:text-sm">
-              {tr('Rows')}
+              {tr('Rows per page')}
             </p>
             <Select
               value={`${pageSize}`}
@@ -329,7 +331,10 @@ export function DataTable<TData, TValue>({
                 }
               }}
             >
-              <SelectTrigger className="h-8 w-[70px]">
+              <SelectTrigger
+                className="h-9 w-[80px]"
+                aria-label={tr('Rows per page')}
+              >
                 <SelectValue placeholder={pageSize} />
               </SelectTrigger>
               <SelectContent side="top">
@@ -370,6 +375,7 @@ export function DataTable<TData, TValue>({
                 setCurrentPage(1);
               }, [setCurrentPage])}
               disabled={currentPage <= 1}
+              aria-label={tr('First page')}
             >
               <DoubleArrowLeftIcon className="h-4 w-4" />
             </Button>
@@ -381,6 +387,7 @@ export function DataTable<TData, TValue>({
                 setCurrentPage(Math.max(1, currentPage - 1));
               }, [setCurrentPage, currentPage])}
               disabled={currentPage <= 1}
+              aria-label={tr('Previous page')}
             >
               <ChevronLeftIcon className="h-4 w-4" />
             </Button>
@@ -400,6 +407,7 @@ export function DataTable<TData, TValue>({
                 setCurrentPage(Math.min(pageCount, currentPage + 1));
               }, [setCurrentPage, currentPage, pageCount])}
               disabled={currentPage >= pageCount}
+              aria-label={tr('Next page')}
             >
               <ChevronRightIcon className="h-4 w-4" />
             </Button>
@@ -411,6 +419,7 @@ export function DataTable<TData, TValue>({
                 setCurrentPage(pageCount);
               }, [setCurrentPage, pageCount])}
               disabled={currentPage >= pageCount}
+              aria-label={tr('Last page')}
             >
               <DoubleArrowRightIcon className="h-4 w-4" />
             </Button>

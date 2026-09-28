@@ -1339,6 +1339,7 @@ export default function LogTable() {
       {/* Desktop View */}
       <div className="hidden md:block">
         <DataTable
+          scrollMode="page"
           columns={filterColumns}
           data={logData}
           totalItems={totalData}
@@ -1407,7 +1408,7 @@ export default function LogTable() {
               variant="outline"
               size="sm"
               onClick={() => setPage(page + 1)}
-              disabled={logData.length < pageSize}
+              disabled={page * pageSize >= totalData}
             >
               Next
             </Button>

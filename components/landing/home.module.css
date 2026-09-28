@@ -5,11 +5,23 @@
   --accent: #7347eb;
   --paper: #fdfdfe;
   color: var(--ink);
-  background: var(--paper);
+  min-height: 100vh;
+  background: radial-gradient(
+    ellipse 85% 65% at 50% 0%,
+    #eee9ff 0%,
+    #f8f6ff 55%,
+    #ffffff 100%
+  );
   color-scheme: light;
   font-family: var(--font-sans), 'PingFang SC', 'Microsoft YaHei', sans-serif;
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
+}
+/* Let content grow on small screens, while keeping the next section below
+   the initial viewport. The shared header is at least 61px tall. */
+.intro {
+  display: flow-root;
+  min-height: calc(100svh - 61px);
 }
 .showcase {
   max-width: 1248px;

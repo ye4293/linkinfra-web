@@ -11,9 +11,7 @@ import { STATUS_OPTIONS, useTableFilters } from './use-table-filters';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
 import {
-  Copy,
   Calendar,
   Clock,
   Database,
@@ -25,6 +23,8 @@ import { renderQuota } from '@/utils/render';
 import dayjs from 'dayjs';
 import { CellAction } from './cell-action';
 import { ClientSetupDialog } from '../client-setup-dialog';
+import { ModelSetupDialog } from '../model-setup-dialog';
+import { ApiKeyCopy } from '../api-key-copy';
 
 // 移动端Token卡片
 const MobileTokenCard = ({ row }: { row: Token }) => {
@@ -74,13 +74,6 @@ const MobileTokenCard = ({ row }: { row: Token }) => {
   const status = statusConfig[token.status ?? 0];
   const isInactive = token.status !== 1;
 
-  const handleCopy = () => {
-    navigator.clipboard
-      .writeText(token.key)
-      .then(() => toast.success(tr('Copied to clipboard!')))
-      .catch(() => toast.error(tr('Failed to copy!')));
-  };
-
   return (
     <Card
       className={`mb-4 overflow-hidden border-l-4 text-sm ${
@@ -88,7 +81,7 @@ const MobileTokenCard = ({ row }: { row: Token }) => {
       } ${status?.cardBgClass ?? ''}`}
     >
       <CardContent className="space-y-3 p-4">
-        <div className="flex items-center justify-between border-b pb-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2">
           <div
             className={`max-w-[200px] truncate font-medium ${
               isInactive ? 'opacity-60' : ''
@@ -160,16 +153,10 @@ const MobileTokenCard = ({ row }: { row: Token }) => {
           </div>
         </div>
 
-        <Button
-          variant="outline"
-          size="sm"
-          className="mt-2 w-full"
-          onClick={handleCopy}
-        >
-          <Copy className="mr-2 h-3 w-3" />
-          {tr('Copy Token Key')}
-        </Button>
-        <ClientSetupDialog token={token} />
+        <div className="flex flex-wrap items-center gap-2">
+          <ApiKeyCopy value={token.key} />
+          <ClientSetupDialog token={token} />
+        </div>
       </CardContent>
     </Card>
   );
@@ -199,6 +186,7 @@ export default function TokenTable({
 
   return (
     <div className="space-y-4">
+      <ModelSetupDialog tokens={data} />
       <div className="flex flex-wrap items-center gap-4">
         <DataTableSearch
           searchKey={tr('ID,Name,Key')}
@@ -225,6 +213,7 @@ export default function TokenTable({
       {/* Desktop View */}
       <div className="hidden md:block">
         <DataTable
+          scrollMode="page"
           columns={columns}
           data={data}
           totalItems={totalData}
@@ -265,7 +254,7 @@ export default function TokenTable({
               variant="outline"
               size="sm"
               onClick={() => setPage(page + 1)}
-              disabled={data.length < pageSize}
+              disabled={page * pageSize >= totalData}
             >
               {tr('Next')}
             </Button>

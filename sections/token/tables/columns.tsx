@@ -2,15 +2,14 @@
 import { useText } from '@/components/locale-text';
 import dayjs from 'dayjs';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
 import { Token } from '@/lib/types/token';
 import { ColumnDef } from '@tanstack/react-table';
 import { CellAction } from './cell-action';
 import { ClientSetupDialog } from '../client-setup-dialog';
 import { renderQuota } from '@/utils/render';
 import { CheckCircle2, Ban, Clock, AlertTriangle } from 'lucide-react';
+import { ApiKeyCopy } from '../api-key-copy';
 
 export function useTokenColumns(): ColumnDef<Token>[] {
   const tr = useText();
@@ -102,32 +101,16 @@ export function useTokenColumns(): ColumnDef<Token>[] {
     },
     {
       id: 'copyToken',
-      header: () => <div className="text-center">{tr('Copy')}</div>,
-      cell: ({ row }) => {
-        const handleCopy = () => {
-          navigator.clipboard
-            .writeText(row.original.key)
-            .then(() => {
-              toast.success(tr('Copied to clipboard!'));
-            })
-            .catch(() => {
-              toast.error(tr('Failed to copy!'));
-            });
-        };
-
-        return (
-          <div className="text-center">
-            <Button onClick={handleCopy} className="copy-button">
-              {tr('Copy')}
-            </Button>
-            {/* <Toaster position="top-center" /> */}
-          </div>
-        );
-      }
+      header: () => <div className="text-center">{tr('API key')}</div>,
+      cell: ({ row }) => (
+        <div className="text-center">
+          <ApiKeyCopy value={row.original.key} />
+        </div>
+      )
     },
     {
       id: 'clientSetup',
-      header: () => <div className="text-center">{tr('Client setup')}</div>,
+      header: () => <div className="text-center">{tr('Connect an app')}</div>,
       cell: ({ row }) => (
         <div className="text-center">
           <ClientSetupDialog token={row.original} />
@@ -137,7 +120,7 @@ export function useTokenColumns(): ColumnDef<Token>[] {
     },
     {
       id: 'actions',
-      header: () => <div className="text-center">{tr('Actions')}</div>,
+      header: () => <div className="text-center">{tr('Manage key')}</div>,
       cell: ({ row }) => (
         <div className="text-center">
           <CellAction data={row.original} />

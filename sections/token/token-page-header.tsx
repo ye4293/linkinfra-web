@@ -12,14 +12,17 @@ export function TokenPageHeader({ total }: { total: number }) {
   const model = useSearchParams().get('model');
   const query = model ? `?${new URLSearchParams({ model })}` : '';
   return (
-    <div className="flex items-start justify-between gap-3">
+    <div className="flex flex-wrap items-start justify-between gap-3">
       <Heading
         title={`${tr('Keys')} (${total})`}
         description={tr('Manage API keys and their spending limits.')}
       />
       <Link
         href={`/dashboard/token/create${query}`}
-        className={buttonVariants({ variant: 'default' })}
+        className={buttonVariants({
+          variant: 'default',
+          className: 'shrink-0 whitespace-nowrap'
+        })}
       >
         <Plus className="mr-2 h-4 w-4" />
         {tr('Add New')}

@@ -49,7 +49,15 @@ interface ParamsOption extends Partial<Token> {
   // models?: string;
 }
 
-export default function TokenForm() {
+export default function TokenForm({
+  create = false,
+  onCreated,
+  onCancel
+}: {
+  create?: boolean;
+  onCreated?: (token?: Token) => void;
+  onCancel?: () => void;
+} = {}) {
   const tr = useText();
   const router = useRouter();
   const { lang } = useLocale();
@@ -58,12 +66,24 @@ export default function TokenForm() {
     selectedModel ? `?${new URLSearchParams({ model: selectedModel })}` : ''
   }`;
   const formSchema = makeFormSchema(tr('Name is required.'));
-  const { tokenId } = useParams();
+  const params = useParams();
+  const tokenId = create ? 'create' : params.tokenId;
 
   const [isLoading, setIsLoading] = useState(true);
   const [isExpired, setIsExpired] = useState<boolean>(true);
   const [tokenData, setTokenData] = useState<Object | null>(null);
   const [displayValue, setDisplayValue] = useState<string>(''); // 用于管理显示的美元金额
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: create && selectedModel ? selectedModel.slice(0, 30) : '',
+      expired_time: undefined,
+      remain_quota: undefined,
+      unlimited_quota: false
+    }
+  });
+  const unlimitedQuota = form.watch('unlimited_quota');
 
   useEffect(() => {
     setIsLoading(true);
@@ -108,18 +128,7 @@ export default function TokenForm() {
     };
 
     getTokenDetail();
-  }, [tokenId]);
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: '',
-      expired_time: undefined,
-      remain_quota: undefined,
-      unlimited_quota: false
-      // token_remind_threshold: undefined
-    }
-  });
+  }, [tokenId, form]);
 
   useEffect(() => {
     // Force re-render when unlimited_quota changes
@@ -129,7 +138,7 @@ export default function TokenForm() {
     if (currentQuota !== undefined) {
       setDisplayValue(renderQuotaNum(currentQuota).toString());
     }
-  }, [form.getValues('unlimited_quota')]);
+  }, [form, unlimitedQuota]);
 
   if (isLoading && tokenId !== 'create') {
     return (
@@ -170,18 +179,23 @@ export default function TokenForm() {
     // }
     if (isExpired) params.expired_time = -1;
     // params.type = Number(params.type);
-    const res = await fetch(`/api/token`, {
-      method: params.id ? 'PUT' : 'POST',
-      body: JSON.stringify(params),
-      credentials: 'include'
-    });
-    const { success, message } = await res.json();
-    // console.log('data', data);
-    if (success) {
-      router.push(listHref);
-      router.refresh();
-    } else {
-      toast.error(message || tr('Submit failed'));
+    try {
+      const res = await fetch(`/api/token`, {
+        method: params.id ? 'PUT' : 'POST',
+        body: JSON.stringify(params),
+        credentials: 'include'
+      });
+      const { success, message, data } = await res.json();
+      // console.log('data', data);
+      if (success) {
+        if (onCreated) onCreated(data?.key ? data : undefined);
+        else router.push(listHref);
+        router.refresh();
+      } else {
+        toast.error(message || tr('Submit failed'));
+      }
+    } catch {
+      toast.error(tr('Submit failed'));
     }
   }
 
@@ -395,10 +409,20 @@ export default function TokenForm() {
               </div>
             </div>
             <div className="flex gap-4">
-              <Button type="button" onClick={() => router.push(listHref)}>
+              <Button
+                type="button"
+                disabled={form.formState.isSubmitting}
+                onClick={() => (onCancel ? onCancel() : router.push(listHref))}
+              >
                 {tr('Go Back')}
               </Button>
-              <Button type="submit">{tr('Submit')}</Button>
+              <Button type="submit" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting
+                  ? tr('Saving…')
+                  : create
+                  ? tr('Create API key')
+                  : tr('Submit')}
+              </Button>
             </div>
           </form>
         </Form>

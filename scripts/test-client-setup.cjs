@@ -14,6 +14,18 @@ const compiled = ts.transpileModule(
 );
 const client = {};
 new Function('exports', compiled.outputText)(client);
+
+test('API key copy normalizes the prefix while display never exposes the full key', () => {
+  const raw = 'abcd0123456789wxyz';
+  assert.equal(client.clientApiKey(raw), `sk-${raw}`);
+  assert.equal(client.clientApiKey(`sk-${raw}`), `sk-${raw}`);
+  assert.equal(client.maskedApiKey(raw), 'sk-abcd********wxyz');
+  assert.equal(client.maskedApiKey(`sk-${raw}`), 'sk-abcd********wxyz');
+  assert.equal(client.maskedApiKey('tiny'), 'sk-********');
+  assert.equal(client.maskedApiKey(''), '—');
+  assert.equal(client.maskedApiKey('sk-abcd********wxyz'), '—');
+  assert.throws(() => client.clientApiKey('sk-abcd********wxyz'));
+});
 const setup = {
   serverAddress: 'https://api.example.com/gateway/v1/',
   apiKey: 'test-only+&=/秘密',

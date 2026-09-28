@@ -1,392 +1,310 @@
-'use client';
+﻿'use client';
+
+import { useId, useState } from 'react';
+import { format } from 'date-fns';
+import { enUS, zhCN } from 'date-fns/locale';
+import { CalendarIcon } from '@radix-ui/react-icons';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger
-} from '@/components/ui/popover';
-import { Separator } from '@/components/ui/separator';
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+  DialogTrigger
+} from '@/components/ui/dialog';
+import { useText } from '@/components/locale-text';
+import { useLocale } from '@/components/providers/locale-provider';
 import { cn } from '@/lib/utils';
-import { CalendarIcon } from '@radix-ui/react-icons';
-import * as React from 'react';
-import { DateRange } from 'react-day-picker';
+import {
+  DateTimeRange,
+  RangePreset,
+  presetRange,
+  validDateRange
+} from '@/lib/date-time-range';
 
-interface DateTimeRange {
-  from: Date | undefined;
-  to: Date | undefined;
-}
-
-interface DateTimeRangePickerProps {
-  value?: DateTimeRange;
-  onValueChange?: (value: DateTimeRange | undefined) => void;
-  className?: string;
-}
-
-// 快捷时间范围选项
-const TIME_PRESETS = [
-  {
-    label: 'Today',
-    getValue: () => {
-      const now = new Date();
-      const startOfDay = new Date(now);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(now);
-      endOfDay.setHours(23, 59, 59, 999);
-      return { from: startOfDay, to: endOfDay };
-    }
-  },
-  {
-    label: 'Yesterday',
-    getValue: () => {
-      const now = new Date();
-      const yesterday = new Date(now);
-      yesterday.setDate(now.getDate() - 1);
-      const startOfDay = new Date(yesterday);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(yesterday);
-      endOfDay.setHours(23, 59, 59, 999);
-      return { from: startOfDay, to: endOfDay };
-    }
-  },
-  {
-    label: 'Last 7 days',
-    getValue: () => {
-      const now = new Date();
-      const sevenDaysAgo = new Date(now);
-      sevenDaysAgo.setDate(now.getDate() - 7);
-      sevenDaysAgo.setHours(0, 0, 0, 0);
-      const endOfToday = new Date(now);
-      endOfToday.setHours(23, 59, 59, 999);
-      return { from: sevenDaysAgo, to: endOfToday };
-    }
-  },
-  {
-    label: 'Last 30 days',
-    getValue: () => {
-      const now = new Date();
-      const thirtyDaysAgo = new Date(now);
-      thirtyDaysAgo.setDate(now.getDate() - 30);
-      thirtyDaysAgo.setHours(0, 0, 0, 0);
-      const endOfToday = new Date(now);
-      endOfToday.setHours(23, 59, 59, 999);
-      return { from: thirtyDaysAgo, to: endOfToday };
-    }
-  },
-  {
-    label: 'This week',
-    getValue: () => {
-      const now = new Date();
-      const startOfWeek = new Date(now);
-      const day = startOfWeek.getDay();
-      const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
-      startOfWeek.setDate(diff);
-      startOfWeek.setHours(0, 0, 0, 0);
-      const endOfToday = new Date(now);
-      endOfToday.setHours(23, 59, 59, 999);
-      return { from: startOfWeek, to: endOfToday };
-    }
-  },
-  {
-    label: 'This month',
-    getValue: () => {
-      const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      startOfMonth.setHours(0, 0, 0, 0);
-      const endOfToday = new Date(now);
-      endOfToday.setHours(23, 59, 59, 999);
-      return { from: startOfMonth, to: endOfToday };
-    }
-  }
+const presets: { id: RangePreset; label: string }[] = [
+  { id: 'today', label: 'Today' },
+  { id: 'yesterday', label: 'Yesterday' },
+  { id: 'week', label: 'Last 7 days' },
+  { id: 'month', label: 'Last 30 days' },
+  { id: 'thisWeek', label: 'This week' },
+  { id: 'thisMonth', label: 'This month' }
 ];
+const emptyRange: DateTimeRange = { from: undefined, to: undefined };
 
 export function DateTimeRangePicker({
   value,
   onValueChange,
   className
-}: DateTimeRangePickerProps) {
-  const [range, setRange] = React.useState<DateTimeRange>(
-    value || { from: undefined, to: undefined }
-  );
-  const [startTimeString, setStartTimeString] = React.useState('');
-  const [endTimeString, setEndTimeString] = React.useState('');
-  const [open, setOpen] = React.useState(false);
+}: {
+  value?: DateTimeRange;
+  onValueChange?: (value: DateTimeRange | undefined) => void;
+  className?: string;
+}) {
+  const tr = useText();
+  const { lang } = useLocale();
+  const id = useId();
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState<DateTimeRange>(value || emptyRange);
+  const [active, setActive] = useState<'from' | 'to'>('from');
+  const [month, setMonth] = useState(value?.from || new Date());
+  const [timezone, setTimezone] = useState('');
+  const locale = lang === 'zh' ? zhCN : enUS;
+  const display = (date?: Date) =>
+    date && Number.isFinite(date.getTime())
+      ? format(date, 'yyyy-MM-dd HH:mm:ss')
+      : tr('Not selected');
+  const valid = validDateRange(draft);
+  const reversed = draft.from && draft.to && draft.from > draft.to;
 
-  // 格式化日期时间为字符串
-  const formatDateTime = (date: Date | undefined): string => {
-    if (!date) return '';
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const seconds = String(date.getSeconds()).padStart(2, '0');
-    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-  };
-
-  // 解析字符串为日期时间
-  const parseDateTime = (dateTimeString: string): Date | undefined => {
-    if (!dateTimeString) return undefined;
-    try {
-      // 支持多种格式
-      const formats = [
-        /^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})$/,
-        /^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})$/,
-        /^(\d{4})-(\d{2})-(\d{2})$/
-      ];
-
-      for (const format of formats) {
-        const match = dateTimeString.match(format);
-        if (match) {
-          const [
-            ,
-            year,
-            month,
-            day,
-            hours = '00',
-            minutes = '00',
-            seconds = '00'
-          ] = match;
-          return new Date(
-            parseInt(year),
-            parseInt(month) - 1,
-            parseInt(day),
-            parseInt(hours),
-            parseInt(minutes),
-            parseInt(seconds)
-          );
-        }
-      }
-      return undefined;
-    } catch (error) {
-      return undefined;
+  const changeOpen = (next: boolean) => {
+    if (next) {
+      setDraft(value || emptyRange);
+      setActive('from');
+      setMonth(value?.from || new Date());
+      setTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone);
     }
+    setOpen(next);
   };
-
-  // 同步外部值到内部状态
-  React.useEffect(() => {
-    if (value) {
-      setRange(value);
-      setStartTimeString(formatDateTime(value.from));
-      setEndTimeString(formatDateTime(value.to));
-    }
-  }, [value]);
-
-  // 处理快捷选择
-  const handlePresetSelect = (preset: (typeof TIME_PRESETS)[0]) => {
-    const newRange = preset.getValue();
-    setRange(newRange);
-    setStartTimeString(formatDateTime(newRange.from));
-    setEndTimeString(formatDateTime(newRange.to));
-    onValueChange?.(newRange);
+  const selectDay = (day: Date) => {
+    const date = new Date(day);
+    const previous = draft[active];
+    date.setHours(
+      previous?.getHours() ?? (active === 'from' ? 0 : 23),
+      previous?.getMinutes() ?? (active === 'from' ? 0 : 59),
+      previous?.getSeconds() ?? (active === 'from' ? 0 : 59),
+      0
+    );
+    setDraft({ ...draft, [active]: date });
+    if (active === 'from') setActive('to');
   };
-
-  // 处理手动输入的开始时间变更
-  const handleStartTimeChange = (value: string) => {
-    setStartTimeString(value);
-    const date = parseDateTime(value);
-    if (date || value === '') {
-      const newRange = { from: date, to: range.to };
-      setRange(newRange);
-      onValueChange?.(newRange);
-    }
-  };
-
-  // 处理手动输入的结束时间变更
-  const handleEndTimeChange = (value: string) => {
-    setEndTimeString(value);
-    const date = parseDateTime(value);
-    if (date || value === '') {
-      const newRange = { from: range.from, to: date };
-      setRange(newRange);
-      onValueChange?.(newRange);
-    }
-  };
-
-  // 处理日历选择
-  const handleCalendarSelect = (dateRange: DateRange | undefined) => {
-    if (dateRange) {
-      // 如果选择了日期，保留原有时间部分或设置默认时间
-      const from = dateRange.from ? new Date(dateRange.from) : undefined;
-      const to = dateRange.to ? new Date(dateRange.to) : undefined;
-
-      if (from && range.from) {
-        from.setHours(
-          range.from.getHours(),
-          range.from.getMinutes(),
-          range.from.getSeconds()
-        );
-      } else if (from) {
-        from.setHours(0, 0, 0, 0);
-      }
-
-      if (to && range.to) {
-        to.setHours(
-          range.to.getHours(),
-          range.to.getMinutes(),
-          range.to.getSeconds()
-        );
-      } else if (to) {
-        to.setHours(23, 59, 59, 999);
-      }
-
-      const newRange = { from, to };
-      setRange(newRange);
-      setStartTimeString(formatDateTime(from));
-      setEndTimeString(formatDateTime(to));
-      onValueChange?.(newRange);
-    }
-  };
-
-  // 清除选择
-  const handleClear = () => {
-    const newRange = { from: undefined, to: undefined };
-    setRange(newRange);
-    setStartTimeString('');
-    setEndTimeString('');
-    onValueChange?.(newRange);
-    setOpen(false);
-  };
-
-  // 显示文本
-  const getDisplayText = () => {
-    if (range.from && range.to) {
-      return `${formatDateTime(range.from)} ~ ${formatDateTime(range.to)}`;
-    } else if (range.from) {
-      return `From ${formatDateTime(range.from)}`;
-    } else if (range.to) {
-      return `To ${formatDateTime(range.to)}`;
-    }
-    return 'Select date range';
+  const changeTime = (
+    part: 'hours' | 'minutes' | 'seconds',
+    amount: number
+  ) => {
+    if (!draft[active]) return;
+    const date = new Date(draft[active]!);
+    if (part === 'hours') date.setHours(amount);
+    else if (part === 'minutes') date.setMinutes(amount);
+    else date.setSeconds(amount);
+    setDraft({ ...draft, [active]: date });
   };
 
   return (
-    <div className={cn('grid gap-2', className)}>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
+    <div className={cn('grid min-w-0 gap-2', className)}>
+      <Dialog open={open} onOpenChange={changeOpen}>
+        <DialogTrigger asChild>
           <Button
             variant="outline"
-            className={cn(
-              'w-full min-w-0 max-w-full justify-start text-left font-normal sm:w-[380px]',
-              !range.from && !range.to && 'text-muted-foreground'
-            )}
+            aria-label={tr('Select date range')}
+            className="w-full min-w-0 justify-start text-left font-normal sm:max-w-[420px]"
           >
-            <CalendarIcon className="mr-2 h-3 w-3 flex-shrink-0 sm:h-4 sm:w-4" />
+            <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
             <span className="truncate text-xs sm:text-sm">
-              {getDisplayText()}
+              {value?.from || value?.to
+                ? `${display(value.from)} → ${display(value.to)}`
+                : tr('All time')}
             </span>
           </Button>
-        </PopoverTrigger>
-        <PopoverContent
-          className="max-h-[var(--radix-popover-content-available-height)] w-auto max-w-[calc(100vw-24px)] overflow-y-auto overscroll-contain p-0"
-          align="start"
-          collisionPadding={12}
+        </DialogTrigger>
+        <DialogContent
+          aria-label={tr('Select date range')}
+          className="block max-h-[calc(100dvh-24px)] w-[560px] max-w-[calc(100vw-24px)] overflow-y-auto p-0"
         >
-          <div className="flex flex-col sm:flex-row">
-            {/* 左侧：快捷选择 */}
-            <div className="border-b p-3 sm:border-b-0 sm:border-r">
-              <div className="space-y-1">
-                <h4 className="mb-2 text-sm font-medium leading-none">
-                  Quick select
-                </h4>
-                <div className="grid grid-cols-2 gap-1 sm:grid-cols-1">
-                  {TIME_PRESETS.map((preset) => (
-                    <Button
-                      key={preset.label}
-                      variant="ghost"
-                      size="sm"
-                      className="w-full justify-start text-xs sm:text-sm"
-                      onClick={() => handlePresetSelect(preset)}
+          <div className="space-y-4 p-3 sm:p-4">
+            <div>
+              <DialogTitle className="pr-6 font-semibold">
+                {tr('Select date range')}
+              </DialogTitle>
+              <DialogDescription className="mt-1 text-xs text-muted-foreground">
+                {tr('Times use your local timezone')}
+                {timezone ? ` · ${timezone}` : ''}
+              </DialogDescription>
+            </div>
+            <div
+              className="flex flex-wrap gap-2"
+              role="group"
+              aria-label={tr('Quick select')}
+            >
+              {presets.map((preset) => (
+                <Button
+                  key={preset.id}
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const range = presetRange(preset.id);
+                    setDraft(range);
+                    setMonth(range.from!);
+                    setActive('from');
+                  }}
+                >
+                  {tr(preset.label)}
+                </Button>
+              ))}
+            </div>
+            <div
+              className="grid grid-cols-1 gap-2 sm:grid-cols-2"
+              role="group"
+              aria-label={tr('Range endpoints')}
+            >
+              {(['from', 'to'] as const).map((endpoint) => (
+                <button
+                  key={endpoint}
+                  type="button"
+                  aria-pressed={active === endpoint}
+                  aria-label={tr(
+                    endpoint === 'from'
+                      ? 'Start date and time'
+                      : 'End date and time'
+                  )}
+                  className={cn(
+                    'rounded-lg border p-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary',
+                    active === endpoint && 'border-primary bg-primary/5'
+                  )}
+                  onClick={() => {
+                    setActive(endpoint);
+                    setMonth(draft[endpoint] || new Date());
+                  }}
+                >
+                  <span className="block text-xs font-medium text-muted-foreground">
+                    {tr(endpoint === 'from' ? 'Start' : 'End')}
+                  </span>
+                  <span className="mt-1 block text-sm tabular-nums">
+                    {display(draft[endpoint])}
+                  </span>
+                </button>
+              ))}
+            </div>
+            <p
+              id={`${id}-hint`}
+              className="text-sm font-medium"
+              aria-live="polite"
+            >
+              {tr(
+                active === 'from'
+                  ? 'Choose the start date'
+                  : 'Choose the end date'
+              )}
+            </p>
+            <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+              <Calendar
+                mode="range"
+                locale={locale}
+                month={month}
+                onMonthChange={setMonth}
+                selected={
+                  reversed ? { from: draft[active], to: draft[active] } : draft
+                }
+                onDayClick={(day, modifiers) => {
+                  if (!modifiers.disabled) selectDay(day);
+                }}
+                disabled={{ after: new Date(), before: new Date(1900, 0, 1) }}
+                className="shrink-0 rounded-lg border p-2"
+                aria-describedby={`${id}-hint`}
+              />
+              <div className="w-full min-w-0 space-y-3">
+                <p className="text-xs font-medium">
+                  {tr(active === 'from' ? 'Start time' : 'End time')}
+                </p>
+                <div className="grid grid-cols-3 gap-2">
+                  {(['hours', 'minutes', 'seconds'] as const).map((part) => (
+                    <label
+                      key={part}
+                      className="min-w-0 space-y-1 text-xs text-muted-foreground"
                     >
-                      {preset.label}
-                    </Button>
+                      <span>
+                        {tr(
+                          part === 'hours'
+                            ? 'Hour'
+                            : part === 'minutes'
+                            ? 'Minute'
+                            : 'Second'
+                        )}
+                      </span>
+                      <select
+                        className="h-10 w-full rounded-md border bg-background px-1 text-sm text-foreground"
+                        aria-label={tr(
+                          part === 'hours'
+                            ? 'Hour'
+                            : part === 'minutes'
+                            ? 'Minute'
+                            : 'Second'
+                        )}
+                        disabled={!draft[active]}
+                        value={
+                          draft[active]
+                            ? part === 'hours'
+                              ? draft[active]!.getHours()
+                              : part === 'minutes'
+                              ? draft[active]!.getMinutes()
+                              : draft[active]!.getSeconds()
+                            : 0
+                        }
+                        onChange={(event) =>
+                          changeTime(part, Number(event.target.value))
+                        }
+                      >
+                        {Array.from(
+                          { length: part === 'hours' ? 24 : 60 },
+                          (_, n) => (
+                            <option key={n} value={n}>
+                              {String(n).padStart(2, '0')}
+                            </option>
+                          )
+                        )}
+                      </select>
+                    </label>
                   ))}
                 </div>
-                <Separator className="my-2" />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full justify-start text-xs text-muted-foreground sm:text-sm"
-                  onClick={handleClear}
-                >
-                  Clear
-                </Button>
-              </div>
-            </div>
-
-            {/* 右侧：详细设置 */}
-            <div className="min-w-0 space-y-3 p-3">
-              <h4 className="text-sm font-medium leading-none">Custom range</h4>
-
-              {/* 手动输入时间 */}
-              <div className="space-y-2">
-                <div>
-                  <Label htmlFor="start-time" className="text-xs">
-                    Start
-                  </Label>
-                  <Input
-                    id="start-time"
-                    placeholder="2025-01-01 00:00:00"
-                    value={startTimeString}
-                    onChange={(e) => handleStartTimeChange(e.target.value)}
-                    className="text-xs"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="end-time" className="text-xs">
-                    End
-                  </Label>
-                  <Input
-                    id="end-time"
-                    placeholder="2025-01-01 23:59:59"
-                    value={endTimeString}
-                    onChange={(e) => handleEndTimeChange(e.target.value)}
-                    className="text-xs"
-                  />
-                </div>
-              </div>
-
-              {/* 日历辅助选择 - 在移动端隐藏或简化 */}
-              <div className="hidden sm:block">
-                <Label className="text-xs">Calendar (optional)</Label>
-                <Calendar
-                  mode="range"
-                  selected={{
-                    from: range.from,
-                    to: range.to
-                  }}
-                  onSelect={handleCalendarSelect}
-                  numberOfMonths={1}
-                  disabled={(date) =>
-                    date > new Date() || date < new Date('1900-01-01')
-                  }
-                  className="rounded-md border-0"
-                />
-              </div>
-
-              {/* 移动端简化日历 */}
-              <div className="sm:hidden">
-                <Label className="text-xs">Calendar</Label>
-                <Calendar
-                  mode="range"
-                  selected={{
-                    from: range.from,
-                    to: range.to
-                  }}
-                  onSelect={handleCalendarSelect}
-                  numberOfMonths={1}
-                  disabled={(date) =>
-                    date > new Date() || date < new Date('1900-01-01')
-                  }
-                  className="origin-top-left scale-90 rounded-md border-0"
-                />
+                <p className="text-xs leading-5 text-muted-foreground">
+                  {tr(
+                    'Select Start or End above to adjust that date and time. Changes take effect when you apply.'
+                  )}
+                </p>
+                {reversed && (
+                  <p role="alert" className="text-sm text-destructive">
+                    {tr('End must be on or after Start.')}
+                  </p>
+                )}
               </div>
             </div>
           </div>
-        </PopoverContent>
-      </Popover>
+          <div className="sticky bottom-0 flex flex-wrap items-center justify-between gap-2 border-t bg-popover p-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                onValueChange?.(undefined);
+                setOpen(false);
+              }}
+            >
+              {tr('All time')}
+            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setOpen(false)}
+              >
+                {tr('Cancel')}
+              </Button>
+              <Button
+                size="sm"
+                disabled={!valid}
+                onClick={() => {
+                  if (valid) {
+                    onValueChange?.(draft);
+                    setOpen(false);
+                  }
+                }}
+              >
+                {tr('Apply range')}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

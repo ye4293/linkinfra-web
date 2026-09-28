@@ -2,7 +2,8 @@
 
 import { searchParams } from '@/lib/searchparams';
 import { useQueryState } from 'nuqs';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
+import { rangeFromTimestamps } from '@/lib/date-time-range';
 
 interface DateTimeRange {
   from: Date | undefined;
@@ -122,25 +123,21 @@ export function useTableFilters() {
       .withDefault(toTimestamp(todayRange.to))
   );
 
-  const [dateTimeRange, setDateTimeRange] = useState<DateTimeRange>(() => ({
-    from: startTimestamp
-      ? new Date(parseInt(startTimestamp) * 1000)
-      : todayRange.from,
-    to: endTimestamp ? new Date(parseInt(endTimestamp) * 1000) : todayRange.to
-  }));
+  const dateTimeRange = useMemo(
+    () => rangeFromTimestamps(startTimestamp, endTimestamp),
+    [startTimestamp, endTimestamp]
+  );
 
   // 将日期时间转换为秒级时间戳
   const handleDateTimeRangeChange = useCallback(
     (range: DateTimeRange | undefined) => {
-      setDateTimeRange(range || { from: undefined, to: undefined });
-
       // 直接使用精确的时间戳（秒）
       const startTimestamp = range?.from
         ? Math.floor(range.from.getTime() / 1000).toString()
-        : null;
+        : '';
       const endTimestamp = range?.to
         ? Math.floor(range.to.getTime() / 1000).toString()
-        : null;
+        : '';
 
       setStartTimestamp(startTimestamp);
       setEndTimestamp(endTimestamp);
@@ -161,7 +158,6 @@ export function useTableFilters() {
     const today = getTodayRange();
     setStartTimestamp(toTimestamp(today.from));
     setEndTimestamp(toTimestamp(today.to));
-    setDateTimeRange(today);
 
     setPage(1);
   }, [
@@ -174,8 +170,7 @@ export function useTableFilters() {
     setTypeFilter,
     setPage,
     setStartTimestamp,
-    setEndTimestamp,
-    setDateTimeRange
+    setEndTimestamp
   ]);
 
   const isAnyFilterActive = useMemo(() => {

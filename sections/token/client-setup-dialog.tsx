@@ -41,7 +41,7 @@ export function ClientSetupDialog({ token }: { token: Token }) {
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <Settings2 className="mr-2 h-4 w-4" />
-          {tr('Set up client')}
+          {tr('Connect an app')}
         </Button>
       </DialogTrigger>
       {open && <ClientSetupContent token={token} />}
@@ -49,7 +49,13 @@ export function ClientSetupDialog({ token }: { token: Token }) {
   );
 }
 
-function ClientSetupContent({ token }: { token: Token }) {
+export function ClientSetupContent({
+  token,
+  onChangeKey
+}: {
+  token: Token;
+  onChangeKey?: () => void;
+}) {
   const tr = useText();
   const selectedModel = useSearchParams().get('model') || '';
   const selection = setupSelection([], selectedModel);
@@ -208,6 +214,16 @@ function ClientSetupContent({ token }: { token: Token }) {
           )}
         </DialogDescription>
       </DialogHeader>
+      {onChangeKey && (
+        <Button
+          variant="outline"
+          size="sm"
+          className="shrink-0 self-start"
+          onClick={onChangeKey}
+        >
+          {tr('Choose another key')}
+        </Button>
+      )}
       <div
         className="grid shrink-0 grid-cols-1 gap-2 sm:grid-cols-3"
         aria-label={tr('Client')}

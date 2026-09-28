@@ -43,6 +43,18 @@ export function clientApiKey(key: string) {
   return value.startsWith('sk-') ? value : `sk-${value}`;
 }
 
+export function maskedApiKey(key: string) {
+  try {
+    const value = clientApiKey(key).slice(3);
+    // Short or malformed keys must never become fully visible.
+    return value.length > 8
+      ? `sk-${value.slice(0, 4)}********${value.slice(-4)}`
+      : 'sk-********';
+  } catch {
+    return '—';
+  }
+}
+
 export function buildClientImport(
   target: 'cherry' | CodingApp,
   setup: ClientSetup

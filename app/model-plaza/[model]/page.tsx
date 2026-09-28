@@ -8,12 +8,18 @@ export const metadata = {
 export default function ModelDetailPage({
   searchParams
 }: {
-  searchParams: { channel_id?: string; source_key?: string };
+  searchParams: { channel_id?: string; source_key?: string; returnTo?: string };
 }) {
   return (
     <ModelDetailView
       channelId={searchParams.channel_id}
       sourceKey={searchParams.source_key}
+      returnTo={
+        typeof searchParams.returnTo === 'string' &&
+        searchParams.returnTo.startsWith('/model-plaza?')
+          ? searchParams.returnTo
+          : '/model-plaza'
+      }
     />
   );
 }

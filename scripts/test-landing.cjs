@@ -156,6 +156,11 @@ test('model labels preserve version numbers and distinguish thinking variants', 
 });
 
 test('search accepts displayed labels, exact IDs, and the visible provider alias', () => {
+  const gpt = model('gpt-6-astra', { provider: 'OpenAI' });
+  for (const query of ['gpt6', 'GPT 6', 'gpt-6', 'gpt_6', '  gpt6  ']) {
+    assert.equal(catalog.matchesModel(gpt, query), true, query);
+  }
+  assert.equal(catalog.matchesModel(gpt, 'gpt7'), false);
   assert.equal(
     catalog.matchesModel(model('claude-fable-5-1'), ' Claude Fable 5.1 '),
     true
@@ -191,7 +196,10 @@ test('homepage features the newest direct Opus ahead of Fable', () => {
   ];
   const featured = catalog.orderModels(models)[0];
   assert.equal(featured.model_name, 'claude-opus-5-5');
-  assert.equal(catalog.modelDetailHref(featured), '/model-plaza/claude-opus-5-5');
+  assert.equal(
+    catalog.modelDetailHref(featured),
+    '/model-plaza/claude-opus-5-5'
+  );
 });
 
 test('numeric release ordering selects newer direct models without mutating input', () => {

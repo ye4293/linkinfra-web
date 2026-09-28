@@ -109,69 +109,69 @@ export default function RankingsView() {
 
   return (
     <main className="mx-auto w-full max-w-6xl space-y-10 px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
-      <header className="space-y-4">
-        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-          <BarChart3 className="h-4 w-4" />
-          {c('平台用量', 'Platform usage')}
-        </div>
-        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-          {c('模型排行榜', 'Model rankings')}
-        </h1>
-        <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-          {c(
-            '看看大家正在使用哪些模型。按平台记录的输入与输出 Token 总量排名，每天更新。',
-            'Discover the models people are using. Ranked by recorded input and output tokens on this platform, updated daily.'
-          )}
-        </p>
-        {data && (
-          <p className="text-xs text-muted-foreground">
-            {c('数据截至', 'Data through')}{' '}
-            <span className="font-medium text-foreground">
-              {data.data_through}
-            </span>{' '}
-            · UTC
-            {stale && (
-              <span className="ml-2 text-amber-600 dark:text-amber-400">
-                {c(
-                  '数据更新延迟，当前展示最近可用结果',
-                  'Update delayed; showing the latest available results'
-                )}
-              </span>
+      <div className="min-h-[calc(100svh-61px-2.5rem)] space-y-10 sm:min-h-[calc(100svh-61px-3.5rem)]">
+        <header className="space-y-4">
+          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <BarChart3 className="h-4 w-4" />
+            {c('平台用量', 'Platform usage')}
+          </div>
+          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+            {c('模型排行榜', 'Model rankings')}
+          </h1>
+          <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+            {c(
+              '看看大家正在使用哪些模型。按平台记录的输入与输出 Token 总量排名，每天更新。',
+              'Discover the models people are using. Ranked by recorded input and output tokens on this platform, updated daily.'
             )}
           </p>
-        )}
-      </header>
-
-      {!data ? (
-        <div
-          role="status"
-          aria-live="polite"
-          className="rounded-xl border border-dashed px-6 py-20 text-center"
-        >
-          <p className="text-sm text-muted-foreground">
-            {status === 'loading'
-              ? c('正在加载排行榜…', 'Loading rankings…')
-              : status === 'error'
-              ? c('暂时无法加载排行榜。', 'Rankings could not be loaded.')
-              : status === 'disabled' || status === 'paused'
-              ? c('排行榜暂时暂停更新。', 'Rankings are currently paused.')
-              : c(
-                  '排名数据准备中，将在首个完整统计日结束后展示。',
-                  'Rankings will appear after the first complete day of collection.'
-                )}
-          </p>
-          {status === 'error' && (
-            <Button
-              variant="outline"
-              className="mt-5"
-              onClick={() => setAttempt((value) => value + 1)}
-            >
-              {c('重新加载', 'Try again')}
-            </Button>
+          {data && (
+            <p className="text-xs text-muted-foreground">
+              {c('数据截至', 'Data through')}{' '}
+              <span className="font-medium text-foreground">
+                {data.data_through}
+              </span>{' '}
+              · UTC
+              {stale && (
+                <span className="ml-2 text-amber-600 dark:text-amber-400">
+                  {c(
+                    '数据更新延迟，当前展示最近可用结果',
+                    'Update delayed; showing the latest available results'
+                  )}
+                </span>
+              )}
+            </p>
           )}
-        </div>
-      ) : (
-        <>
+        </header>
+
+        {!data ? (
+          <div
+            role="status"
+            aria-live="polite"
+            className="rounded-xl border border-dashed px-6 py-20 text-center"
+          >
+            <p className="text-sm text-muted-foreground">
+              {status === 'loading'
+                ? c('正在加载排行榜…', 'Loading rankings…')
+                : status === 'error'
+                ? c('暂时无法加载排行榜。', 'Rankings could not be loaded.')
+                : status === 'disabled' || status === 'paused'
+                ? c('排行榜暂时暂停更新。', 'Rankings are currently paused.')
+                : c(
+                    '排名数据准备中，将在首个完整统计日结束后展示。',
+                    'Rankings will appear after the first complete day of collection.'
+                  )}
+            </p>
+            {status === 'error' && (
+              <Button
+                variant="outline"
+                className="mt-5"
+                onClick={() => setAttempt((value) => value + 1)}
+              >
+                {c('重新加载', 'Try again')}
+              </Button>
+            )}
+          </div>
+        ) : (
           <section aria-labelledby="ranking-trend-title" className="space-y-5">
             <div>
               <h2 id="ranking-trend-title" className="text-xl font-semibold">
@@ -233,7 +233,10 @@ export default function RankingsView() {
               </p>
             )}
           </section>
-
+        )}
+      </div>
+      {data && (
+        <>
           {board && (
             <section aria-labelledby="leaderboard-title" className="space-y-5">
               <div className="flex flex-wrap items-end justify-between gap-4">

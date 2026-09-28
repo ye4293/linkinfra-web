@@ -5,7 +5,7 @@ import { DiscountPrice } from '@/components/discount-price';
 import { DurationPrice } from '@/components/duration-price';
 
 import { useCallback, useEffect, useState, useRef } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { ArrowLeft, RefreshCw, KeyRound, Copy } from 'lucide-react';
@@ -53,14 +53,15 @@ function formatPrice(price: number): string {
 
 export default function ModelDetailView({
   channelId,
-  sourceKey
+  sourceKey,
+  returnTo = '/model-plaza'
 }: {
   channelId?: string;
   sourceKey?: string;
+  returnTo?: string;
 }) {
   const tr = useText();
   const params = useParams();
-  const router = useRouter();
   const { data: session } = useSession();
   const { t, lang } = useLocale();
   useDocumentTitle('Model details');
@@ -173,14 +174,11 @@ export default function ModelDetailView({
     <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
       {/* Header */}
       <div className="mb-6">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="-ml-2 mb-3"
-          onClick={() => router.push('/model-plaza')}
-        >
-          <ArrowLeft className="mr-1 h-4 w-4" />
-          {t.modelDetail?.back || 'Back'}
+        <Button variant="ghost" size="sm" className="-ml-2 mb-3" asChild>
+          <Link href={returnTo}>
+            <ArrowLeft className="mr-1 h-4 w-4" />
+            {t.modelDetail?.back || 'Back'}
+          </Link>
         </Button>
 
         <div className="flex flex-wrap items-center gap-3">

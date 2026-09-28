@@ -43,7 +43,7 @@ export default async function TokenListingPage({}: TTokenListingPage) {
   const token: Token[] = (data && data.list) || [];
 
   return (
-    <PageContainer scrollable>
+    <PageContainer scrollable={false}>
       <div className="space-y-4">
         <Breadcrumbs items={breadcrumbItems} />
 

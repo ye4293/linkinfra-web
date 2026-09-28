@@ -12,7 +12,7 @@ import {
 import { Token } from '@/lib/types/token';
 import { Edit, MoreHorizontal, Trash, Ban, CircleSlash2 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 interface CellActionProps {
@@ -22,45 +22,43 @@ interface CellActionProps {
 export const CellAction: React.FC<CellActionProps> = ({ data }) => {
   const tr = useText();
   const [loading, setLoading] = useState(false);
+  const pending = useRef(false);
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const model = useSearchParams().get('model');
 
-  const onConfirm = async (token: Token) => {
-    deleteToken(token);
-  };
-
-  const manageToken = async (token: Token) => {
-    const params = {
-      id: token.id,
-      status: token.status === 1 ? 2 : 1,
-      status_only: true
-    };
-    // Implement disable logic here
-    const res = await fetch(`/api/token`, {
-      method: 'PUT',
-      body: JSON.stringify(params),
-      credentials: 'include'
-    });
-    const { success, message } = await res.json();
-    if (success) {
+  const updateToken = async (remove: boolean) => {
+    if (pending.current) return;
+    pending.current = true;
+    setLoading(true);
+    try {
+      const res = await fetch(remove ? `/api/token/${data.id}` : '/api/token', {
+        method: remove ? 'DELETE' : 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        ...(remove
+          ? {}
+          : {
+              body: JSON.stringify({
+                id: data.id,
+                status: data.status === 1 ? 2 : 1,
+                status_only: true
+              })
+            }),
+        credentials: 'include'
+      });
+      const result = await res.json();
+      if (!res.ok || !result.success) {
+        toast.error(result.message || tr('Operation failed!'));
+        return;
+      }
+      if (remove) setOpen(false);
       router.refresh();
       toast.success(tr('Operation completed successfully!'));
-    } else {
-      toast.error(message || tr('Operation failed!'));
-    }
-  };
-
-  const deleteToken = async (token: Token) => {
-    // Implement disable logic here
-    const res = await fetch(`/api/token/${token.id}`, {
-      method: 'DELETE',
-      credentials: 'include'
-    });
-    const { success } = await res.json();
-    if (success) {
-      setOpen(false);
-      router.refresh();
+    } catch {
+      toast.error(tr('Operation failed!'));
+    } finally {
+      pending.current = false;
+      setLoading(false);
     }
   };
 
@@ -68,19 +66,27 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
     <>
       <AlertModal
         isOpen={open}
-        onClose={() => setOpen(false)}
-        onConfirm={() => onConfirm(data)}
+        onClose={() => {
+          if (!pending.current) setOpen(false);
+        }}
+        onConfirm={() => void updateToken(true)}
         loading={loading}
       />
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0">
-            <span className="sr-only">{tr('Open menu')}</span>
-            <MoreHorizontal className="h-4 w-4" />
+          <Button
+            variant="outline"
+            disabled={loading}
+            size="sm"
+            className="shrink-0 gap-1.5 whitespace-nowrap"
+            aria-label={`${tr('Manage key')}: ${data.name || ''}`}
+          >
+            {tr('Manage key')}
+            <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuLabel>{tr('Actions')}</DropdownMenuLabel>
+          <DropdownMenuLabel>{tr('Manage key')}</DropdownMenuLabel>
 
           <DropdownMenuItem
             onClick={() =>
@@ -92,13 +98,16 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
             }
           >
             <Edit className="mr-2 h-4 w-4" />
-            {tr('Update')}
+            {tr('Edit name and limits')}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setOpen(true)}>
             <Trash className="mr-2 h-4 w-4" />
             {tr('Delete')}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => manageToken(data)}>
+          <DropdownMenuItem
+            disabled={loading}
+            onClick={() => void updateToken(false)}
+          >
             {data.status === 1 ? (
               <>
                 <Ban className="mr-2 h-4 w-4" />
