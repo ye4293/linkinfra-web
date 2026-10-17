@@ -112,6 +112,13 @@ export const navItems: NavItem[] = [
     roles: [1, 10, 100]
   },
   {
+    title: 'Playground',
+    href: '/dashboard/playground',
+    icon: 'playground',
+    label: 'playground',
+    roles: [1, 10, 100]
+  },
+  {
     title: 'Channel',
     href: '/dashboard/channel',
     icon: 'channel',
@@ -165,13 +172,6 @@ export const navItems: NavItem[] = [
     href: '/dashboard/statistics',
     icon: 'chart',
     label: 'statistics',
-    roles: [1, 10, 100]
-  },
-  {
-    title: 'Playground',
-    href: '/dashboard/playground',
-    icon: 'playground',
-    label: 'playground',
     roles: [1, 10, 100]
   },
   // {
