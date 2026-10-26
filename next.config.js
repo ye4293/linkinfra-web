@@ -11,6 +11,11 @@ const nextConfig = {
         source: '/register',
         destination: '/sign-in',
         permanent: false
+      },
+      {
+        source: '/playground',
+        destination: '/dashboard/playground',
+        permanent: false
       }
     ];
   }
