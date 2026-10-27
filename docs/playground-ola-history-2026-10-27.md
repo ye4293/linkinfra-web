@@ -1,0 +1,12 @@
+# Ola, model defaults and browser history
+
+- Temperature is omitted by default, rather than set to zero or 0.7. Users can explicitly enable a custom value, including zero. Selecting a different model resets temperature to the model default. The slider now exposes its accessible name on the actual slider thumb.
+- The assistant is named Ola, with an original purple SVG mascot in the welcome screen and message rows. The default system prompt also uses Ola; users can still customize it.
+- Conversation and composer widths remain unchanged. The signed-out ChatGPT desktop page inspected on 2026-10-27 also uses a centered, limited-width composer (approximately 618px for its textarea at a 1440px viewport). Keeping readable line lengths matches that layout approach.
+- The local new-api implementation was inspected: it saves messages to user-scoped localStorage and applies size/count limits. LinkInfra uses its own IndexedDB implementation for text, uploaded image data URLs and generated Base64 images. Both modes restore on refresh or a new tab, scoped to the signed-in user. API keys and connection credentials are not saved with history. URL-based image results retain their URLs; availability still depends on the image host.
+- The application does not expire or trim saved conversations. Browser/site-data deletion or browser storage eviction can still remove them. A clear action requires confirmation and removes only the selected mode. Pending empty replies are omitted on restore; prompts and partial replies remain.
+- Writes are serialized, throttled during streaming, flushed on page visibility changes/navigation, and awaited at request completion. History loads before sending is enabled, preventing empty initial state from replacing existing records. Storage failures produce a visible notice, keep chat usable, and do not erase existing records. Invalid or newer cache formats are not silently overwritten.
+
+Validation: 74 repository tests, TypeScript, targeted lint and an isolated production build. Browser checks cover omitted/custom/reset temperature, text and image restoration, account isolation, new-tab restoration, delete cancellation/confirmation, quota failure, storage denial, and 320px/390px/768px/1440px layouts. The GPT-5.2 gateway request without temperature returned HTTP 200 and `OK` in approximately 6.5 seconds.
+
+References: [OpenAI GPT-5.2 documentation](https://developers.openai.com/api/docs/models/gpt-5.2), [ChatGPT](https://chatgpt.com/). The new-api reference was read only; no code was copied or modified there.

@@ -317,3 +317,96 @@ test('image proxy preserves cancellation and reports transport failures without 
   controller.abort();
   assert.equal((await imageRoute().POST(cancelled)).status, 499);
 });
+
+const historyStorage = load('lib/playground-history.ts', {
+  './playground': playground
+});
+
+test('temperature defaults to omitted, while explicit zero and custom values are preserved', () => {
+  assert.deepEqual(playground.chatSamplingParameters(undefined), {});
+  assert.deepEqual(playground.chatSamplingParameters(null), {});
+  assert.deepEqual(playground.chatSamplingParameters(0), { temperature: 0 });
+  assert.deepEqual(playground.chatSamplingParameters(0.7), {
+    temperature: 0.7
+  });
+  assert.equal(
+    JSON.stringify(playground.chatSamplingParameters(null)).includes(
+      'temperature'
+    ),
+    false
+  );
+});
+
+test('history restores both modes and image attachments without trimming long conversations', () => {
+  const longText = 'A'.repeat(6 * 1024 * 1024);
+  const history = {
+    chat: [
+      { role: 'user', content: longText },
+      { role: 'assistant', content: 'Saved reply' }
+    ],
+    image: [
+      {
+        role: 'assistant',
+        content: [
+          {
+            type: 'image_url',
+            image_url: { url: `data:image/png;base64,${png}` }
+          }
+        ]
+      }
+    ]
+  };
+  const restored = historyStorage.restorePlaygroundHistory({
+    version: 1,
+    history,
+    apiKey: 'never-store-this'
+  });
+  assert.deepEqual(restored, history);
+  assert.equal(JSON.stringify(restored).includes('never-store-this'), false);
+});
+
+test('missing history starts empty but corrupt or unsupported saved data is not silently erased', () => {
+  assert.deepEqual(historyStorage.restorePlaygroundHistory(undefined), {
+    chat: [],
+    image: []
+  });
+  for (const invalid of [
+    null,
+    {},
+    { version: 2, history: { chat: [], image: [] } },
+    {
+      version: 1,
+      history: {
+        chat: [
+          {
+            role: 'user',
+            content: [
+              { type: 'image_url', image_url: { url: 'javascript:alert(1)' } }
+            ]
+          }
+        ],
+        image: []
+      }
+    }
+  ]) {
+    assert.throws(() => historyStorage.restorePlaygroundHistory(invalid));
+  }
+});
+
+test('refresh during generation restores the prompt and partial replies without empty Ola bubbles', () => {
+  const restored = historyStorage.restorePlaygroundHistory({
+    version: 1,
+    history: {
+      chat: [
+        { role: 'user', content: 'Keep my question' },
+        { role: 'assistant', content: 'Partial reply' }
+      ],
+      image: [
+        { role: 'user', content: 'Draw a bird' },
+        { role: 'assistant', content: '' }
+      ]
+    }
+  });
+  assert.equal(restored.chat[1].content, 'Partial reply');
+  assert.deepEqual(restored.image, [{ role: 'user', content: 'Draw a bird' }]);
+});

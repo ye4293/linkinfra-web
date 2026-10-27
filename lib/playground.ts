@@ -14,6 +14,11 @@ export interface PlaygroundMessage {
   error?: boolean;
 }
 
+export function chatSamplingParameters(temperature: number | null | undefined) {
+  // Omission lets each model use its own supported default. Zero is an explicit value.
+  return typeof temperature === 'number' ? { temperature } : {};
+}
+
 // Keep uploads bounded in both the browser and the proxy.
 export const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
 export const MAX_IMAGE_COUNT = 16;

@@ -11,7 +11,20 @@ import React, {
 import { useSession } from 'next-auth/react';
 import { useDropzone } from 'react-dropzone';
 import { useLocale } from '@/components/providers/locale-provider';
+import { OlaMascot } from '@/components/ola-mascot';
+import { usePlaygroundHistory } from '@/hooks/use-playground-history';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -50,6 +63,7 @@ import { clientApiKey, maskedApiKey } from '@/lib/client-setup';
 import {
   buildImageRequest,
   buildMessageContent,
+  chatSamplingParameters,
   CHAT_IMAGE_TYPES,
   EDIT_IMAGE_TYPES,
   getImageUrls,
@@ -72,7 +86,6 @@ import { toast } from 'sonner';
 import {
   AlertCircle,
   ArrowUp,
-  Bot,
   Check,
   ChevronsUpDown,
   Copy,
@@ -218,6 +231,11 @@ function SettingSelect({
 
 export default function PlaygroundPage() {
   const { data: session } = useSession();
+  return <PlaygroundWorkspace key={session?.user?.id || 'pending-session'} />;
+}
+
+function PlaygroundWorkspace() {
+  const { data: session } = useSession();
   const { lang } = useLocale();
   const text = useCallback(
     (en: string, zh: string) => (lang === 'zh' ? zh : en),
@@ -230,19 +248,24 @@ export default function PlaygroundPage() {
   const selectedModel = selectedModels[mode];
   const [selectedTokenKey, setSelectedTokenKey] = useState('');
   const [imageUrls, setImageUrls] = useState<string[]>([]);
-  const [history, setHistory] = useState<
-    Record<PlaygroundMode, PlaygroundMessage[]>
-  >({ chat: [], image: [] });
+  const {
+    history,
+    setHistory,
+    clearHistory,
+    flushHistory,
+    isHistoryLoading,
+    storageError
+  } = usePlaygroundHistory(session?.user?.id);
   const messages = history[mode];
   const [inputValue, setInputValue] = useState('');
   const [systemPrompt, setSystemPrompt] = useState(
-    'You are a helpful assistant.'
+    'You are Ola, a helpful AI assistant.'
   );
   const [isBusy, setIsBusy] = useState(false);
   const [isReadingImages, setIsReadingImages] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [streamEnabled, setStreamEnabled] = useState(true);
-  const [temperature, setTemperature] = useState(0.7);
+  const [temperature, setTemperature] = useState<number | null>(null);
   const [maxTokens, setMaxTokens] = useState(2048);
   const [imageSettings, setImageSettings] = useState<
     Omit<ImageRequest, 'model' | 'prompt'>
@@ -287,6 +310,10 @@ export default function PlaygroundPage() {
     [tokens]
   );
   const selectedToken = tokens.find((token) => token.key === selectedTokenKey);
+
+  useEffect(() => {
+    setTemperature(null);
+  }, [selectedModel]);
 
   useEffect(() => {
     if (followOutputRef.current) {
@@ -498,6 +525,7 @@ export default function PlaygroundPage() {
     if (
       abortControllerRef.current ||
       readingRef.current ||
+      isHistoryLoading ||
       (!prompt && (mode === 'image' || !imageUrls.length)) ||
       !selectedModel ||
       !selectedTokenKey
@@ -571,7 +599,7 @@ export default function PlaygroundPage() {
               userMessage
             ],
             stream: streamEnabled,
-            temperature,
+            ...chatSamplingParameters(temperature),
             max_tokens: maxTokens
           })
         });
@@ -614,6 +642,7 @@ export default function PlaygroundPage() {
       }
       if (!cancelled) toast.error(message);
     } finally {
+      await flushHistory();
       abortControllerRef.current = null;
       setIsBusy(false);
       requestAnimationFrame(() => textareaRef.current?.focus());
@@ -652,6 +681,7 @@ export default function PlaygroundPage() {
   const canSend =
     !!selectedModel &&
     !!selectedTokenKey &&
+    !isHistoryLoading &&
     !isReadingImages &&
     (!!inputValue.trim() || (mode === 'chat' && imageUrls.length > 0));
 
@@ -711,19 +741,48 @@ export default function PlaygroundPage() {
             />
           </div>
           <div className="ml-auto flex shrink-0 items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              disabled={isBusy || !messages.length}
-              aria-label={text('Clear conversation', '清空记录')}
-              title={text('Clear conversation', '清空记录')}
-              onClick={() => {
-                setHistory((prev) => ({ ...prev, [mode]: [] }));
-                setCopiedIdx(null);
-              }}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  disabled={isBusy || isHistoryLoading || !messages.length}
+                  aria-label={text('Clear conversation', '清空记录')}
+                  title={text('Clear conversation', '清空记录')}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md">
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    {mode === 'chat'
+                      ? text('Delete chat history?', '删除聊天记录？')
+                      : text('Delete image history?', '删除生图记录？')}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {text(
+                      'This removes the current mode’s history from this browser. Your other mode’s history is kept. This cannot be undone.',
+                      '将删除当前模式保存在此浏览器中的全部记录，另一模式的记录会保留。此操作无法撤销。'
+                    )}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>
+                    {text('Cancel', '取消')}
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => {
+                      void clearHistory(mode);
+                      setCopiedIdx(null);
+                    }}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {text('Delete history', '删除记录')}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
             <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
               <SheetTrigger asChild>
                 <Button
@@ -880,22 +939,44 @@ export default function PlaygroundPage() {
                         </div>
                         <div className="space-y-3">
                           <div className="flex justify-between">
-                            <Label htmlFor="temperature">
+                            <Label htmlFor="custom-temperature">
                               {text('Temperature', '温度')}
                             </Label>
-                            <span className="text-xs tabular-nums text-muted-foreground">
-                              {temperature}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs tabular-nums text-muted-foreground">
+                                {temperature ??
+                                  text('Model default', '模型默认')}
+                              </span>
+                              <Switch
+                                id="custom-temperature"
+                                aria-label={text(
+                                  'Custom temperature',
+                                  '自定义温度'
+                                )}
+                                checked={temperature !== null}
+                                onCheckedChange={(checked) =>
+                                  setTemperature(checked ? 1 : null)
+                                }
+                              />
+                            </div>
                           </div>
-                          <Slider
-                            id="temperature"
-                            aria-label={text('Temperature', '温度')}
-                            value={[temperature]}
-                            onValueChange={([value]) => setTemperature(value)}
-                            min={0}
-                            max={2}
-                            step={0.1}
-                          />
+                          {temperature !== null && (
+                            <Slider
+                              id="temperature"
+                              aria-label={text('Temperature', '温度')}
+                              value={[temperature]}
+                              onValueChange={([value]) => setTemperature(value)}
+                              min={0}
+                              max={2}
+                              step={0.1}
+                            />
+                          )}
+                          <p className="text-xs leading-5 text-muted-foreground">
+                            {text(
+                              'Off by default. Enable only when the selected model supports temperature.',
+                              '默认不传温度参数；仅在所选模型支持时开启。'
+                            )}
+                          </p>
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="max-tokens">
@@ -940,6 +1021,18 @@ export default function PlaygroundPage() {
             >
               {text('Retry', '重试')}
             </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {storageError && (
+        <Alert className="mx-4 mt-3 w-auto shrink-0">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {text(
+              'Browser history is unavailable or full. You can keep chatting, but new changes may not survive a refresh. Existing saved history has not been removed.',
+              '浏览器存储不可用或空间不足。仍可继续对话，但新内容可能无法在刷新后保留；已有缓存未被删除。'
+            )}
           </AlertDescription>
         </Alert>
       )}
@@ -1039,18 +1132,21 @@ export default function PlaygroundPage() {
           }}
         >
           <div className="mx-auto w-full max-w-4xl space-y-5 px-4 py-6 sm:px-8">
-            {!messages.length && (
+            {isHistoryLoading && (
+              <div
+                className="flex min-h-[28vh] items-center justify-center gap-2 text-sm text-muted-foreground"
+                role="status"
+              >
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {text('Restoring your conversations…', '正在恢复对话记录…')}
+              </div>
+            )}
+            {!isHistoryLoading && !messages.length && (
               <div className="flex min-h-[28vh] flex-col items-center justify-center py-8 text-center sm:min-h-[40vh]">
-                <div className="mb-5 rounded-2xl border bg-muted/30 p-4">
-                  {mode === 'chat' ? (
-                    <MessageSquare className="h-7 w-7 text-muted-foreground" />
-                  ) : (
-                    <ImageIcon className="h-7 w-7 text-muted-foreground" />
-                  )}
-                </div>
+                <OlaMascot className="mb-4 h-24 w-24" />
                 <h2 className="text-xl font-medium tracking-tight">
                   {mode === 'chat'
-                    ? text('What would you like to explore?', '想聊些什么？')
+                    ? text('Hi, I’m Ola', '你好，我是 Ola')
                     : text('Turn an idea into an image', '把想法变成图片')}
                 </h2>
                 <p className="mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
@@ -1095,11 +1191,9 @@ export default function PlaygroundPage() {
                     {message.role === 'user' ? (
                       <User className="h-4 w-4" />
                     ) : (
-                      <Bot className="h-4 w-4" />
+                      <OlaMascot className="h-7 w-7" />
                     )}
-                    {message.role === 'user'
-                      ? text('You', '你')
-                      : text('Assistant', '助手')}
+                    {message.role === 'user' ? text('You', '你') : 'Ola'}
                     {!pending && (
                       <Button
                         variant="ghost"
@@ -1421,7 +1515,7 @@ export default function PlaygroundPage() {
               </div>
             </div>
           </div>
-          <div className="mx-auto mt-2 flex max-w-4xl items-center justify-between gap-3 px-1 text-[11px] text-muted-foreground">
+          <div className="mx-auto mt-2 flex max-w-4xl flex-wrap items-center justify-between gap-x-3 gap-y-1 px-1 text-[11px] text-muted-foreground">
             <span className="truncate">
               {selectedToken
                 ? `${text('Key', '密钥')}: ${
@@ -1432,6 +1526,14 @@ export default function PlaygroundPage() {
                     '请在设置中选择 API Key'
                   )}
             </span>
+            {!isHistoryLoading && !storageError && (
+              <span>
+                {text(
+                  'History saved in this browser',
+                  '记录自动保存在此浏览器'
+                )}
+              </span>
+            )}
             <span className="hidden shrink-0 sm:inline">
               {text(
                 'Enter to send · Shift + Enter for a new line',
