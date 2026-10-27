@@ -82,6 +82,10 @@ import {
   requestError
 } from '@/lib/playground';
 import { cn } from '@/lib/utils';
+import {
+  PlaygroundPayloadError,
+  prepareChatRequest
+} from '@/lib/playground-payload';
 import { toast } from 'sonner';
 import {
   AlertCircle,
@@ -262,9 +266,11 @@ function PlaygroundWorkspace() {
     'You are Ola, a helpful AI assistant.'
   );
   const [isBusy, setIsBusy] = useState(false);
+  const [isPreparing, setIsPreparing] = useState(false);
   const [isReadingImages, setIsReadingImages] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [streamEnabled, setStreamEnabled] = useState(true);
+  const [includeHistory, setIncludeHistory] = useState(true);
   const [temperature, setTemperature] = useState<number | null>(null);
   const [maxTokens, setMaxTokens] = useState(2048);
   const [imageSettings, setImageSettings] = useState<
@@ -555,6 +561,7 @@ function PlaygroundWorkspace() {
     setInputValue('');
     setImageUrls([]);
     setIsBusy(true);
+    setIsPreparing(true);
     let assistantContent: MessageContent = '';
     const updateAssistant = (content: MessageContent, error = false) =>
       updateMessages((prev) => [
@@ -565,30 +572,35 @@ function PlaygroundWorkspace() {
       const apiKey = clientApiKey(selectedTokenKey);
       let response: Response;
       if (submittedMode === 'image') {
-        const request = await buildImageRequest(
+        const { optimizedImages, ...request } = await buildImageRequest(
           { ...imageSettings, model: selectedModel, prompt },
           apiKey,
           submittedImages,
           controller.signal
         );
+        if (optimizedImages)
+          toast.info(
+            text(
+              'Images compressed for sending. Originals are kept.',
+              '发送副本已压缩，原图仍保留。'
+            )
+          );
+        setIsPreparing(false);
         response = await fetch('/api/playground/images', {
           method: 'POST',
           ...request,
           signal: controller.signal
         });
       } else {
-        response = await fetch('/api/playground/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          signal: controller.signal,
-          body: JSON.stringify({
+        const request = await prepareChatRequest(
+          {
             apiKey,
             model: selectedModel,
             messages: [
               ...(systemPrompt
-                ? [{ role: 'system', content: systemPrompt }]
+                ? [{ role: 'system' as const, content: systemPrompt }]
                 : []),
-              ...messages
+              ...(includeHistory ? messages : [])
                 .filter(
                   (message) =>
                     !message.error &&
@@ -601,11 +613,31 @@ function PlaygroundWorkspace() {
             stream: streamEnabled,
             ...chatSamplingParameters(temperature),
             max_tokens: maxTokens
-          })
+          },
+          controller.signal
+        );
+        if (request.optimizedImages)
+          toast.info(
+            text(
+              'Images compressed for sending. Originals are kept.',
+              '发送副本已压缩，原图仍保留。'
+            )
+          );
+        setIsPreparing(false);
+        response = await fetch('/api/playground/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
+          body: request.body
         });
       }
       if (!response.ok) {
         const raw = await response.text();
+        if (
+          response.status === 413 ||
+          raw.includes('FUNCTION_PAYLOAD_TOO_LARGE')
+        )
+          throw new PlaygroundPayloadError();
         let error: unknown = raw;
         try {
           error = JSON.parse(raw);
@@ -628,9 +660,32 @@ function PlaygroundWorkspace() {
       }
     } catch (error) {
       const cancelled = controller.signal.aborted;
-      const message = cancelled
-        ? text('Generation stopped.', '已停止生成。')
-        : requestError(error);
+      let message = requestError(error);
+      if (cancelled) {
+        message = text('Generation stopped.', '已停止生成。');
+      } else if (error instanceof PlaygroundPayloadError) {
+        if (error.reason === 'animated-image') {
+          message = text(
+            'This GIF is too large. Use a smaller GIF or a static image.',
+            'GIF 文件过大，请压缩 GIF 或改用静态图片后重试。'
+          );
+        } else if (error.reason === 'invalid-image') {
+          message = text(
+            'Could not read this image. Please upload it again.',
+            '无法读取图片，请重新上传后重试。'
+          );
+        } else if (submittedMode === 'image' || !includeHistory) {
+          message = text(
+            'These images or the prompt are too large. Use fewer images or a shorter prompt.',
+            '本次图片或提示词过大，请减少图片数量或缩短描述后重试。'
+          );
+        } else {
+          message = text(
+            'This message and its history are too large. Use fewer attachments, shorten the prompt, or turn off Include chat history in Settings. Saved history is kept.',
+            '本次消息和历史图片合计过大。请减少附件、缩短描述，或在设置中关闭“携带历史消息”后重试；本地记录仍会保留。'
+          );
+        }
+      }
       if (!cancelled || !getTextContent(assistantContent)) {
         updateMessages((prev) => [
           ...prev.slice(0, -2),
@@ -645,6 +700,7 @@ function PlaygroundWorkspace() {
       await flushHistory();
       abortControllerRef.current = null;
       setIsBusy(false);
+      setIsPreparing(false);
       requestAnimationFrame(() => textareaRef.current?.focus());
     }
   };
@@ -915,6 +971,24 @@ function PlaygroundWorkspace() {
                       </>
                     ) : (
                       <>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor="include-history">
+                              {text('Include chat history', '携带历史消息')}
+                            </Label>
+                            <Switch
+                              id="include-history"
+                              checked={includeHistory}
+                              onCheckedChange={setIncludeHistory}
+                            />
+                          </div>
+                          <p className="text-xs leading-5 text-muted-foreground">
+                            {text(
+                              'Turn off to send only the current prompt and attachments. Saved conversations are kept.',
+                              '关闭后仅发送本次提示词和附件，不会删除已保存的记录。'
+                            )}
+                          </p>
+                        </div>
                         <div className="space-y-2">
                           <Label htmlFor="system-prompt">
                             {text('System prompt', '系统提示词')}
@@ -1313,7 +1387,9 @@ function PlaygroundWorkspace() {
                       role="status"
                     >
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      {mode === 'image'
+                      {isPreparing
+                        ? text('Preparing your message…', '正在准备发送…')
+                        : mode === 'image'
                         ? text(
                             'Creating your image… This may take a few minutes.',
                             '正在生成图片，可能需要几分钟…'
@@ -1414,6 +1490,14 @@ function PlaygroundWorkspace() {
               disabled={isBusy}
               className="max-h-[180px] min-h-[76px] resize-none rounded-2xl border-0 bg-transparent px-4 py-4 text-base shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 sm:text-sm"
             />
+            {mode === 'chat' && !includeHistory && (
+              <p className="px-4 pb-2 text-xs text-muted-foreground">
+                {text(
+                  'Only this message will be sent · History is kept',
+                  '仅发送本次消息 · 已有记录仍保留'
+                )}
+              </p>
+            )}
             <div className="flex items-center gap-1 px-3 pb-3">
               <Button
                 type="button"

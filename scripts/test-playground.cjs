@@ -21,7 +21,10 @@ function load(file, dependencies = {}) {
   );
   return exports;
 }
-const playground = load('lib/playground.ts');
+const payload = load('lib/playground-payload.ts');
+const playground = load('lib/playground.ts', {
+  './playground-payload': payload
+});
 const client = load('lib/client-setup.ts');
 const input = {
   model: 'gpt-image-1',
@@ -409,4 +412,113 @@ test('refresh during generation restores the prompt and partial replies without 
   });
   assert.equal(restored.chat[1].content, 'Partial reply');
   assert.deepEqual(restored.image, [{ role: 'user', content: 'Draw a bird' }]);
+});
+
+test('payload limit measures UTF-8 bytes and accepts exactly the safe request budget', () => {
+  assert.doesNotThrow(() =>
+    payload.assertPlaygroundRequestSize(payload.MAX_PLAYGROUND_REQUEST_BYTES)
+  );
+  assert.throws(
+    () =>
+      payload.assertPlaygroundRequestSize(
+        payload.MAX_PLAYGROUND_REQUEST_BYTES + 1
+      ),
+    payload.PlaygroundPayloadError
+  );
+  assert.throws(
+    () => payload.assertPlaygroundRequestSize('图'.repeat(1_400_000)),
+    payload.PlaygroundPayloadError
+  );
+});
+
+test('small chat requests preserve original images and remote references without re-encoding', async () => {
+  const image = `data:image/png;base64,${png}`;
+  const input = {
+    model: 'vision-model',
+    messages: [
+      {
+        role: 'user',
+        content: playground.buildMessageContent('Describe these', [
+          image,
+          'https://example.com/reference.png'
+        ])
+      }
+    ]
+  };
+  const original = JSON.stringify(input);
+  const result = await payload.prepareChatRequest(
+    input,
+    new AbortController().signal
+  );
+  assert.equal(result.body, original);
+  assert.equal(result.optimizedImages, 0);
+  assert.equal(JSON.stringify(input), original);
+});
+
+test('oversized text and cancelled chat preparation fail before sending a request', async (t) => {
+  t.mock.method(global, 'fetch', async () => {
+    throw new Error('No network request expected');
+  });
+  await assert.rejects(
+    payload.prepareChatRequest(
+      { messages: [{ role: 'user', content: '中'.repeat(1_400_000) }] },
+      new AbortController().signal
+    ),
+    payload.PlaygroundPayloadError
+  );
+  const controller = new AbortController();
+  controller.abort();
+  await assert.rejects(
+    payload.prepareChatRequest({ messages: [] }, controller.signal),
+    { name: 'AbortError' }
+  );
+  assert.equal(fetch.mock.calls.length, 0);
+});
+
+test('large GIF input is rejected instead of silently flattening the animation', async (t) => {
+  t.mock.method(global, 'fetch', async (url) => {
+    assert.ok(url.startsWith('data:image/gif;'));
+    return new Response(
+      new Blob([new Uint8Array(4_000_000)], { type: 'image/gif' })
+    );
+  });
+  const gif = 'data:image/gif;base64,' + 'A'.repeat(5_400_000);
+  const input = {
+    messages: [
+      {
+        role: 'user',
+        content: playground.buildMessageContent('Read the animation', [gif])
+      }
+    ]
+  };
+  await assert.rejects(
+    payload.prepareChatRequest(input, new AbortController().signal),
+    (error) =>
+      error instanceof payload.PlaygroundPayloadError &&
+      error.reason === 'animated-image'
+  );
+  assert.equal(playground.getImageUrls(input.messages[0].content)[0], gif);
+});
+
+test('multipart request checks include prompt bytes and preserve small source files', async () => {
+  const form = new FormData();
+  form.set('prompt', 'Edit this');
+  const image = new Blob([Buffer.from(png, 'base64')], { type: 'image/png' });
+  const result = await payload.fitImageFormData(
+    form,
+    [image],
+    new AbortController().signal
+  );
+  assert.equal(result.optimizedImages, 0);
+  assert.equal(result.body.get('image[]').size, image.size);
+  assert.ok(
+    (await new Response(result.body).blob()).size <
+      payload.MAX_PLAYGROUND_REQUEST_BYTES
+  );
+  const oversized = new FormData();
+  oversized.set('prompt', '中'.repeat(1_400_000));
+  await assert.rejects(
+    payload.fitImageFormData(oversized, [image], new AbortController().signal),
+    payload.PlaygroundPayloadError
+  );
 });

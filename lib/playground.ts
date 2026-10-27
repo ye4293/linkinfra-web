@@ -1,4 +1,9 @@
 import { z } from 'zod';
+import {
+  assertPlaygroundRequestSize,
+  fitImageFormData
+} from './playground-payload';
+export { readImageFile } from './playground-payload';
 
 export type PlaygroundMode = 'chat' | 'image';
 export type MessageContent =
@@ -128,18 +133,6 @@ export function normalizeImageResponse(
   return buildMessageContent(prompts.join('\n'), images);
 }
 
-export function readImageFile(file: File) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () =>
-      typeof reader.result === 'string'
-        ? resolve(reader.result)
-        : reject(new Error('Failed to read image.'));
-    reader.onerror = () => reject(new Error('Failed to read image.'));
-    reader.readAsDataURL(file);
-  });
-}
-
 // Multipart works with GPT Image-compatible gateways, including image edits.
 // Remote attachments are fetched in the browser, never by the server proxy.
 export async function buildImageRequest(
@@ -147,12 +140,19 @@ export async function buildImageRequest(
   apiKey: string,
   images: string[],
   signal: AbortSignal
-): Promise<{ body: BodyInit; headers?: Record<string, string> }> {
+): Promise<{
+  body: BodyInit;
+  headers?: Record<string, string>;
+  optimizedImages: number;
+}> {
   const payload = imageRequestSchema.parse(params);
   if (!images.length) {
+    const body = JSON.stringify({ ...payload, apiKey });
+    assertPlaygroundRequestSize(body);
     return {
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...payload, apiKey })
+      body,
+      optimizedImages: 0
     };
   }
   if (images.length > MAX_IMAGE_COUNT)
@@ -162,6 +162,7 @@ export async function buildImageRequest(
   Object.entries(payload).forEach(([key, value]) =>
     form.set(key, String(value))
   );
+  const blobs: Blob[] = [];
   for (let index = 0; index < images.length; index++) {
     const url = images[index];
     if (!isImageUrl(url)) throw new Error('Invalid image URL.');
@@ -181,13 +182,9 @@ export async function buildImageRequest(
       throw new Error('Image editing supports PNG, JPEG and WebP files.');
     if (!blob.size || blob.size > MAX_IMAGE_BYTES)
       throw new Error('Each image must be between 1 byte and 20 MB.');
-    form.append(
-      'image[]',
-      blob,
-      `image-${index + 1}.${blob.type.split('/')[1]}`
-    );
+    blobs.push(blob);
   }
-  return { body: form };
+  return fitImageFormData(form, blobs, signal);
 }
 
 function assistantText(content: unknown): string {
