@@ -7,7 +7,7 @@ import {
   savePlaygroundHistory,
   type PlaygroundHistory
 } from '@/lib/playground-history';
-import type { PlaygroundMode } from '@/lib/playground';
+import type { PlaygroundMessage, PlaygroundMode } from '@/lib/playground';
 
 // The workspace is keyed by user ID, so pending requests cannot cross accounts.
 export function usePlaygroundHistory(userId: string | undefined) {
@@ -100,10 +100,22 @@ export function usePlaygroundHistory(userId: string | undefined) {
     [setHistory, flushHistory]
   );
 
+  const deleteMessage = useCallback(
+    async (mode: PlaygroundMode, message: PlaygroundMessage) => {
+      setHistory((previous) => ({
+        ...previous,
+        [mode]: previous[mode].filter((item) => item !== message)
+      }));
+      await flushHistory();
+    },
+    [setHistory, flushHistory]
+  );
+
   return {
     history,
     setHistory,
     clearHistory,
+    deleteMessage,
     flushHistory,
     isHistoryLoading,
     storageError

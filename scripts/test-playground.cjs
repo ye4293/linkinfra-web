@@ -324,6 +324,111 @@ test('image proxy preserves cancellation and reports transport failures without 
 const historyStorage = load('lib/playground-history.ts', {
   './playground': playground
 });
+const preferencesStorage = load('lib/playground-preferences.ts', {
+  './playground': playground
+});
+
+function mockPreferenceStorage(t) {
+  const entries = new Map();
+  const previous = Object.getOwnPropertyDescriptor(global, 'localStorage');
+  Object.defineProperty(global, 'localStorage', {
+    configurable: true,
+    value: {
+      getItem: (key) => entries.get(key) ?? null,
+      setItem: (key, value) => entries.set(key, value)
+    }
+  });
+  t.after(() => {
+    if (previous) Object.defineProperty(global, 'localStorage', previous);
+    else delete global.localStorage;
+  });
+  return entries;
+}
+
+test('Playground selections restore per account without saving credentials', (t) => {
+  const entries = mockPreferenceStorage(t);
+  const saved = {
+    version: 1,
+    mode: 'image',
+    models: { chat: 'gpt-5.2', image: 'provider/custom-image-alias' },
+    includeHistory: false
+  };
+  preferencesStorage.savePlaygroundPreferences('account-a', {
+    ...saved,
+    apiKey: 'never-persist-this',
+    accessToken: 'never-persist-this'
+  });
+  assert.deepEqual(
+    preferencesStorage.loadPlaygroundPreferences('account-a'),
+    saved
+  );
+  assert.deepEqual(
+    preferencesStorage.loadPlaygroundPreferences('account-b'),
+    preferencesStorage.defaultPlaygroundPreferences()
+  );
+  assert.equal(
+    [...entries.values()].some((value) => value.includes('never-persist-this')),
+    false
+  );
+  assert.throws(() => preferencesStorage.loadPlaygroundPreferences(''));
+});
+
+test('unavailable saved models fall back safely without mutating remembered selections', () => {
+  const saved = { chat: 'gpt-5.2', image: 'custom-image-alias' };
+  assert.deepEqual(
+    preferencesStorage.resolvePlaygroundModels(
+      ['gpt-4.1', 'gpt-image-1', 'gpt-image-1.5'],
+      saved
+    ),
+    { chat: 'gpt-4.1', image: 'gpt-image-1.5' }
+  );
+  assert.deepEqual(preferencesStorage.resolvePlaygroundModels([], saved), {
+    chat: '',
+    image: ''
+  });
+  assert.deepEqual(
+    preferencesStorage.resolvePlaygroundModels(
+      ['gpt-5.2', 'custom-image-alias'],
+      saved
+    ),
+    saved
+  );
+  assert.deepEqual(saved, { chat: 'gpt-5.2', image: 'custom-image-alias' });
+});
+
+test('unreadable or unsupported preferences are reported and never erased on load', (t) => {
+  const entries = mockPreferenceStorage(t);
+  preferencesStorage.savePlaygroundPreferences(
+    'account-a',
+    preferencesStorage.defaultPlaygroundPreferences()
+  );
+  const key = [...entries.keys()][0];
+  for (const invalid of [
+    'broken-json',
+    JSON.stringify({ version: 2 }),
+    JSON.stringify({
+      ...preferencesStorage.defaultPlaygroundPreferences(),
+      includeHistory: 'false'
+    })
+  ]) {
+    entries.set(key, invalid);
+    assert.throws(() =>
+      preferencesStorage.loadPlaygroundPreferences('account-a')
+    );
+    assert.equal(entries.get(key), invalid);
+  }
+  t.mock.method(global.localStorage, 'setItem', () => {
+    throw new Error('Storage denied');
+  });
+  assert.throws(
+    () =>
+      preferencesStorage.savePlaygroundPreferences(
+        'account-a',
+        preferencesStorage.defaultPlaygroundPreferences()
+      ),
+    /Storage denied/
+  );
+});
 
 test('temperature defaults to omitted, while explicit zero and custom values are preserved', () => {
   assert.deepEqual(playground.chatSamplingParameters(undefined), {});

@@ -13,6 +13,8 @@ import { useDropzone } from 'react-dropzone';
 import { useLocale } from '@/components/providers/locale-provider';
 import { OlaMascot } from '@/components/ola-mascot';
 import { usePlaygroundHistory } from '@/hooks/use-playground-history';
+import { usePlaygroundPreferences } from '@/hooks/use-playground-preferences';
+import { resolvePlaygroundModels } from '@/lib/playground-preferences';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   AlertDialog,
@@ -247,8 +249,17 @@ function PlaygroundWorkspace() {
   );
   const [models, setModels] = useState<string[]>([]);
   const [tokens, setTokens] = useState<TokenOption[]>([]);
-  const [mode, setMode] = useState<PlaygroundMode>('chat');
-  const [selectedModels, setSelectedModels] = useState({ chat: '', image: '' });
+  const {
+    preferences,
+    setPreferences,
+    isPreferencesLoading,
+    preferencesError
+  } = usePlaygroundPreferences(session?.user?.id);
+  const { mode, includeHistory } = preferences;
+  const selectedModels = useMemo(
+    () => resolvePlaygroundModels(models, preferences.models),
+    [models, preferences.models]
+  );
   const selectedModel = selectedModels[mode];
   const [selectedTokenKey, setSelectedTokenKey] = useState('');
   const [imageUrls, setImageUrls] = useState<string[]>([]);
@@ -256,6 +267,7 @@ function PlaygroundWorkspace() {
     history,
     setHistory,
     clearHistory,
+    deleteMessage,
     flushHistory,
     isHistoryLoading,
     storageError
@@ -270,7 +282,6 @@ function PlaygroundWorkspace() {
   const [isReadingImages, setIsReadingImages] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [streamEnabled, setStreamEnabled] = useState(true);
-  const [includeHistory, setIncludeHistory] = useState(true);
   const [temperature, setTemperature] = useState<number | null>(null);
   const [maxTokens, setMaxTokens] = useState(2048);
   const [imageSettings, setImageSettings] = useState<
@@ -282,6 +293,11 @@ function PlaygroundWorkspace() {
   const [previewUrl, setPreviewUrl] = useState('');
   const [previewOpen, setPreviewOpen] = useState(false);
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    mode: PlaygroundMode;
+    message: PlaygroundMessage;
+  } | null>(null);
+  const deleteTriggerRef = useRef<HTMLButtonElement | null>(null);
   const [modelError, setModelError] = useState('');
   const [tokenError, setTokenError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -366,16 +382,6 @@ function PlaygroundWorkspace() {
           if (!list.length)
             throw new Error('No models are available for your account.');
           setModels(list);
-          setSelectedModels((prev) => ({
-            chat: list.includes(prev.chat)
-              ? prev.chat
-              : list.find((model) => !isGptImageModel(model)) || '',
-            image: list.includes(prev.image)
-              ? prev.image
-              : list.find((model) => model === 'gpt-image-1.5') ||
-                list.find(isGptImageModel) ||
-                ''
-          }));
           setModelError('');
         }
       ),
@@ -407,7 +413,6 @@ function PlaygroundWorkspace() {
     ]);
     if (results[0].status === 'rejected') {
       setModels([]);
-      setSelectedModels({ chat: '', image: '' });
       setModelError(requestError(results[0].reason));
     }
     if (results[1].status === 'rejected') {
@@ -532,6 +537,7 @@ function PlaygroundWorkspace() {
       abortControllerRef.current ||
       readingRef.current ||
       isHistoryLoading ||
+      isPreferencesLoading ||
       (!prompt && (mode === 'image' || !imageUrls.length)) ||
       !selectedModel ||
       !selectedTokenKey
@@ -731,13 +737,14 @@ function PlaygroundWorkspace() {
 
   const changeMode = (value: PlaygroundMode) => {
     followOutputRef.current = true;
-    setMode(value);
+    setPreferences((previous) => ({ ...previous, mode: value }));
     setCopiedIdx(null);
   };
   const canSend =
     !!selectedModel &&
     !!selectedTokenKey &&
     !isHistoryLoading &&
+    !isPreferencesLoading &&
     !isReadingImages &&
     (!!inputValue.trim() || (mode === 'chat' && imageUrls.length > 0));
 
@@ -757,7 +764,7 @@ function PlaygroundWorkspace() {
               key={value}
               size="sm"
               variant="ghost"
-              disabled={isBusy || isReadingImages}
+              disabled={isBusy || isReadingImages || isPreferencesLoading}
               aria-pressed={mode === value}
               onClick={() => changeMode(value)}
               className={cn(
@@ -781,7 +788,12 @@ function PlaygroundWorkspace() {
               label={text('Model', '模型')}
               value={selectedModel}
               options={modelOptions}
-              disabled={isBusy || isReadingImages || !models.length}
+              disabled={
+                isBusy ||
+                isReadingImages ||
+                isPreferencesLoading ||
+                !models.length
+              }
               placeholder={
                 isLoading
                   ? text('Loading models…', '正在加载模型…')
@@ -791,8 +803,13 @@ function PlaygroundWorkspace() {
               emptyText={text('No matching models.', '没有匹配的模型。')}
               onChange={(value) => {
                 const nextMode = isGptImageModel(value) ? 'image' : mode;
-                setSelectedModels((prev) => ({ ...prev, [nextMode]: value }));
-                changeMode(nextMode);
+                followOutputRef.current = true;
+                setPreferences((previous) => ({
+                  ...previous,
+                  mode: nextMode,
+                  models: { ...previous.models, [nextMode]: value }
+                }));
+                setCopiedIdx(null);
               }}
             />
           </div>
@@ -979,13 +996,19 @@ function PlaygroundWorkspace() {
                             <Switch
                               id="include-history"
                               checked={includeHistory}
-                              onCheckedChange={setIncludeHistory}
+                              disabled={isPreferencesLoading}
+                              onCheckedChange={(value) =>
+                                setPreferences((previous) => ({
+                                  ...previous,
+                                  includeHistory: value
+                                }))
+                              }
                             />
                           </div>
                           <p className="text-xs leading-5 text-muted-foreground">
                             {text(
-                              'Turn off to send only the current prompt and attachments. Saved conversations are kept.',
-                              '关闭后仅发送本次提示词和附件，不会删除已保存的记录。'
+                              'When on, all valid messages and images in this chat are included. Turn off to send only the current prompt and attachments. Saved conversations are kept.',
+                              '开启时携带当前聊天中全部有效的历史消息和图片；关闭后仅发送本次提示词和附件，不会删除已保存的记录。'
                             )}
                           </p>
                         </div>
@@ -1104,8 +1127,20 @@ function PlaygroundWorkspace() {
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             {text(
-              'Browser history is unavailable or full. You can keep chatting, but new changes may not survive a refresh. Existing saved history has not been removed.',
-              '浏览器存储不可用或空间不足。仍可继续对话，但新内容可能无法在刷新后保留；已有缓存未被删除。'
+              'Browser history is unavailable or full. You can keep chatting, but changes, including deletions, may not survive a refresh. Restore browser storage and try again.',
+              '浏览器存储不可用或空间不足。仍可继续对话，但本次更改（包括删除）可能无法在刷新后保留，请恢复浏览器存储后重试。'
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {preferencesError && (
+        <Alert className="mx-4 mt-3 w-auto shrink-0">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {text(
+              'Browser preferences could not be loaded or saved. Your model selection may reset when you leave this page.',
+              '浏览器偏好设置无法读取或保存，离开页面后可能无法记住本次模型选择。'
             )}
           </AlertDescription>
         </Alert>
@@ -1269,19 +1304,36 @@ function PlaygroundWorkspace() {
                     )}
                     {message.role === 'user' ? text('You', '你') : 'Ola'}
                     {!pending && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="ml-auto h-7 w-7 md:opacity-0 md:focus-visible:opacity-100 md:group-hover:opacity-100"
-                        aria-label={text('Copy message', '复制消息')}
-                        onClick={() => handleCopy(message.content, index)}
-                      >
-                        {copiedIdx === index ? (
-                          <Check className="h-3.5 w-3.5" />
-                        ) : (
-                          <Copy className="h-3.5 w-3.5" />
-                        )}
-                      </Button>
+                      <div className="ml-auto flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          aria-label={text('Copy message', '复制消息')}
+                          title={text('Copy message', '复制消息')}
+                          onClick={() => handleCopy(message.content, index)}
+                        >
+                          {copiedIdx === index ? (
+                            <Check className="h-3.5 w-3.5" />
+                          ) : (
+                            <Copy className="h-3.5 w-3.5" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
+                          disabled={isBusy || isHistoryLoading}
+                          aria-label={text('Delete message', '删除消息')}
+                          title={text('Delete message', '删除消息')}
+                          onClick={(event) => {
+                            deleteTriggerRef.current = event.currentTarget;
+                            setDeleteTarget({ mode, message });
+                          }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     )}
                   </div>
                   {content && (
@@ -1627,6 +1679,55 @@ function PlaygroundWorkspace() {
           </div>
         </div>
       </div>
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+      >
+        <AlertDialogContent
+          className="max-w-[calc(100vw-2rem)] sm:max-w-md"
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            if (deleteTriggerRef.current?.isConnected)
+              deleteTriggerRef.current.focus({ preventScroll: true });
+            else textareaRef.current?.focus({ preventScroll: true });
+          }}
+        >
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {text('Delete this message?', '删除这条消息？')}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {text(
+                'This deletes only this message and its attachments from this browser. Other messages are kept. It will no longer be included in future requests. This cannot be undone.',
+                '仅删除此条消息及其附件，其他消息会保留。这条消息不会再随历史发送，此操作无法撤销。'
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {deleteTarget && (
+            <p className="line-clamp-3 break-words rounded-lg bg-muted p-3 text-sm [overflow-wrap:anywhere]">
+              {getTextContent(deleteTarget.message.content).slice(0, 180) ||
+                text('Image message', '图片消息')}
+            </p>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel>{text('Cancel', '取消')}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (!deleteTarget || abortControllerRef.current) return;
+                followOutputRef.current = false;
+                void deleteMessage(deleteTarget.mode, deleteTarget.message);
+                setCopiedIdx(null);
+                deleteTriggerRef.current = null;
+              }}
+            >
+              {text('Delete message', '删除消息')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
         <DialogContent className="max-h-[95dvh] max-w-4xl overflow-auto">
           <DialogTitle>{text('Image preview', '图片预览')}</DialogTitle>
