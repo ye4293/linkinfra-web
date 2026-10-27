@@ -34,7 +34,8 @@ export async function POST(req: NextRequest) {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      signal: req.signal
     });
 
     if (!response.ok) {

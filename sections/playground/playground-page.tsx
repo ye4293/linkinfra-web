@@ -1,5 +1,6 @@
 'use client';
 
+/* eslint-disable @next/next/no-img-element -- User-provided and generated images include data URLs. */
 import React, {
   useCallback,
   useEffect,
@@ -8,7 +9,9 @@ import React, {
   useState
 } from 'react';
 import { useSession } from 'next-auth/react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useDropzone } from 'react-dropzone';
+import { useLocale } from '@/components/providers/locale-provider';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -18,6 +21,12 @@ import {
   CommandItem,
   CommandList
 } from '@/components/ui/command';
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -29,26 +38,51 @@ import {
   Sheet,
   SheetContent,
   SheetHeader,
-  SheetTitle
+  SheetTitle,
+  SheetDescription,
+  SheetTrigger
 } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { useBreakpoint } from '@/hooks/useBreakPoints';
+import { clientApiKey, maskedApiKey } from '@/lib/client-setup';
+import {
+  buildImageRequest,
+  buildMessageContent,
+  CHAT_IMAGE_TYPES,
+  EDIT_IMAGE_TYPES,
+  getImageUrls,
+  getTextContent,
+  ImageRequest,
+  isGptImageModel,
+  isImageUrl,
+  MAX_IMAGE_BYTES,
+  MAX_IMAGE_COUNT,
+  MessageContent,
+  normalizeImageResponse,
+  PlaygroundMessage,
+  PlaygroundMode,
+  readChatResponse,
+  readImageFile,
+  requestError
+} from '@/lib/playground';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import {
   AlertCircle,
+  ArrowUp,
   Bot,
   Check,
-  ChevronLeft,
   ChevronsUpDown,
   Copy,
+  Download,
+  ExternalLink,
   Image as ImageIcon,
   ImagePlus,
-  Plus,
-  Send,
+  Link as LinkIcon,
+  Loader2,
+  MessageSquare,
   Settings2,
   Square,
   Trash2,
@@ -56,318 +90,15 @@ import {
   X
 } from 'lucide-react';
 
-interface TextContentPart {
-  type: 'text';
-  text: string;
+interface SearchableOption {
+  value: string;
+  label: string;
 }
-
-interface ImageContentPart {
-  type: 'image_url';
-  image_url: {
-    url: string;
-  };
-}
-
-type MessageContent = string | Array<TextContentPart | ImageContentPart>;
-
-interface Message {
-  role: 'system' | 'user' | 'assistant';
-  content: MessageContent;
-}
-
-interface ModelOption {
-  id: string;
-  object: string;
-}
-
 interface TokenOption {
   id: number;
   key: string;
   name: string;
   status: number;
-}
-
-interface SearchableOption {
-  value: string;
-  label: string;
-}
-
-const ENABLED_TOKEN_STATUS = 1;
-
-const DEFAULT_SYSTEM_PROMPT = 'You are a helpful assistant.';
-
-function normalizeModelOptions(data: unknown): ModelOption[] {
-  if (!Array.isArray(data)) {
-    return [];
-  }
-
-  const uniqueModels = new Set(
-    data.filter(
-      (model): model is string =>
-        typeof model === 'string' && model.trim().length > 0
-    )
-  );
-
-  return Array.from(uniqueModels)
-    .sort((a, b) => a.localeCompare(b))
-    .map((id) => ({ id, object: 'model' as const }));
-}
-
-function normalizeTokenOptions(data: unknown): TokenOption[] {
-  if (!data || typeof data !== 'object' || !('list' in data)) {
-    return [];
-  }
-
-  const list = (data as { list?: unknown }).list;
-  if (!Array.isArray(list)) {
-    return [];
-  }
-
-  return list.filter((item): item is TokenOption => {
-    return (
-      !!item &&
-      typeof item === 'object' &&
-      'id' in item &&
-      typeof item.id === 'number' &&
-      'key' in item &&
-      typeof item.key === 'string' &&
-      item.key.length > 0 &&
-      'status' in item &&
-      typeof item.status === 'number' &&
-      item.status === ENABLED_TOKEN_STATUS &&
-      'name' in item &&
-      typeof item.name === 'string'
-    );
-  });
-}
-
-function formatTokenLabel(token: TokenOption) {
-  const tokenSuffix =
-    token.key.length > 8
-      ? `${token.key.slice(0, 4)}...${token.key.slice(-4)}`
-      : token.key;
-  return token.name ? `${token.name} (${tokenSuffix})` : tokenSuffix;
-}
-
-function isDataImageUrl(url: string) {
-  return url.startsWith('data:image/');
-}
-
-function getTextContent(content: MessageContent) {
-  if (typeof content === 'string') {
-    return content;
-  }
-
-  return content
-    .filter((part): part is TextContentPart => part.type === 'text')
-    .map((part) => part.text)
-    .join('\n')
-    .trim();
-}
-
-function getImageUrls(content: MessageContent) {
-  if (typeof content === 'string') {
-    return [];
-  }
-
-  return content.flatMap((part) =>
-    part.type === 'image_url' && part.image_url.url ? [part.image_url.url] : []
-  );
-}
-
-function buildMessageContent(
-  textContent: string,
-  imageUrls: string[],
-  imageEnabled: boolean
-): MessageContent {
-  const validImageUrls = imageUrls
-    .map((url) => url.trim())
-    .filter((url) => url.length > 0);
-
-  if (imageEnabled && validImageUrls.length > 0) {
-    return [
-      { type: 'text', text: textContent || '' },
-      ...validImageUrls.map((url) => ({
-        type: 'image_url' as const,
-        image_url: { url }
-      }))
-    ];
-  }
-
-  return textContent || '';
-}
-
-function getCopyableContent(content: MessageContent) {
-  const textContent = getTextContent(content);
-  const imageLines = getImageUrls(content).map((url, index) =>
-    isDataImageUrl(url) ? `[Image ${index + 1}: local attachment]` : url
-  );
-
-  return [textContent, ...imageLines]
-    .map((item) => item.trim())
-    .filter((item) => item.length > 0)
-    .join('\n');
-}
-
-function normalizeAssistantContent(content: unknown) {
-  if (typeof content === 'string') {
-    return content;
-  }
-
-  if (!Array.isArray(content)) {
-    return '';
-  }
-
-  return content
-    .map((part) => {
-      if (
-        part &&
-        typeof part === 'object' &&
-        'type' in part &&
-        part.type === 'text' &&
-        'text' in part &&
-        typeof part.text === 'string'
-      ) {
-        return part.text;
-      }
-      return '';
-    })
-    .filter((part) => part.length > 0)
-    .join('\n')
-    .trim();
-}
-
-function readImageFileAsDataUrl(file: File) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        resolve(reader.result);
-        return;
-      }
-      reject(new Error('Failed to read image file'));
-    };
-    reader.onerror = () => reject(new Error('Failed to read image file'));
-    reader.readAsDataURL(file);
-  });
-}
-
-function ImageUrlInput({
-  imageUrls,
-  imageEnabled,
-  localImageCount,
-  onImageUrlsChange,
-  onImageEnabledChange,
-  onRemoveImage
-}: {
-  imageUrls: string[];
-  imageEnabled: boolean;
-  localImageCount: number;
-  onImageUrlsChange: (urls: string[]) => void;
-  onImageEnabledChange: (enabled: boolean) => void;
-  onRemoveImage: (index: number) => void;
-}) {
-  const remoteImageEntries = imageUrls
-    .map((url, index) => ({ url, index }))
-    .filter(({ url }) => !isDataImageUrl(url));
-
-  const handleAddImageUrl = () => {
-    if (!imageEnabled) {
-      return;
-    }
-
-    onImageUrlsChange([...imageUrls, '']);
-  };
-
-  const handleUpdateImageUrl = (index: number, value: string) => {
-    const nextUrls = [...imageUrls];
-    nextUrls[index] = value;
-    onImageUrlsChange(nextUrls);
-  };
-
-  const helperText = !imageEnabled
-    ? 'Enable images to add URLs, upload files, or paste screenshots.'
-    : remoteImageEntries.length === 0 && localImageCount === 0
-    ? 'Click + to add image URLs. Upload or paste images from the composer.'
-    : `${remoteImageEntries.length} URL${
-        remoteImageEntries.length === 1 ? '' : 's'
-      }, ${localImageCount} local image${
-        localImageCount === 1 ? '' : 's'
-      } ready.`;
-
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <ImageIcon
-            className={cn(
-              'h-4 w-4',
-              imageEnabled ? 'text-primary' : 'text-muted-foreground'
-            )}
-          />
-          <Label className="text-xs font-medium">Images</Label>
-        </div>
-        <div className="flex items-center gap-2">
-          <Switch
-            checked={imageEnabled}
-            onCheckedChange={onImageEnabledChange}
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 rounded-full"
-            onClick={handleAddImageUrl}
-            disabled={!imageEnabled}
-            title="Add image URL"
-          >
-            <Plus className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-      </div>
-
-      <p className="text-xs text-muted-foreground">{helperText}</p>
-
-      {remoteImageEntries.length > 0 && (
-        <div className="space-y-2">
-          {remoteImageEntries.map(({ url, index }) => (
-            <div key={index} className="flex items-center gap-2">
-              <Input
-                value={url}
-                onChange={(e) => handleUpdateImageUrl(index, e.target.value)}
-                placeholder={`https://example.com/image${index + 1}.png`}
-                className="h-8 text-xs"
-                disabled={!imageEnabled}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 shrink-0 rounded-full"
-                onClick={() => onRemoveImage(index)}
-                disabled={!imageEnabled}
-                title="Remove image URL"
-              >
-                <X className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {localImageCount > 0 && (
-        <div
-          className={cn(
-            'rounded-md border px-3 py-2 text-xs',
-            !imageEnabled && 'opacity-70'
-          )}
-        >
-          {localImageCount} pasted/uploaded local image
-          {localImageCount === 1 ? '' : 's'} saved.
-        </div>
-      )}
-    </div>
-  );
 }
 
 function SearchableSelect({
@@ -378,6 +109,7 @@ function SearchableSelect({
   value,
   options,
   disabled,
+  compact = false,
   onChange
 }: {
   label: string;
@@ -387,14 +119,15 @@ function SearchableSelect({
   value: string;
   options: SearchableOption[];
   disabled?: boolean;
+  compact?: boolean;
   onChange: (value: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   const selectedOption = options.find((option) => option.value === value);
 
   return (
-    <div className="space-y-2">
-      <Label className="text-xs">{label}</Label>
+    <div className="min-w-0 space-y-2">
+      {!compact && <Label className="text-xs">{label}</Label>}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -402,17 +135,17 @@ function SearchableSelect({
             role="combobox"
             aria-label={label}
             aria-expanded={open}
-            className="h-auto min-h-10 w-full justify-between gap-2 px-3 py-2 text-sm font-normal"
+            className="h-10 w-full justify-between gap-2 px-3 text-sm font-normal"
             disabled={disabled}
           >
-            <span className="min-w-0 whitespace-normal break-words text-left leading-5 [overflow-wrap:anywhere]">
+            <span className="min-w-0 truncate text-left">
               {selectedOption?.label || placeholder}
             </span>
             <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          className="w-[var(--radix-popover-trigger-width)] max-w-[calc(100vw-24px)] overflow-hidden p-0 shadow-lg"
+          className="w-[max(260px,var(--radix-popover-trigger-width))] max-w-[calc(100vw-24px)] overflow-hidden p-0 shadow-lg"
           align="start"
           collisionPadding={12}
           sideOffset={6}
@@ -452,913 +185,1277 @@ function SearchableSelect({
   );
 }
 
-interface PlaygroundSettingsContentProps {
-  modelOptions: SearchableOption[];
-  tokenOptions: SearchableOption[];
-  selectedModel: string;
-  selectedTokenKey: string;
-  modelError: string;
-  tokenError: string;
-  modelsCount: number;
-  tokensCount: number;
-  imageUrls: string[];
-  imageEnabled: boolean;
-  localImageCount: number;
-  systemPrompt: string;
-  streamEnabled: boolean;
-  temperature: number;
-  maxTokens: number;
-  onModelChange: (value: string) => void;
-  onTokenChange: (value: string) => void;
-  onImageUrlsChange: (urls: string[]) => void;
-  onImageEnabledChange: (enabled: boolean) => void;
-  onRemoveImage: (index: number) => void;
-  onSystemPromptChange: (value: string) => void;
-  onStreamChange: (checked: boolean) => void;
-  onTemperatureChange: (value: number) => void;
-  onMaxTokensChange: (value: number) => void;
-  onClearMessages: () => void;
-}
-
-function PlaygroundSettingsContent({
-  modelOptions,
-  tokenOptions,
-  selectedModel,
-  selectedTokenKey,
-  modelError,
-  tokenError,
-  modelsCount,
-  tokensCount,
-  imageUrls,
-  imageEnabled,
-  localImageCount,
-  systemPrompt,
-  streamEnabled,
-  temperature,
-  maxTokens,
-  onModelChange,
-  onTokenChange,
-  onImageUrlsChange,
-  onImageEnabledChange,
-  onRemoveImage,
-  onSystemPromptChange,
-  onStreamChange,
-  onTemperatureChange,
-  onMaxTokensChange,
-  onClearMessages
-}: PlaygroundSettingsContentProps) {
+function SettingSelect({
+  label,
+  value,
+  options,
+  onChange
+}: {
+  label: string;
+  value: string;
+  options: SearchableOption[];
+  onChange: (value: string) => void;
+}) {
+  const id = React.useId();
   return (
-    <div className="space-y-5 p-4">
-      <div className="space-y-4 rounded-xl border bg-background p-3">
-        <div className="flex items-center justify-between gap-2">
-          <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Connection
-          </h4>
-          <span className="text-xs tabular-nums text-muted-foreground">
-            {modelsCount} models
-          </span>
-        </div>
-        <SearchableSelect
-          label="Model"
-          value={selectedModel}
-          options={modelOptions}
-          onChange={onModelChange}
-          disabled={modelsCount === 0}
-          placeholder={modelError ? 'Models unavailable' : 'Select model'}
-          searchPlaceholder="Search models..."
-          emptyText="No matching models."
-        />
-
-        <SearchableSelect
-          label="API Key"
-          value={selectedTokenKey}
-          options={tokenOptions}
-          onChange={onTokenChange}
-          disabled={tokensCount === 0}
-          placeholder={tokenError ? 'API keys unavailable' : 'Select API key'}
-          searchPlaceholder="Search API keys..."
-          emptyText="No matching API keys."
-        />
-      </div>
-
-      {(modelError || tokenError) && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Playground setup failed</AlertTitle>
-          <AlertDescription>{modelError || tokenError}</AlertDescription>
-        </Alert>
-      )}
-
-      {!tokenError && tokensCount === 0 && (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>No API key available</AlertTitle>
-          <AlertDescription>
-            Create a key in the `Keys` page, then refresh this playground.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      <div className="space-y-2 rounded-xl border bg-background p-3">
-        <Label className="text-xs">System Prompt</Label>
-        <Textarea
-          value={systemPrompt}
-          onChange={(e) => onSystemPromptChange(e.target.value)}
-          placeholder="You are a helpful assistant."
-          className="min-h-[100px] resize-y text-sm leading-relaxed"
-          rows={4}
-        />
-      </div>
-
-      <div className="space-y-5 rounded-xl border bg-background p-3">
-        <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Generation
-        </h4>
-        <div className="flex items-center justify-between">
-          <Label className="text-xs">Stream</Label>
-          <Switch checked={streamEnabled} onCheckedChange={onStreamChange} />
-        </div>
-
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label className="text-xs">Temperature</Label>
-            <span className="text-xs text-muted-foreground">{temperature}</span>
-          </div>
-          <Slider
-            value={[temperature]}
-            onValueChange={([value]) => onTemperatureChange(value)}
-            min={0}
-            max={2}
-            step={0.1}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label className="text-xs">Max Tokens</Label>
-          <Input
-            type="number"
-            value={maxTokens}
-            onChange={(e) =>
-              onMaxTokensChange(Math.max(1, parseInt(e.target.value, 10) || 1))
-            }
-            className="h-8 text-xs"
-            min={1}
-            max={128000}
-          />
-        </div>
-      </div>
-
-      <div className="rounded-xl border bg-background p-3">
-        <ImageUrlInput
-          imageUrls={imageUrls}
-          imageEnabled={imageEnabled}
-          localImageCount={localImageCount}
-          onImageUrlsChange={onImageUrlsChange}
-          onImageEnabledChange={onImageEnabledChange}
-          onRemoveImage={onRemoveImage}
-        />
-      </div>
-
-      <Button
-        variant="outline"
-        size="sm"
-        className="w-full text-xs"
-        onClick={onClearMessages}
+    <div className="space-y-2">
+      <Label htmlFor={id}>{label}</Label>
+      <select
+        id={id}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="h-10 w-full rounded-md border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <Trash2 className="mr-2 h-3.5 w-3.5" />
-        Clear Messages
-      </Button>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }
 
 export default function PlaygroundPage() {
   const { data: session } = useSession();
-  const { isBelowXl } = useBreakpoint('xl');
-  const isCompactLayout = isBelowXl;
-
-  const [models, setModels] = useState<ModelOption[]>([]);
+  const { lang } = useLocale();
+  const text = useCallback(
+    (en: string, zh: string) => (lang === 'zh' ? zh : en),
+    [lang]
+  );
+  const [models, setModels] = useState<string[]>([]);
   const [tokens, setTokens] = useState<TokenOption[]>([]);
-  const [selectedModel, setSelectedModel] = useState('');
+  const [mode, setMode] = useState<PlaygroundMode>('chat');
+  const [selectedModels, setSelectedModels] = useState({ chat: '', image: '' });
+  const selectedModel = selectedModels[mode];
   const [selectedTokenKey, setSelectedTokenKey] = useState('');
-  const [imageEnabled, setImageEnabled] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [history, setHistory] = useState<
+    Record<PlaygroundMode, PlaygroundMessage[]>
+  >({ chat: [], image: [] });
+  const messages = history[mode];
   const [inputValue, setInputValue] = useState('');
-  const [systemPrompt, setSystemPrompt] = useState(DEFAULT_SYSTEM_PROMPT);
-  const [isStreaming, setIsStreaming] = useState(false);
+  const [systemPrompt, setSystemPrompt] = useState(
+    'You are a helpful assistant.'
+  );
+  const [isBusy, setIsBusy] = useState(false);
+  const [isReadingImages, setIsReadingImages] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [streamEnabled, setStreamEnabled] = useState(true);
   const [temperature, setTemperature] = useState(0.7);
   const [maxTokens, setMaxTokens] = useState(2048);
-  const [settingsOpen, setSettingsOpen] = useState(true);
-  const [mobileSettingsOpen, setMobileSettingsOpen] = useState(false);
+  const [imageSettings, setImageSettings] = useState<
+    Omit<ImageRequest, 'model' | 'prompt'>
+  >({ size: 'auto', quality: 'auto', output_format: 'png', n: 1 });
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [urlOpen, setUrlOpen] = useState(false);
+  const [urlInput, setUrlInput] = useState('');
+  const [previewUrl, setPreviewUrl] = useState('');
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const [modelError, setModelError] = useState('');
   const [tokenError, setTokenError] = useState('');
-
+  const [isLoading, setIsLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const followOutputRef = useRef(true);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const readingRef = useRef(false);
+  const dragDepthRef = useRef(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const imageFileInputRef = useRef<HTMLInputElement>(null);
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
-  const modelOptions = useMemo<SearchableOption[]>(
+  const modelOptions = useMemo(
     () =>
-      models.map((model) => ({
-        value: model.id,
-        label: model.id
-      })),
-    [models]
+      [...models]
+        .sort((a, b) => {
+          if (mode === 'image')
+            return (
+              Number(isGptImageModel(b)) - Number(isGptImageModel(a)) ||
+              a.localeCompare(b)
+            );
+          return a.localeCompare(b);
+        })
+        .map((id) => ({ value: id, label: id })),
+    [models, mode]
   );
-
-  const tokenOptions = useMemo<SearchableOption[]>(
+  const tokenOptions = useMemo(
     () =>
       tokens.map((token) => ({
         value: token.key,
-        label: formatTokenLabel(token)
+        label: `${token.name || 'API Key'} (${maskedApiKey(token.key)})`
       })),
     [tokens]
   );
-
-  const validImageUrls = useMemo(
-    () => imageUrls.map((url) => url.trim()).filter((url) => url.length > 0),
-    [imageUrls]
-  );
-
-  const localImageCount = useMemo(
-    () => imageUrls.filter((url) => isDataImageUrl(url)).length,
-    [imageUrls]
-  );
-
-  const hasPendingImages = imageEnabled && validImageUrls.length > 0;
+  const selectedToken = tokens.find((token) => token.key === selectedTokenKey);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  useEffect(() => {
-    if (!isCompactLayout) {
-      setMobileSettingsOpen(false);
-    }
-  }, [isCompactLayout]);
-
-  const loadModels = useCallback(async () => {
-    try {
-      setModelError('');
-      const res = await fetch('/api/playground/models', { cache: 'no-store' });
-      const json = await res.json();
-
-      if (!res.ok || !json.success) {
-        throw new Error(
-          json.message || `Failed to load models (${res.status})`
-        );
-      }
-
-      const modelList = normalizeModelOptions(json.data);
-      setModels(modelList);
-      setSelectedModel((current) => {
-        if (current && modelList.some((model) => model.id === current)) {
-          return current;
-        }
-        return modelList[0]?.id ?? '';
+    if (followOutputRef.current) {
+      messagesEndRef.current?.scrollIntoView({
+        behavior: isBusy ? 'auto' : 'smooth',
+        block: 'end'
       });
+    }
+  }, [messages, isBusy]);
+  useEffect(
+    () => () => {
+      abortControllerRef.current?.abort();
+      clearTimeout(copyTimerRef.current);
+    },
+    []
+  );
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${Math.min(textarea.scrollHeight, 180)}px`;
+    }
+  }, [inputValue]);
 
-      if (modelList.length === 0) {
-        setModelError(
-          'No models are currently available for your account. Please contact the administrator.'
-        );
-      }
-
-      return modelList;
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Failed to load models';
+  const loadConnection = useCallback(async () => {
+    setIsLoading(true);
+    const results = await Promise.allSettled([
+      fetch('/api/playground/models', { cache: 'no-store' }).then(
+        async (res) => {
+          const json = await res.json();
+          if (!res.ok || !json.success)
+            throw new Error(requestError(json, 'Failed to load models.'));
+          const list: string[] = Array.isArray(json.data)
+            ? Array.from(
+                new Set<string>(
+                  json.data.filter(
+                    (item: unknown): item is string =>
+                      typeof item === 'string' && !!item.trim()
+                  )
+                )
+              )
+            : [];
+          list.sort((a, b) => a.localeCompare(b));
+          if (!list.length)
+            throw new Error('No models are available for your account.');
+          setModels(list);
+          setSelectedModels((prev) => ({
+            chat: list.includes(prev.chat)
+              ? prev.chat
+              : list.find((model) => !isGptImageModel(model)) || '',
+            image: list.includes(prev.image)
+              ? prev.image
+              : list.find((model) => model === 'gpt-image-1.5') ||
+                list.find(isGptImageModel) ||
+                ''
+          }));
+          setModelError('');
+        }
+      ),
+      fetch('/api/token?page=1&pagesize=100', { cache: 'no-store' }).then(
+        async (res) => {
+          const json = await res.json();
+          if (!res.ok || !json.success)
+            throw new Error(requestError(json, 'Failed to load API keys.'));
+          const list: TokenOption[] = Array.isArray(json.data?.list)
+            ? json.data.list.filter(
+                (item: TokenOption) =>
+                  item &&
+                  typeof item.key === 'string' &&
+                  !!item.key.trim() &&
+                  item.status === 1
+              )
+            : [];
+          if (!list.length)
+            throw new Error(
+              'No enabled API keys. Create a key on the Keys page.'
+            );
+          setTokens(list);
+          setSelectedTokenKey((prev) =>
+            list.some((token) => token.key === prev) ? prev : list[0].key
+          );
+          setTokenError('');
+        }
+      )
+    ]);
+    if (results[0].status === 'rejected') {
       setModels([]);
-      setSelectedModel('');
-      setModelError(message);
-      toast.error(message);
-      return [];
+      setSelectedModels({ chat: '', image: '' });
+      setModelError(requestError(results[0].reason));
     }
-  }, []);
-
-  const loadTokens = useCallback(async () => {
-    try {
-      setTokenError('');
-      const res = await fetch('/api/token?page=1&pagesize=100');
-      const json = await res.json();
-
-      if (!res.ok || !json.success) {
-        throw new Error(
-          json.message || `Failed to load API keys (${res.status})`
-        );
-      }
-
-      const tokenList = normalizeTokenOptions(json.data);
-      setTokens(tokenList);
-      setSelectedTokenKey((current) => {
-        if (current && tokenList.some((token) => token.key === current)) {
-          return current;
-        }
-        return tokenList[0]?.key ?? '';
-      });
-
-      if (tokenList.length === 0) {
-        setTokenError(
-          'No enabled API keys were found. Create one in the Keys page before chatting.'
-        );
-      }
-
-      return tokenList;
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Failed to load API keys';
+    if (results[1].status === 'rejected') {
       setTokens([]);
       setSelectedTokenKey('');
-      setTokenError(message);
-      toast.error(message);
-      return [];
+      setTokenError(requestError(results[1].reason));
     }
+    setIsLoading(false);
   }, []);
 
   useEffect(() => {
-    if (!session?.user?.accessToken) {
-      return;
-    }
-
-    void loadModels();
-    void loadTokens();
-  }, [session?.user?.accessToken, loadModels, loadTokens]);
-
-  const appendImages = useCallback((newUrls: string[]) => {
-    setImageUrls((prev) => [...prev, ...newUrls]);
-  }, []);
+    if (session?.user?.accessToken) void loadConnection();
+  }, [session?.user?.accessToken, loadConnection]);
 
   const handleImageFiles = useCallback(
     async (files: File[]) => {
-      if (files.length === 0) {
+      if (abortControllerRef.current || readingRef.current || !files.length)
+        return;
+      const allowedTypes =
+        mode === 'image' ? EDIT_IMAGE_TYPES : CHAT_IMAGE_TYPES;
+      if (files.some((file) => !allowedTypes.includes(file.type))) {
+        toast.error(
+          text(
+            'Use PNG, JPEG or WebP images (GIF is also supported in chat).',
+            '请使用 PNG、JPEG 或 WebP 图片；聊天模式也支持 GIF。'
+          )
+        );
         return;
       }
-
+      if (files.some((file) => !file.size || file.size > MAX_IMAGE_BYTES)) {
+        toast.error(
+          text(
+            'Each image must be nonempty and no larger than 20 MB.',
+            '图片不能为空，且每张不得超过 20 MB。'
+          )
+        );
+        return;
+      }
+      if (imageUrls.length + files.length > MAX_IMAGE_COUNT) {
+        toast.error(
+          text('You can attach up to 16 images.', '最多可添加 16 张图片。')
+        );
+        return;
+      }
+      readingRef.current = true;
+      setIsReadingImages(true);
       try {
-        const dataUrls = await Promise.all(
-          files.map((file) => readImageFileAsDataUrl(file))
-        );
-        setImageEnabled(true);
-        appendImages(dataUrls);
-        toast.success(
-          `${dataUrls.length} image${dataUrls.length > 1 ? 's' : ''} added`
-        );
+        const urls = await Promise.all(files.map(readImageFile));
+        setImageUrls((prev) => [...prev, ...urls]);
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'Failed to process image';
-        toast.error(message);
+        toast.error(requestError(error));
+      } finally {
+        readingRef.current = false;
+        setIsReadingImages(false);
       }
     },
-    [appendImages]
+    [imageUrls.length, mode, text]
   );
 
-  const handleImageUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const files = Array.from(event.target.files ?? []).filter((file) =>
-      file.type.startsWith('image/')
-    );
-    await handleImageFiles(files);
-    event.target.value = '';
+  const { getRootProps, getInputProps, open } = useDropzone({
+    noClick: true,
+    noKeyboard: true,
+    disabled: isBusy || isReadingImages,
+    onDrop: handleImageFiles
+  });
+
+  const handlePaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const files = Array.from(event.clipboardData.items)
+      .filter((item) => item.kind === 'file')
+      .map((item) => item.getAsFile())
+      .filter((file): file is File => !!file);
+    if (!files.length) return;
+    event.preventDefault();
+    const pastedText = event.clipboardData.getData('text/plain');
+    if (pastedText) {
+      const start = event.currentTarget.selectionStart;
+      const end = event.currentTarget.selectionEnd;
+      setInputValue(
+        (prev) => prev.slice(0, start) + pastedText + prev.slice(end)
+      );
+    }
+    void handleImageFiles(files);
   };
 
-  const handleOpenImageUpload = () => {
-    setImageEnabled(true);
-    imageFileInputRef.current?.click();
+  const attachImageUrls = (urls: string[]) => {
+    if (isBusy || isReadingImages) return false;
+    if (urls.some((url) => !isImageUrl(url))) {
+      toast.error(
+        text(
+          'Enter a valid HTTP or HTTPS image URL.',
+          '请输入有效的 HTTP 或 HTTPS 图片地址。'
+        )
+      );
+      return false;
+    }
+    if (imageUrls.length + urls.length > MAX_IMAGE_COUNT) {
+      toast.error(
+        text('You can attach up to 16 images.', '最多可添加 16 张图片。')
+      );
+      return false;
+    }
+    setImageUrls((prev) => [...prev, ...urls]);
+    requestAnimationFrame(() => textareaRef.current?.focus());
+    return true;
   };
 
-  const handlePasteImage = useCallback(
-    async (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
-      const items = Array.from(event.clipboardData?.items ?? []);
-      const files = items
-        .filter((item) => item.type.startsWith('image/'))
-        .map((item) => item.getAsFile())
-        .filter((file): file is File => file !== null);
-
-      if (files.length === 0) {
-        return;
-      }
-
-      event.preventDefault();
-      if (!imageEnabled) {
-        toast.warning('Enable images in Settings before pasting a screenshot');
-        return;
-      }
-
-      await handleImageFiles(files);
-    },
-    [handleImageFiles, imageEnabled]
-  );
-
-  const handleRemoveImage = (index: number) => {
-    setImageUrls((prev) =>
-      prev.filter((_, currentIndex) => currentIndex !== index)
-    );
+  const addImageUrl = () => {
+    if (attachImageUrls([urlInput.trim()])) {
+      setUrlInput('');
+      setUrlOpen(false);
+    }
   };
 
-  const handleClearImages = () => {
-    setImageUrls([]);
-    setImageEnabled(false);
+  const previewImage = (url: string) => {
+    setPreviewUrl(url);
+    setPreviewOpen(true);
   };
 
-  const handleSend = useCallback(async () => {
-    if ((!inputValue.trim() && !hasPendingImages) || isStreaming) return;
-    if (!selectedModel) {
-      toast.error('Please select a model');
+  const handleSend = async () => {
+    const prompt = inputValue.trim();
+    if (
+      abortControllerRef.current ||
+      readingRef.current ||
+      (!prompt && (mode === 'image' || !imageUrls.length)) ||
+      !selectedModel ||
+      !selectedTokenKey
+    )
       return;
-    }
-    if (!selectedTokenKey) {
-      toast.error('Please select an API key');
-      return;
-    }
-
-    const messageContent = buildMessageContent(
-      inputValue.trim(),
-      validImageUrls,
-      imageEnabled
-    );
-    const userMessage: Message = { role: 'user', content: messageContent };
-    const allMessages: Message[] = [
-      ...(systemPrompt
-        ? [{ role: 'system' as const, content: systemPrompt }]
-        : []),
-      ...messages,
-      userMessage
-    ];
-
-    setMessages((prev) => [...prev, userMessage]);
-    setInputValue('');
-    if (hasPendingImages) {
-      setImageEnabled(false);
-    }
-    setIsStreaming(true);
-
-    const assistantMessage: Message = { role: 'assistant', content: '' };
-    setMessages((prev) => [...prev, assistantMessage]);
-
     const controller = new AbortController();
+    followOutputRef.current = true;
     abortControllerRef.current = controller;
-
+    const submittedMode = mode;
+    const submittedImages = [...imageUrls];
+    const userMessage: PlaygroundMessage = {
+      role: 'user',
+      content: buildMessageContent(prompt, submittedImages)
+    };
+    const updateMessages = (
+      update: (prev: PlaygroundMessage[]) => PlaygroundMessage[]
+    ) =>
+      setHistory((prev) => ({
+        ...prev,
+        [submittedMode]: update(prev[submittedMode])
+      }));
+    updateMessages((prev) => [
+      ...prev,
+      userMessage,
+      { role: 'assistant', content: '' }
+    ]);
+    setInputValue('');
+    setImageUrls([]);
+    setIsBusy(true);
+    let assistantContent: MessageContent = '';
+    const updateAssistant = (content: MessageContent, error = false) =>
+      updateMessages((prev) => [
+        ...prev.slice(0, -1),
+        { role: 'assistant', content, error }
+      ]);
     try {
-      const body: Record<string, any> = {
-        apiKey: selectedTokenKey,
-        model: selectedModel,
-        messages: allMessages,
-        stream: streamEnabled,
-        temperature,
-        max_tokens: maxTokens
-      };
-
-      const res = await fetch('/api/playground/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(body),
-        signal: controller.signal
-      });
-
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(errText || `HTTP ${res.status}`);
-      }
-
-      if (streamEnabled && res.body) {
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
-
-          for (const line of lines) {
-            const trimmed = line.trim();
-            if (!trimmed || !trimmed.startsWith('data: ')) continue;
-            const data = trimmed.slice(6);
-            if (data === '[DONE]') continue;
-
-            try {
-              const parsed = JSON.parse(data);
-              const delta = normalizeAssistantContent(
-                parsed.choices?.[0]?.delta?.content
-              );
-              if (delta) {
-                setMessages((prev) => {
-                  const updated = [...prev];
-                  const last = updated[updated.length - 1];
-                  if (last.role === 'assistant') {
-                    const currentContent =
-                      typeof last.content === 'string'
-                        ? last.content
-                        : getTextContent(last.content);
-                    updated[updated.length - 1] = {
-                      ...last,
-                      content: currentContent + delta
-                    };
-                  }
-                  return updated;
-                });
-              }
-            } catch {
-              // skip malformed chunks
-            }
-          }
-        }
-      } else {
-        const json = await res.json();
-        if (json.error) {
-          throw new Error(json.error.message || 'Request failed');
-        }
-        const content = normalizeAssistantContent(
-          json.choices?.[0]?.message?.content
+      const apiKey = clientApiKey(selectedTokenKey);
+      let response: Response;
+      if (submittedMode === 'image') {
+        const request = await buildImageRequest(
+          { ...imageSettings, model: selectedModel, prompt },
+          apiKey,
+          submittedImages,
+          controller.signal
         );
-        if (!content) {
-          throw new Error('No response content');
+        response = await fetch('/api/playground/images', {
+          method: 'POST',
+          ...request,
+          signal: controller.signal
+        });
+      } else {
+        response = await fetch('/api/playground/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
+          body: JSON.stringify({
+            apiKey,
+            model: selectedModel,
+            messages: [
+              ...(systemPrompt
+                ? [{ role: 'system', content: systemPrompt }]
+                : []),
+              ...messages
+                .filter(
+                  (message) =>
+                    !message.error &&
+                    (getTextContent(message.content) ||
+                      getImageUrls(message.content).length)
+                )
+                .map(({ role, content }) => ({ role, content })),
+              userMessage
+            ],
+            stream: streamEnabled,
+            temperature,
+            max_tokens: maxTokens
+          })
+        });
+      }
+      if (!response.ok) {
+        const raw = await response.text();
+        let error: unknown = raw;
+        try {
+          error = JSON.parse(raw);
+        } catch {
+          /* The gateway can return plain text errors. */
         }
-        setMessages((prev) => {
-          const updated = [...prev];
-          updated[updated.length - 1] = {
-            role: 'assistant',
-            content
-          };
-          return updated;
+        throw new Error(requestError(error, `HTTP ${response.status}`));
+      }
+      if (submittedMode === 'image') {
+        assistantContent = normalizeImageResponse(
+          await response.json(),
+          imageSettings.output_format
+        );
+        updateAssistant(assistantContent);
+      } else {
+        await readChatResponse(response, (delta) => {
+          assistantContent = getTextContent(assistantContent) + delta;
+          updateAssistant(assistantContent);
         });
       }
     } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') return;
-      const message = error instanceof Error ? error.message : 'Request failed';
-      setMessages((prev) => {
-        const updated = [...prev];
-        updated[updated.length - 1] = {
-          role: 'assistant',
-          content: `Error: ${message}`
-        };
-        return updated;
-      });
-      toast.error(message);
+      const cancelled = controller.signal.aborted;
+      const message = cancelled
+        ? text('Generation stopped.', '已停止生成。')
+        : requestError(error);
+      if (!cancelled || !getTextContent(assistantContent)) {
+        updateMessages((prev) => [
+          ...prev.slice(0, -2),
+          { ...userMessage, error: true },
+          { role: 'assistant', content: message, error: true }
+        ]);
+        setInputValue(prompt);
+        setImageUrls(submittedImages);
+      }
+      if (!cancelled) toast.error(message);
     } finally {
-      setIsStreaming(false);
       abortControllerRef.current = null;
-    }
-  }, [
-    hasPendingImages,
-    imageEnabled,
-    inputValue,
-    isStreaming,
-    selectedModel,
-    systemPrompt,
-    messages,
-    streamEnabled,
-    temperature,
-    maxTokens,
-    selectedTokenKey,
-    validImageUrls
-  ]);
-
-  const handleStop = () => {
-    abortControllerRef.current?.abort();
-    setIsStreaming(false);
-  };
-
-  const handleClear = () => {
-    setMessages([]);
-    setInputValue('');
-  };
-
-  const handleCopy = (content: MessageContent, idx: number) => {
-    const copyValue = getCopyableContent(content);
-    if (!copyValue) {
-      return;
-    }
-
-    navigator.clipboard.writeText(copyValue);
-    setCopiedIdx(idx);
-    setTimeout(() => setCopiedIdx(null), 2000);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (
-      e.key === 'Enter' &&
-      !e.shiftKey &&
-      (inputValue.trim() || hasPendingImages)
-    ) {
-      e.preventDefault();
-      handleSend();
+      setIsBusy(false);
+      requestAnimationFrame(() => textareaRef.current?.focus());
     }
   };
+
+  const handleCopy = async (content: MessageContent, index: number) => {
+    try {
+      await navigator.clipboard.writeText(
+        [
+          getTextContent(content),
+          ...getImageUrls(content).map((url) =>
+            url.startsWith('data:')
+              ? text('[Image attachment]', '[图片附件]')
+              : url
+          )
+        ]
+          .filter(Boolean)
+          .join('\n')
+      );
+      setCopiedIdx(index);
+      clearTimeout(copyTimerRef.current);
+      copyTimerRef.current = setTimeout(() => setCopiedIdx(null), 2000);
+    } catch {
+      toast.error(
+        text('Could not copy to the clipboard.', '无法复制到剪贴板。')
+      );
+    }
+  };
+
+  const changeMode = (value: PlaygroundMode) => {
+    followOutputRef.current = true;
+    setMode(value);
+    setCopiedIdx(null);
+  };
+  const canSend =
+    !!selectedModel &&
+    !!selectedTokenKey &&
+    !isReadingImages &&
+    (!!inputValue.trim() || (mode === 'chat' && imageUrls.length > 0));
 
   return (
-    <div className="flex h-[calc(100dvh-57px)] min-h-0 min-w-0 overflow-hidden">
-      <input
-        ref={imageFileInputRef}
-        type="file"
-        accept="image/*"
-        multiple
-        className="hidden"
-        onChange={handleImageUpload}
-      />
-
-      {!isCompactLayout && (
+    <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-background">
+      <header className="flex shrink-0 flex-wrap items-center gap-3 border-b px-4 py-3 sm:px-6 xl:flex-nowrap">
+        <h1 className="mr-auto text-base font-semibold tracking-tight xl:mr-2">
+          Playground
+        </h1>
         <div
-          className={cn(
-            'relative hidden min-h-0 flex-shrink-0 flex-col bg-muted/20 transition-all duration-300 xl:flex',
-            settingsOpen ? 'w-80 border-r 2xl:w-[340px]' : 'w-0'
-          )}
+          className="flex rounded-lg bg-muted p-1"
+          role="group"
+          aria-label={text('Playground mode', 'Playground 模式')}
         >
-          {settingsOpen && (
-            <>
-              <div className="flex shrink-0 items-center justify-between border-b bg-background px-4 py-3">
-                <h3 className="text-sm font-semibold">Settings</h3>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  aria-label="Hide settings"
-                  onClick={() => setSettingsOpen(false)}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-              </div>
-              <ScrollArea className="min-h-0 flex-1">
-                <PlaygroundSettingsContent
-                  modelOptions={modelOptions}
-                  tokenOptions={tokenOptions}
-                  selectedModel={selectedModel}
-                  selectedTokenKey={selectedTokenKey}
-                  modelError={modelError}
-                  tokenError={tokenError}
-                  modelsCount={models.length}
-                  tokensCount={tokens.length}
-                  imageUrls={imageUrls}
-                  imageEnabled={imageEnabled}
-                  localImageCount={localImageCount}
-                  systemPrompt={systemPrompt}
-                  streamEnabled={streamEnabled}
-                  temperature={temperature}
-                  maxTokens={maxTokens}
-                  onModelChange={setSelectedModel}
-                  onTokenChange={setSelectedTokenKey}
-                  onImageUrlsChange={setImageUrls}
-                  onImageEnabledChange={setImageEnabled}
-                  onRemoveImage={handleRemoveImage}
-                  onSystemPromptChange={setSystemPrompt}
-                  onStreamChange={setStreamEnabled}
-                  onTemperatureChange={setTemperature}
-                  onMaxTokensChange={setMaxTokens}
-                  onClearMessages={handleClear}
-                />
-              </ScrollArea>
-            </>
-          )}
+          {(['chat', 'image'] as const).map((value) => (
+            <Button
+              key={value}
+              size="sm"
+              variant="ghost"
+              disabled={isBusy || isReadingImages}
+              aria-pressed={mode === value}
+              onClick={() => changeMode(value)}
+              className={cn(
+                'h-8 gap-1.5 px-3 text-xs',
+                mode === value && 'bg-background shadow-sm hover:bg-background'
+              )}
+            >
+              {value === 'chat' ? (
+                <MessageSquare className="h-3.5 w-3.5" />
+              ) : (
+                <ImageIcon className="h-3.5 w-3.5" />
+              )}
+              {value === 'chat' ? text('Chat', '聊天') : text('Image', '生图')}
+            </Button>
+          ))}
         </div>
-      )}
-
-      {isCompactLayout && (
-        <Sheet open={mobileSettingsOpen} onOpenChange={setMobileSettingsOpen}>
-          <SheetContent
-            side="left"
-            className="flex w-[92vw] max-w-sm flex-col gap-0 p-0"
-          >
-            <SheetHeader className="border-b px-4 py-3">
-              <SheetTitle className="text-sm">Settings</SheetTitle>
-            </SheetHeader>
-            <ScrollArea className="min-h-0 flex-1 bg-muted/20">
-              <PlaygroundSettingsContent
-                modelOptions={modelOptions}
-                tokenOptions={tokenOptions}
-                selectedModel={selectedModel}
-                selectedTokenKey={selectedTokenKey}
-                modelError={modelError}
-                tokenError={tokenError}
-                modelsCount={models.length}
-                tokensCount={tokens.length}
-                imageUrls={imageUrls}
-                imageEnabled={imageEnabled}
-                localImageCount={localImageCount}
-                systemPrompt={systemPrompt}
-                streamEnabled={streamEnabled}
-                temperature={temperature}
-                maxTokens={maxTokens}
-                onModelChange={setSelectedModel}
-                onTokenChange={setSelectedTokenKey}
-                onImageUrlsChange={setImageUrls}
-                onImageEnabledChange={setImageEnabled}
-                onRemoveImage={handleRemoveImage}
-                onSystemPromptChange={setSystemPrompt}
-                onStreamChange={setStreamEnabled}
-                onTemperatureChange={setTemperature}
-                onMaxTokensChange={setMaxTokens}
-                onClearMessages={handleClear}
-              />
-            </ScrollArea>
-          </SheetContent>
-        </Sheet>
-      )}
-
-      {/* Main Chat Area */}
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        {/* Top Bar */}
-        <div className="flex h-12 flex-shrink-0 items-center gap-2 border-b px-3 sm:px-4">
-          {(isCompactLayout || !settingsOpen) && (
+        <div className="flex w-full min-w-0 items-center gap-2 xl:w-auto xl:flex-1">
+          <div className="min-w-0 flex-1 xl:max-w-sm">
+            <SearchableSelect
+              compact
+              label={text('Model', '模型')}
+              value={selectedModel}
+              options={modelOptions}
+              disabled={isBusy || isReadingImages || !models.length}
+              placeholder={
+                isLoading
+                  ? text('Loading models…', '正在加载模型…')
+                  : text('Select model', '选择模型')
+              }
+              searchPlaceholder={text('Search models…', '搜索模型…')}
+              emptyText={text('No matching models.', '没有匹配的模型。')}
+              onChange={(value) => {
+                const nextMode = isGptImageModel(value) ? 'image' : mode;
+                setSelectedModels((prev) => ({ ...prev, [nextMode]: value }));
+                changeMode(nextMode);
+              }}
+            />
+          </div>
+          <div className="ml-auto flex shrink-0 items-center gap-1">
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
-              aria-label="Show settings"
-              onClick={() =>
-                isCompactLayout
-                  ? setMobileSettingsOpen(true)
-                  : setSettingsOpen(true)
-              }
+              disabled={isBusy || !messages.length}
+              aria-label={text('Clear conversation', '清空记录')}
+              title={text('Clear conversation', '清空记录')}
+              onClick={() => {
+                setHistory((prev) => ({ ...prev, [mode]: [] }));
+                setCopiedIdx(null);
+              }}
             >
-              <Settings2 className="h-4 w-4" />
+              <Trash2 className="h-4 w-4" />
             </Button>
-          )}
-          <span className="truncate text-sm font-medium">Playground</span>
-          {selectedModel && (
-            <span className="max-w-[45vw] truncate rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground sm:max-w-xs">
-              {selectedModel}
-            </span>
-          )}
+            <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={text('Settings', '设置')}
+                  title={text('Settings', '设置')}
+                >
+                  <Settings2 className="h-4 w-4" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent className="flex w-[92vw] max-w-sm flex-col gap-0 p-0">
+                <SheetHeader className="border-b px-5 py-4 text-left">
+                  <SheetTitle>{text('Settings', '设置')}</SheetTitle>
+                  <SheetDescription>
+                    {mode === 'chat'
+                      ? text('Connection and chat parameters', '连接与聊天参数')
+                      : text(
+                          'Connection and image parameters',
+                          '连接与生图参数'
+                        )}
+                  </SheetDescription>
+                </SheetHeader>
+                <ScrollArea className="min-h-0 flex-1">
+                  <fieldset
+                    disabled={isBusy}
+                    className="min-w-0 space-y-6 p-5 disabled:opacity-60"
+                  >
+                    <SearchableSelect
+                      label="API Key"
+                      value={selectedTokenKey}
+                      options={tokenOptions}
+                      disabled={isBusy || !tokens.length}
+                      onChange={setSelectedTokenKey}
+                      placeholder={text('Select API key', '选择 API Key')}
+                      searchPlaceholder={text(
+                        'Search API keys…',
+                        '搜索 API Key…'
+                      )}
+                      emptyText={text('No matching keys.', '没有匹配的 Key。')}
+                    />
+                    <div className="border-t" />
+                    {mode === 'image' ? (
+                      <>
+                        <p className="text-sm text-muted-foreground">
+                          {text(
+                            'Use a GPT Image model. Add reference images to edit or remix them.',
+                            '选择 GPT Image 模型。添加参考图片即可进行编辑或再创作。'
+                          )}
+                        </p>
+                        <SettingSelect
+                          label={text('Size', '尺寸')}
+                          value={imageSettings.size}
+                          onChange={(size) =>
+                            setImageSettings((prev) => ({
+                              ...prev,
+                              size: size as ImageRequest['size']
+                            }))
+                          }
+                          options={[
+                            { value: 'auto', label: text('Auto', '自动') },
+                            {
+                              value: '1024x1024',
+                              label: text(
+                                'Square · 1024 × 1024',
+                                '方形 · 1024 × 1024'
+                              )
+                            },
+                            {
+                              value: '1536x1024',
+                              label: text(
+                                'Landscape · 1536 × 1024',
+                                '横向 · 1536 × 1024'
+                              )
+                            },
+                            {
+                              value: '1024x1536',
+                              label: text(
+                                'Portrait · 1024 × 1536',
+                                '竖向 · 1024 × 1536'
+                              )
+                            }
+                          ]}
+                        />
+                        <SettingSelect
+                          label={text('Quality', '画质')}
+                          value={imageSettings.quality}
+                          onChange={(quality) =>
+                            setImageSettings((prev) => ({
+                              ...prev,
+                              quality: quality as ImageRequest['quality']
+                            }))
+                          }
+                          options={[
+                            { value: 'auto', label: text('Auto', '自动') },
+                            { value: 'low', label: text('Low', '低') },
+                            { value: 'medium', label: text('Medium', '中') },
+                            { value: 'high', label: text('High', '高') }
+                          ]}
+                        />
+                        <SettingSelect
+                          label={text('Format', '格式')}
+                          value={imageSettings.output_format}
+                          onChange={(format) =>
+                            setImageSettings((prev) => ({
+                              ...prev,
+                              output_format:
+                                format as ImageRequest['output_format']
+                            }))
+                          }
+                          options={['png', 'jpeg', 'webp'].map((value) => ({
+                            value,
+                            label: value.toUpperCase()
+                          }))}
+                        />
+                        <SettingSelect
+                          label={text('Number of images', '生成数量')}
+                          value={String(imageSettings.n)}
+                          onChange={(n) =>
+                            setImageSettings((prev) => ({
+                              ...prev,
+                              n: Number(n)
+                            }))
+                          }
+                          options={[1, 2, 3, 4].map((n) => ({
+                            value: String(n),
+                            label: String(n)
+                          }))}
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <div className="space-y-2">
+                          <Label htmlFor="system-prompt">
+                            {text('System prompt', '系统提示词')}
+                          </Label>
+                          <Textarea
+                            id="system-prompt"
+                            value={systemPrompt}
+                            onChange={(e) => setSystemPrompt(e.target.value)}
+                            rows={5}
+                            className="resize-y text-sm"
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="stream">
+                            {text('Stream response', '流式输出')}
+                          </Label>
+                          <Switch
+                            id="stream"
+                            checked={streamEnabled}
+                            onCheckedChange={setStreamEnabled}
+                          />
+                        </div>
+                        <div className="space-y-3">
+                          <div className="flex justify-between">
+                            <Label htmlFor="temperature">
+                              {text('Temperature', '温度')}
+                            </Label>
+                            <span className="text-xs tabular-nums text-muted-foreground">
+                              {temperature}
+                            </span>
+                          </div>
+                          <Slider
+                            id="temperature"
+                            aria-label={text('Temperature', '温度')}
+                            value={[temperature]}
+                            onValueChange={([value]) => setTemperature(value)}
+                            min={0}
+                            max={2}
+                            step={0.1}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="max-tokens">
+                            {text('Max output tokens', '最大输出 Token')}
+                          </Label>
+                          <Input
+                            id="max-tokens"
+                            type="number"
+                            value={maxTokens}
+                            min={1}
+                            max={128000}
+                            onChange={(e) =>
+                              setMaxTokens(
+                                Math.min(
+                                  128000,
+                                  Math.max(1, parseInt(e.target.value, 10) || 1)
+                                )
+                              )
+                            }
+                          />
+                        </div>
+                      </>
+                    )}
+                  </fieldset>
+                </ScrollArea>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
+      </header>
 
-        {/* Messages */}
-        <ScrollArea className="min-h-0 flex-1">
-          <div className="mx-auto w-full max-w-3xl space-y-1 p-3 sm:p-4">
-            {messages.length === 0 && (
-              <div className="flex h-[50vh] items-center justify-center">
-                <div className="text-center text-muted-foreground">
-                  <Bot className="mx-auto mb-3 h-10 w-10 opacity-30" />
-                  <p className="text-sm">
-                    Send a message to start the conversation
-                  </p>
+      {(modelError || tokenError) && (
+        <Alert variant="destructive" className="mx-4 mt-3 w-auto shrink-0">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="flex flex-wrap items-center justify-between gap-2">
+            <span>{[modelError, tokenError].filter(Boolean).join(' ')}</span>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={isLoading}
+              onClick={loadConnection}
+            >
+              {text('Retry', '重试')}
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <div
+        {...getRootProps({
+          className: 'relative flex min-h-0 flex-1 flex-col',
+          'data-testid': 'playground-dropzone',
+          // Track the overlay synchronously: file extraction on dragenter can
+          // finish after a fast drop and leave react-dropzone's indicator active.
+          onDragEnterCapture: (event: React.DragEvent) => {
+            if (
+              !event.dataTransfer.types.some((type) =>
+                ['Files', 'text/uri-list'].includes(type)
+              ) ||
+              isBusy ||
+              isReadingImages
+            )
+              return;
+            dragDepthRef.current += 1;
+            setIsDragging(true);
+          },
+          onDragLeaveCapture: () => {
+            dragDepthRef.current = Math.max(0, dragDepthRef.current - 1);
+            if (!dragDepthRef.current) setIsDragging(false);
+          },
+          onDragOverCapture: (event: React.DragEvent) => {
+            if (
+              event.dataTransfer.types.some((type) =>
+                ['Files', 'text/uri-list'].includes(type)
+              )
+            )
+              event.preventDefault();
+          },
+          onDropCapture: (event: React.DragEvent) => {
+            dragDepthRef.current = 0;
+            setIsDragging(false);
+            if (isBusy || isReadingImages) {
+              event.preventDefault();
+              event.stopPropagation();
+              return;
+            }
+            if (!event.dataTransfer.types.includes('Files')) {
+              const urls = event.dataTransfer
+                .getData('text/uri-list')
+                .split(/\r?\n/)
+                .map((url) => url.trim())
+                .filter((url) => url && !url.startsWith('#'));
+              if (urls.length) {
+                event.preventDefault();
+                event.stopPropagation();
+                attachImageUrls(urls);
+              }
+            }
+          }
+        })}
+      >
+        <input
+          {...getInputProps({
+            accept:
+              mode === 'image'
+                ? 'image/png,image/jpeg,image/webp'
+                : 'image/png,image/jpeg,image/webp,image/gif',
+            'aria-label': text('Attach images', '添加图片')
+          })}
+        />
+        {isDragging && (
+          <div
+            className="pointer-events-none absolute inset-3 z-20 flex items-center justify-center rounded-2xl border-2 border-dashed border-primary bg-background/95"
+            role="status"
+          >
+            <div className="space-y-3 text-center">
+              <ImagePlus className="mx-auto h-10 w-10 text-primary" />
+              <p className="font-medium">
+                {text('Drop images here', '松开即可添加图片')}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {text(
+                  'PNG, JPEG, WebP · Up to 20 MB each',
+                  'PNG、JPEG、WebP · 每张最多 20 MB'
+                )}
+              </p>
+            </div>
+          </div>
+        )}
+        <ScrollArea
+          className="min-h-0 flex-1"
+          onScrollCapture={(event) => {
+            const viewport = event.target as HTMLElement;
+            if (viewport.hasAttribute('data-radix-scroll-area-viewport')) {
+              followOutputRef.current =
+                viewport.scrollHeight -
+                  viewport.scrollTop -
+                  viewport.clientHeight <
+                100;
+            }
+          }}
+        >
+          <div className="mx-auto w-full max-w-4xl space-y-5 px-4 py-6 sm:px-8">
+            {!messages.length && (
+              <div className="flex min-h-[28vh] flex-col items-center justify-center py-8 text-center sm:min-h-[40vh]">
+                <div className="mb-5 rounded-2xl border bg-muted/30 p-4">
+                  {mode === 'chat' ? (
+                    <MessageSquare className="h-7 w-7 text-muted-foreground" />
+                  ) : (
+                    <ImageIcon className="h-7 w-7 text-muted-foreground" />
+                  )}
                 </div>
+                <h2 className="text-xl font-medium tracking-tight">
+                  {mode === 'chat'
+                    ? text('What would you like to explore?', '想聊些什么？')
+                    : text('Turn an idea into an image', '把想法变成图片')}
+                </h2>
+                <p className="mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
+                  {mode === 'chat'
+                    ? text(
+                        'Send a message, or drop an image to start.',
+                        '输入消息，或直接拖入图片开始对话。'
+                      )
+                    : text(
+                        'Describe your idea, or drop a reference image to edit.',
+                        '描述你想要的画面，或拖入参考图进行编辑。'
+                      )}
+                </p>
+                {mode === 'image' && !selectedModel && !isLoading && (
+                  <p className="mt-4 max-w-sm text-xs text-muted-foreground">
+                    {text(
+                      'Select an available GPT Image model or its configured alias above.',
+                      '请在上方选择可用的 GPT Image 模型或已配置的模型别名。'
+                    )}
+                  </p>
+                )}
               </div>
             )}
-
-            {messages.map((msg, idx) => {
-              const textContent = getTextContent(msg.content);
-              const imageAttachments = getImageUrls(msg.content);
-
+            {messages.map((message, index) => {
+              const content = getTextContent(message.content);
+              const images = getImageUrls(message.content);
+              const pending =
+                isBusy &&
+                index === messages.length - 1 &&
+                message.role === 'assistant';
               return (
-                <div
-                  key={idx}
+                <article
+                  key={index}
                   className={cn(
-                    'group relative rounded-lg px-3 py-2.5 sm:px-4 sm:py-3',
-                    msg.role === 'user' ? 'bg-muted/50' : 'bg-background'
+                    'group rounded-2xl p-4',
+                    message.role === 'user'
+                      ? 'border bg-muted/30'
+                      : 'bg-background'
                   )}
                 >
-                  <div className="mb-1 flex items-center gap-2">
-                    {msg.role === 'user' ? (
-                      <User className="h-4 w-4 text-muted-foreground" />
+                  <div className="mb-3 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                    {message.role === 'user' ? (
+                      <User className="h-4 w-4" />
                     ) : (
-                      <Bot className="h-4 w-4 text-primary" />
+                      <Bot className="h-4 w-4" />
                     )}
-                    <span className="text-xs font-medium capitalize">
-                      {msg.role}
-                    </span>
-                    <button
-                      onClick={() => handleCopy(msg.content, idx)}
-                      className="ml-auto opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100"
-                    >
-                      {copiedIdx === idx ? (
-                        <Check className="h-3.5 w-3.5 text-green-500" />
-                      ) : (
-                        <Copy className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
-                      )}
-                    </button>
+                    {message.role === 'user'
+                      ? text('You', '你')
+                      : text('Assistant', '助手')}
+                    {!pending && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="ml-auto h-7 w-7 md:opacity-0 md:focus-visible:opacity-100 md:group-hover:opacity-100"
+                        aria-label={text('Copy message', '复制消息')}
+                        onClick={() => handleCopy(message.content, index)}
+                      >
+                        {copiedIdx === index ? (
+                          <Check className="h-3.5 w-3.5" />
+                        ) : (
+                          <Copy className="h-3.5 w-3.5" />
+                        )}
+                      </Button>
+                    )}
                   </div>
-                  <div className="space-y-3 pl-6">
-                    {textContent && (
-                      <div className="whitespace-pre-wrap break-words text-sm leading-relaxed [overflow-wrap:anywhere]">
-                        {textContent}
-                      </div>
-                    )}
-
-                    {imageAttachments.length > 0 && (
-                      <div className="grid max-w-xl grid-cols-2 gap-2 sm:grid-cols-3">
-                        {imageAttachments.map((url, imageIndex) => (
-                          <a
-                            key={`${idx}-${imageIndex}`}
-                            href={url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="overflow-hidden rounded-md border bg-muted"
+                  {content && (
+                    <div
+                      className={cn(
+                        'whitespace-pre-wrap break-words text-sm leading-7 [overflow-wrap:anywhere]',
+                        message.error &&
+                          message.role === 'assistant' &&
+                          'text-destructive'
+                      )}
+                      role={
+                        message.error && message.role === 'assistant'
+                          ? 'alert'
+                          : undefined
+                      }
+                    >
+                      {content}
+                    </div>
+                  )}
+                  {images.length > 0 && (
+                    <div
+                      className={cn(
+                        'mt-3 grid gap-3',
+                        message.role === 'assistant'
+                          ? 'grid-cols-1 sm:grid-cols-2'
+                          : 'grid-cols-2 sm:grid-cols-3'
+                      )}
+                    >
+                      {images.map((url, imageIndex) => (
+                        <div
+                          key={imageIndex}
+                          className="overflow-hidden rounded-xl border bg-muted/20"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => previewImage(url)}
+                            className="block w-full"
+                            aria-label={text(
+                              `Preview image ${imageIndex + 1}`,
+                              `预览图片 ${imageIndex + 1}`
+                            )}
                           >
                             <img
                               src={url}
-                              alt={`Message attachment ${imageIndex + 1}`}
-                              className="h-28 w-full object-cover"
+                              alt={text(
+                                `Image ${imageIndex + 1}`,
+                                `图片 ${imageIndex + 1}`
+                              )}
+                              className={cn(
+                                'w-full object-contain',
+                                message.role === 'assistant'
+                                  ? 'max-h-96'
+                                  : 'h-32'
+                              )}
                             />
-                          </a>
-                        ))}
-                      </div>
-                    )}
-
-                    {isStreaming &&
-                      idx === messages.length - 1 &&
-                      msg.role === 'assistant' &&
-                      !textContent &&
-                      imageAttachments.length === 0 && (
-                        <span className="inline-block h-4 w-1.5 animate-pulse bg-foreground/70" />
-                      )}
-                  </div>
-                </div>
+                          </button>
+                          {message.role === 'assistant' && (
+                            <div className="flex flex-wrap border-t">
+                              <button
+                                type="button"
+                                disabled={isBusy || isReadingImages}
+                                onClick={() => attachImageUrls([url])}
+                                className="flex min-h-10 flex-1 items-center justify-center gap-1.5 px-2 py-2 text-xs hover:bg-muted disabled:opacity-50"
+                              >
+                                <ImagePlus className="h-3.5 w-3.5" />
+                                {text('Use as reference', '用作参考图')}
+                              </button>
+                              <a
+                                href={url}
+                                download={
+                                  url.startsWith('data:')
+                                    ? `playground-${index}-${imageIndex + 1}.${
+                                        url.startsWith('data:image/webp')
+                                          ? 'webp'
+                                          : url.startsWith('data:image/jpeg')
+                                          ? 'jpg'
+                                          : 'png'
+                                      }`
+                                    : undefined
+                                }
+                                target="_blank"
+                                rel="noreferrer"
+                                className="flex min-h-10 flex-1 items-center justify-center gap-1.5 px-2 py-2 text-xs hover:bg-muted"
+                              >
+                                {url.startsWith('data:') ? (
+                                  <Download className="h-3.5 w-3.5" />
+                                ) : (
+                                  <ExternalLink className="h-3.5 w-3.5" />
+                                )}
+                                {url.startsWith('data:')
+                                  ? text('Download', '下载图片')
+                                  : text('Open original', '打开原图')}
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {pending && !content && (
+                    <div
+                      className="flex items-center gap-2 py-3 text-sm text-muted-foreground"
+                      role="status"
+                    >
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      {mode === 'image'
+                        ? text(
+                            'Creating your image… This may take a few minutes.',
+                            '正在生成图片，可能需要几分钟…'
+                          )
+                        : text('Thinking…', '正在思考…')}
+                    </div>
+                  )}
+                </article>
               );
             })}
             <div ref={messagesEndRef} />
           </div>
         </ScrollArea>
 
-        {/* Input Area */}
-        <div className="flex-shrink-0 border-t bg-background p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-4">
-          <div className="mx-auto max-w-3xl">
-            {validImageUrls.length > 0 && (
-              <div className="mb-3 flex items-center justify-between rounded-md border bg-muted/40 px-3 py-2">
-                <span className="text-xs text-muted-foreground">
-                  {validImageUrls.length} image
-                  {validImageUrls.length === 1 ? '' : 's'} ready
-                  {imageEnabled ? ' for the next prompt' : ' saved'}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 text-xs"
-                  onClick={handleClearImages}
-                >
-                  Clear
-                </Button>
+        <div className="shrink-0 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 sm:px-6 sm:pb-5">
+          <div
+            className="mx-auto max-w-4xl rounded-2xl border bg-background shadow-sm transition-shadow focus-within:border-muted-foreground/50 focus-within:shadow-md"
+            data-testid="playground-composer"
+          >
+            {imageUrls.length > 0 && (
+              <div className="flex max-h-36 gap-2 overflow-x-auto px-4 pt-4">
+                {imageUrls.map((url, index) => (
+                  <div
+                    key={index}
+                    className="relative shrink-0 rounded-lg border bg-muted/30"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => previewImage(url)}
+                      aria-label={text(
+                        `Preview attachment ${index + 1}`,
+                        `预览附件 ${index + 1}`
+                      )}
+                    >
+                      <img
+                        src={url}
+                        alt={text(
+                          `Attachment ${index + 1}`,
+                          `附件 ${index + 1}`
+                        )}
+                        className="h-20 w-20 rounded-lg object-cover"
+                      />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isBusy || isReadingImages}
+                      onClick={() =>
+                        setImageUrls((prev) =>
+                          prev.filter((_, current) => current !== index)
+                        )
+                      }
+                      className="absolute right-1 top-1 rounded-full border bg-background p-1 shadow-sm hover:bg-muted disabled:opacity-50"
+                      aria-label={text(
+                        `Remove attachment ${index + 1}`,
+                        `移除附件 ${index + 1}`
+                      )}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
-            <div className="flex items-end gap-2">
+            <Textarea
+              ref={textareaRef}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onPaste={handlePaste}
+              onKeyDown={(event) => {
+                if (
+                  event.key === 'Enter' &&
+                  !event.shiftKey &&
+                  !event.nativeEvent.isComposing &&
+                  event.keyCode !== 229
+                ) {
+                  event.preventDefault();
+                  if (canSend) void handleSend();
+                }
+              }}
+              aria-label={text('Prompt', '提示词')}
+              placeholder={
+                mode === 'chat'
+                  ? text(
+                      'Message, paste or drop images here…',
+                      '输入消息，粘贴或拖入图片…'
+                    )
+                  : imageUrls.length
+                  ? text(
+                      'Describe how to edit these images…',
+                      '描述你希望如何修改这些图片…'
+                    )
+                  : text(
+                      'Describe an image, or drop a reference here…',
+                      '描述想要的画面，或拖入参考图片…'
+                    )
+              }
+              rows={2}
+              disabled={isBusy}
+              className="max-h-[180px] min-h-[76px] resize-none rounded-2xl border-0 bg-transparent px-4 py-4 text-base shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 sm:text-sm"
+            />
+            <div className="flex items-center gap-1 px-3 pb-3">
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
                 size="icon"
-                className="h-10 w-10 flex-shrink-0 sm:h-[44px] sm:w-[44px]"
-                onClick={handleOpenImageUpload}
-                disabled={isStreaming}
-                title="Upload image"
-                aria-label="Upload image"
+                onClick={open}
+                disabled={isBusy || isReadingImages}
+                aria-label={text('Attach images', '添加图片')}
+                title={text('Attach images', '添加图片')}
               >
                 <ImagePlus className="h-4 w-4" />
               </Button>
-              <Textarea
-                ref={textareaRef}
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={handleKeyDown}
-                onPaste={handlePasteImage}
-                placeholder={
-                  imageEnabled
-                    ? 'Type a message or paste an image...'
-                    : 'Type a message...'
-                }
-                className="max-h-[200px] min-h-[40px] resize-none text-sm sm:min-h-[44px]"
-                rows={1}
-                disabled={isStreaming}
-              />
-              {isStreaming ? (
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  className="h-10 w-10 flex-shrink-0 sm:h-[44px] sm:w-[44px]"
-                  onClick={handleStop}
-                  aria-label="Stop generating"
+              <Popover open={urlOpen} onOpenChange={setUrlOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    disabled={isBusy || isReadingImages}
+                    aria-label={text('Add image URL', '添加图片链接')}
+                    title={text('Add image URL', '添加图片链接')}
+                  >
+                    <LinkIcon className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  align="start"
+                  className="w-80 max-w-[calc(100vw-24px)] space-y-3"
                 >
-                  <Square className="h-4 w-4" />
-                </Button>
-              ) : (
-                <Button
-                  size="icon"
-                  className="h-10 w-10 flex-shrink-0 sm:h-[44px] sm:w-[44px]"
-                  onClick={handleSend}
-                  aria-label="Send message"
-                  disabled={
-                    (!inputValue.trim() && !hasPendingImages) ||
-                    !selectedModel ||
-                    !selectedTokenKey
-                  }
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              )}
+                  <Label htmlFor="image-url">
+                    {text('Image URL', '图片链接')}
+                  </Label>
+                  <Input
+                    id="image-url"
+                    type="url"
+                    value={urlInput}
+                    placeholder="https://…"
+                    onChange={(e) => setUrlInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addImageUrl();
+                      }
+                    }}
+                  />
+                  <Button
+                    className="w-full"
+                    size="sm"
+                    disabled={!urlInput.trim()}
+                    onClick={addImageUrl}
+                  >
+                    {text('Add image', '添加图片')}
+                  </Button>
+                </PopoverContent>
+              </Popover>
+              <span
+                className="ml-1 min-w-0 truncate text-xs text-muted-foreground"
+                role="status"
+              >
+                {isReadingImages ? (
+                  text('Reading images…', '正在读取图片…')
+                ) : imageUrls.length ? (
+                  text(
+                    `${imageUrls.length} attached`,
+                    `已添加 ${imageUrls.length} 张`
+                  )
+                ) : (
+                  <span className="hidden sm:inline">
+                    {text('Drop or paste images', '可直接拖入或粘贴图片')}
+                  </span>
+                )}
+              </span>
+              <div className="ml-auto">
+                {isBusy ? (
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="rounded-xl"
+                    onClick={() => abortControllerRef.current?.abort()}
+                    aria-label={text('Stop generating', '停止生成')}
+                  >
+                    <Square className="h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button
+                    size="icon"
+                    className="rounded-xl"
+                    disabled={!canSend}
+                    onClick={handleSend}
+                    aria-label={
+                      mode === 'chat'
+                        ? text('Send message', '发送消息')
+                        : text('Generate image', '生成图片')
+                    }
+                  >
+                    <ArrowUp className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
             </div>
-            <p className="mt-2 hidden text-xs text-muted-foreground sm:block">
-              Enter to send · Shift + Enter for a new line
-            </p>
+          </div>
+          <div className="mx-auto mt-2 flex max-w-4xl items-center justify-between gap-3 px-1 text-[11px] text-muted-foreground">
+            <span className="truncate">
+              {selectedToken
+                ? `${text('Key', '密钥')}: ${
+                    selectedToken.name || maskedApiKey(selectedToken.key)
+                  }`
+                : text(
+                    'Select an API key in Settings',
+                    '请在设置中选择 API Key'
+                  )}
+            </span>
+            <span className="hidden shrink-0 sm:inline">
+              {text(
+                'Enter to send · Shift + Enter for a new line',
+                'Enter 发送 · Shift + Enter 换行'
+              )}
+            </span>
           </div>
         </div>
       </div>
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-h-[95dvh] max-w-4xl overflow-auto">
+          <DialogTitle>{text('Image preview', '图片预览')}</DialogTitle>
+          <DialogDescription className="sr-only">
+            {text('Full image preview', '完整图片预览')}
+          </DialogDescription>
+          {previewUrl && (
+            <img
+              src={previewUrl}
+              alt={text('Image preview', '图片预览')}
+              className="max-h-[75dvh] w-full object-contain"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
