@@ -65,6 +65,25 @@ export default function SettingPage() {
   const [isDataLoading, setIsDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (isDataLoading || error) return;
+
+    const focusSetting = () => {
+      const id = window.location.hash.slice(1);
+      if (id !== 'retry-count' && id !== 'retry-keywords') return;
+      const field = document.getElementById(id);
+      field?.scrollIntoView({ block: 'center' });
+      field?.focus({ preventScroll: true });
+    };
+
+    const frame = requestAnimationFrame(focusSetting);
+    window.addEventListener('hashchange', focusSetting);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('hashchange', focusSetting);
+    };
+  }, [isDataLoading, error]);
+
   // ==================== OAuth login settings ====================
   const [githubOAuthEnabled, setGithubOAuthEnabled] = useState(false);
   const [googleOAuthEnabled, setGoogleOAuthEnabled] = useState(false);

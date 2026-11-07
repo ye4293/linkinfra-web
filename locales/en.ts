@@ -494,6 +494,10 @@ const en: Locale = {
   },
   // Channel management
   channelPage: {
+    maxRetries: 'Max retries',
+    retrySettings: 'Retry settings',
+    retryKeywords: 'Retry keywords',
+
     title: 'Channels',
     countSuffix: 'channels',
     description: 'Manage AI channels & routing',

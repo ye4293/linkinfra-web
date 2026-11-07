@@ -486,6 +486,10 @@ const zh = {
   },
   // channel management
   channelPage: {
+    maxRetries: '最大重试',
+    retrySettings: '重试设置',
+    retryKeywords: '重试关键词',
+
     title: '渠道',
     countSuffix: 'channels',
     description: 'Manage AI channels and load balancing',

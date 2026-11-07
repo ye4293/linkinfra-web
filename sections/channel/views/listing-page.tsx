@@ -88,7 +88,10 @@ export default async function ChannelListingPage({}: TChannelListingPage) {
     <PageContainer scrollable>
       <div className="space-y-4">
         <Breadcrumbs items={breadcrumbItems} />
-        <ChannelPageHeader total={totalData} />
+        <ChannelPageHeader
+          total={totalData}
+          canEditSettings={session.user.role === 100}
+        />
         <Separator />
         <OptimizedChannelTable
           initialData={channels}
