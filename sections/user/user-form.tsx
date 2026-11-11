@@ -44,6 +44,10 @@ import {
   Save,
   UserRound
 } from 'lucide-react';
+import {
+  parseChannelRatios,
+  serializeChannelRatios
+} from '@/lib/channel-ratios';
 import ChannelRatiosEditor from './channel-ratios-editor';
 
 function getQuotaPerUnit(): number {
@@ -83,36 +87,6 @@ interface ParamsOption extends Partial<UserSelf> {
   google_id?: string;
   email?: string;
   channel_ratios?: string;
-}
-
-function parseChannelRatios(raw: unknown): Record<string, number> {
-  if (!raw || typeof raw !== 'string') return {};
-  try {
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object') return {};
-    const out: Record<string, number> = {};
-    for (const [k, v] of Object.entries(parsed)) {
-      const num = Number(v);
-      if (Number.isFinite(num) && num > 0) out[k] = num;
-    }
-    return out;
-  } catch {
-    return {};
-  }
-}
-
-function serializeChannelRatios(
-  map: Record<string, number> | undefined
-): string {
-  if (!map) return '';
-  const cleaned: Record<string, number> = {};
-  for (const [k, v] of Object.entries(map)) {
-    if (typeof v === 'number' && Number.isFinite(v) && v > 0) {
-      cleaned[k] = v;
-    }
-  }
-  if (Object.keys(cleaned).length === 0) return '';
-  return JSON.stringify(cleaned);
 }
 
 export default function UserForm() {

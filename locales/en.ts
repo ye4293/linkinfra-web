@@ -180,6 +180,7 @@ const en: Locale = {
     tierRatio: 'Tier Discount',
     channelDiscount: 'Channel Discount',
     userChannelDiscount: 'User Channel Discount',
+    billingTag: 'Billing Tag',
     keyIndex: 'Key Index'
   },
   // Pricing settings page
@@ -248,15 +249,26 @@ const en: Locale = {
   // Channel form (billing-related)
   channelForm: {
     discountLabel: 'Channel Discount',
-    discountPlaceholder: '1.0 = no discount, 0.7 = 30% off'
+    discountPlaceholder: '1.0 = no discount, 0.7 = 30% off',
+    billingTagLabel: 'Billing Tag',
+    billingTagPlaceholder: 'e.g. vertex-claude (optional)',
+    billingTagHint:
+      "Groups channels for per-user discounts and usage stats. It does not affect routing or retries. Letters, digits, '.', '_' and '-' only."
   },
-  // User × channel-type discount editor
+  // User discount editor: by billing tag and by channel type
   channelRatios: {
     title: 'Channel-Type Discount',
     descriptionPrefix:
       'Multiplied with the channel discount and tier discount. Example: 0.8 will charge',
     formulaCode: 'model price × channel discount × tier discount × 0.8',
-    descriptionSuffix: '. Leave blank for 1.0.'
+    descriptionSuffix: '. Leave blank for 1.0.',
+    tagTitle: 'Billing-Tag Discount',
+    tagDescription:
+      'Applies to channels that carry the tag and replaces the channel-type discount for them. The two are never multiplied. Leave blank to use the channel-type discount.',
+    tagEmpty:
+      'No billing tags yet. Set a billing tag on a channel to configure its discount here.',
+    tagLoadFailed:
+      'Unable to load billing tags. Saved tag discounts are listed below and stay unchanged unless you remove them.'
   },
   // v3 Landing page
   landing: {

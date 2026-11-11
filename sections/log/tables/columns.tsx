@@ -55,7 +55,8 @@ export interface BillingDetails {
   // 折扣分量（从 v2 起新增）
   tier_ratio?: number; // 纯等级折扣
   channel_discount?: number; // 渠道折扣
-  user_channel_ratio?: number; // 用户针对渠道类型的额外折扣
+  user_channel_ratio?: number; // 用户针对渠道的额外折扣（计费标签折扣优先，其次渠道类型折扣）
+  billing_tag?: string; // user_channel_ratio 来自计费标签时为该标签（仅管理员可见）
   // 多 Key 渠道
   is_multi_key?: boolean;
   key_index?: number;
