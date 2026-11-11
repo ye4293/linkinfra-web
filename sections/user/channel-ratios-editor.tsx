@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useId, useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import { Control, useController } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,6 +16,7 @@ import {
   billingTagKey,
   billingTagRows,
   hasChannelTypeRatios,
+  parseRatioInput,
   withRatioInput,
   withoutChannelTypeRatios
 } from '@/lib/channel-ratios';
@@ -40,8 +41,21 @@ interface RatioRowProps {
   hintClassName: string;
   placeholder: string;
   value: number | undefined;
+  /** 批量设置或重置后递增：这一行丢弃还没生效的输入，回到已生效的值 */
+  revision?: number;
   onChange: (raw: string) => void;
 }
+
+/** 输入框里还没生效的文本 */
+interface RatioDraft {
+  text: string;
+  /** 不是可用的折扣：不大于 0，或浏览器认不出的输入 */
+  invalid: boolean;
+  /** 已经在这一行上提示过，之后一直显示到改对为止 */
+  flagged: boolean;
+}
+
+const INVALID_RATIO_MESSAGE = 'Enter a number greater than 0';
 
 /**
  * 一行折扣输入。值直接读写整个 channel_ratios 对象，不为每一行单独注册表单字段：
@@ -55,14 +69,39 @@ function RatioRow({
   hintClassName,
   placeholder,
   value,
+  revision = 0,
   onChange
 }: RatioRowProps) {
   const inputId = useId();
+  const hintId = useId();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const seenRevision = useRef(revision);
   // 正在输入的文本。逐键输入 "0.7" 会先经过 "0" 这种还不是合法折扣的中间态，
   // 这时如果按已生效的值重绘输入框，选中旧值 0.85 再输入 0.7 会变成 0.857。
-  // 所以聚焦期间显示用户输入的文本，失焦后再回到已生效的值。
-  const [draft, setDraft] = useState<string | null>(null);
+  // 所以输入期间显示用户输入的文本；离开输入框时，输入有效就回到已生效的值，
+  // 无效则留在原处并提示，不悄悄丢掉。
+  const [draft, setDraft] = useState<RatioDraft | null>(null);
   const committed = value === undefined ? '' : String(value);
+  const invalid = draft?.invalid ?? false;
+  const showError = invalid && (draft?.flagged ?? false);
+
+  // 无效的输入不会生效。交给浏览器的表单校验拦住保存，而不是按旧值保存后跳走。
+  useEffect(() => {
+    inputRef.current?.setCustomValidity(invalid ? INVALID_RATIO_MESSAGE : '');
+  }, [invalid]);
+
+  // 已生效的值被别处改掉时，输入框跟着变。批量设置或重置之后每一行都回到已生效的值；
+  // 其余情况（例如没有聚焦时点了步进箭头）只在没有聚焦时跟随，不打断正在进行的输入。
+  useEffect(() => {
+    const input = inputRef.current;
+    const bulkChange = seenRevision.current !== revision;
+    seenRevision.current = revision;
+    if (!bulkChange && document.activeElement === input) return;
+    setDraft(null);
+    // 浏览器认不出的输入（如 "."）留在输入框里时 value 一直是空串，React 认为没有变化、不会重绘，手动恢复
+    if (input && input.validity.badInput) input.value = committed;
+  }, [committed, revision]);
+
   return (
     <div className="group flex min-h-14 items-center justify-between gap-3 rounded-lg border bg-card px-3 py-2 transition-colors hover:border-primary/40 hover:bg-muted/20">
       <div className="min-w-0 flex-1">
@@ -76,30 +115,49 @@ function RatioRow({
         >
           {label}
         </Label>
-        <span className={cn('block truncate text-xs', hintClassName)}>
-          {hint}
+        <span
+          id={hintId}
+          className={cn(
+            'block truncate text-xs',
+            showError ? 'font-medium text-destructive' : hintClassName
+          )}
+        >
+          {showError ? INVALID_RATIO_MESSAGE : hint}
         </span>
       </div>
       <Input
+        ref={inputRef}
         id={inputId}
         type="number"
-        step="0.01"
+        step="any"
         min="0"
         placeholder={placeholder}
+        aria-invalid={showError || undefined}
+        aria-describedby={hintId}
         className="h-9 w-24 text-right tabular-nums"
-        value={draft ?? committed}
+        value={draft ? draft.text : committed}
         onChange={(e) => {
           const raw = e.target.value;
-          setDraft(raw);
           // "." 这类浏览器认不出的输入，value 是空串，但不代表用户清空了折扣
-          if (raw === '' && e.target.validity.badInput) return;
-          onChange(raw);
+          const isInvalid =
+            e.target.validity.badInput || parseRatioInput(raw) === null;
+          setDraft((prev) => ({
+            text: raw,
+            invalid: isInvalid,
+            flagged: isInvalid && !!prev?.flagged
+          }));
+          if (!isInvalid) onChange(raw);
         }}
-        onBlur={(e) => {
-          setDraft(null);
-          // 留下的是浏览器认不出的输入时 value 一直是空串，React 认为没有变化、不会重绘，手动恢复
-          if (e.target.validity.badInput) e.target.value = committed;
-        }}
+        onBlur={() =>
+          setDraft((prev) =>
+            prev?.invalid ? { ...prev, flagged: true } : null
+          )
+        }
+        onInvalid={() =>
+          setDraft((prev) =>
+            prev?.invalid ? { ...prev, flagged: true } : prev
+          )
+        }
       />
     </div>
   );
@@ -124,6 +182,8 @@ export default function ChannelRatiosEditor({ control }: Props) {
   const [query, setQuery] = useState('');
   const [onlyCustomized, setOnlyCustomized] = useState(false);
   const [bulkRatio, setBulkRatio] = useState('');
+  // 批量设置或重置渠道类型折扣后递增，让各类型行丢弃还没生效的输入
+  const [typeRevision, setTypeRevision] = useState(0);
 
   const { field } = useController({
     control,
@@ -180,7 +240,7 @@ export default function ChannelRatiosEditor({ control }: Props) {
 
   const setRatio = (key: string, raw: string) => {
     const next = withRatioInput(ratios, key, raw);
-    // 非法输入时保留原状
+    // 无效的输入不写入表单，由所在的行提示
     if (next) field.onChange(next);
   };
 
@@ -193,15 +253,22 @@ export default function ChannelRatiosEditor({ control }: Props) {
     return matchesQuery && matchesCustomized;
   });
 
+  const bulkValue = parseRatioInput(bulkRatio);
+
   const applyBulkRatio = () => {
-    const value = Number(bulkRatio);
-    if (!Number.isFinite(value) || value <= 0) return;
+    if (typeof bulkValue !== 'number') return;
     const next = { ...ratios };
     filteredTypes.forEach((ct) => {
-      next[String(ct.value)] = value;
+      next[String(ct.value)] = bulkValue;
     });
     field.onChange(next);
+    setTypeRevision((revision) => revision + 1);
     setBulkRatio('');
+  };
+
+  const resetChannelTypes = () => {
+    field.onChange(withoutChannelTypeRatios(ratios));
+    setTypeRevision((revision) => revision + 1);
   };
 
   const renderTagRow = (row: BillingTagRow) => {
@@ -325,6 +392,12 @@ export default function ChannelRatiosEditor({ control }: Props) {
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => {
+                // 回车只用于筛选，不提交整个用户表单
+                if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+                  e.preventDefault();
+                }
+              }}
               placeholder="Search channel types"
               className="h-10 pl-9 pr-9"
             />
@@ -351,7 +424,7 @@ export default function ChannelRatiosEditor({ control }: Props) {
           <Button
             type="button"
             variant="outline"
-            onClick={() => field.onChange(withoutChannelTypeRatios(ratios))}
+            onClick={resetChannelTypes}
             disabled={!hasChannelTypeRatios(ratios)}
             className="h-10 justify-start lg:justify-center"
           >
@@ -371,10 +444,16 @@ export default function ChannelRatiosEditor({ control }: Props) {
           <div className="flex gap-2">
             <Input
               type="number"
-              step="0.01"
-              min="0.01"
+              step="any"
               value={bulkRatio}
               onChange={(e) => setBulkRatio(e.target.value)}
+              onKeyDown={(e) => {
+                // 回车等同于 Apply，不提交整个用户表单
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  applyBulkRatio();
+                }
+              }}
               placeholder="e.g. 0.85"
               className="h-9 min-w-0 flex-1 sm:w-32"
             />
@@ -382,7 +461,7 @@ export default function ChannelRatiosEditor({ control }: Props) {
               type="button"
               size="sm"
               onClick={applyBulkRatio}
-              disabled={!bulkRatio}
+              disabled={typeof bulkValue !== 'number'}
             >
               Apply
             </Button>
@@ -416,6 +495,7 @@ export default function ChannelRatiosEditor({ control }: Props) {
                   }
                   placeholder="1.0"
                   value={currentVal}
+                  revision={typeRevision}
                   onChange={(raw) => setRatio(key, raw)}
                 />
               );

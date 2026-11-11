@@ -20,6 +20,7 @@ const {
   billingTagFromKey,
   parseChannelRatios,
   serializeChannelRatios,
+  parseRatioInput,
   withRatioInput,
   hasChannelTypeRatios,
   withoutChannelTypeRatios,
@@ -36,6 +37,10 @@ test('billing tags normalize the same way as the backend', () => {
     'vertex claude': '',
     'tag:vertex': '',
     渠道: '',
+    // 非 ASCII 字符一律不接受，不会被大小写转换变成另一个合法标签（U+212A 的小写是 k）。
+    // 用码点构造，免得源码里出现和 ASCII 字母长得一样的字符。
+    ['vertex-' + String.fromCharCode(0x212a) + 'laude']: '',
+    [String.fromCharCode(0x130) + 'stanbul']: '',
     ['a'.repeat(64)]: 'a'.repeat(64),
     ['a'.repeat(65)]: ''
   };
@@ -46,6 +51,15 @@ test('billing tags normalize the same way as the backend', () => {
   assert.equal(billingTagFromKey('TAG: Vertex-Claude '), 'vertex-claude');
   assert.equal(billingTagFromKey('48'), '');
   assert.equal(billingTagFromKey('tag:bad tag'), '');
+  // 首尾空白按后端 strings.TrimSpace 的口径：U+0085 算空白，U+FEFF 不算
+  assert.equal(
+    billingTagFromKey('tag:vertex' + String.fromCharCode(0x85)),
+    'vertex'
+  );
+  assert.equal(
+    billingTagFromKey(String.fromCharCode(0xfeff) + 'tag:vertex'),
+    ''
+  );
   // 渠道表单允许大写输入（保存时转小写），不允许空格和其他符号
   assert.ok(BILLING_TAG_INPUT_PATTERN.test('Vertex-Claude_1.5'));
   assert.ok(BILLING_TAG_INPUT_PATTERN.test(''));
@@ -82,6 +96,23 @@ test('channel_ratios keeps channel types and canonicalizes billing tag keys', ()
   assert.equal(serializeChannelRatios({ 48: undefined, 14: 0 }), '');
 });
 
+test('channel_ratios drops keys billing ignores and reads channel types as integers', () => {
+  // 计费不认的 key 不带回表单：名字不合法的 tag: 项会让后端拒绝保存，
+  // 名为 target 的 key 会被表单库当成事件对象
+  assert.deepEqual(
+    parseChannelRatios(
+      '{"48":0.9,"abc":0.5,"target":0.3,"tag:bad tag":0.5,"tag:":0.5,"-1":0.5,"0":0.5,"__proto__":0.5}'
+    ),
+    { 48: 0.9 }
+  );
+  // 后端按整数识别渠道类型；同一类型有多种写法时排在后面的生效
+  assert.deepEqual(parseChannelRatios('{"048":0.5}'), { 48: 0.5 });
+  assert.deepEqual(parseChannelRatios('{"048":0.5,"48":0.9,"+48":0.7}'), {
+    48: 0.9
+  });
+  assert.deepEqual(parseChannelRatios('{" 48":0.5,"4 8":0.5,"4.8":0.5}'), {});
+});
+
 test('ratio input writes, clears or rejects one key without touching the others', () => {
   const base = { 48: 0.9, 'tag:vertex-claude': 0.85 };
   assert.deepEqual(withRatioInput(base, 'tag:vertex-gemini', ' 0.7 '), {
@@ -97,6 +128,15 @@ test('ratio input writes, clears or rejects one key without touching the others'
     assert.equal(withRatioInput(base, '48', invalid), null, invalid);
   }
   assert.deepEqual(base, { 48: 0.9, 'tag:vertex-claude': 0.85 });
+
+  // 输入框文本的三种结果：留空是不设置，正数是折扣（位数不限），其余无效
+  assert.equal(parseRatioInput(''), undefined);
+  assert.equal(parseRatioInput('   '), undefined);
+  assert.equal(parseRatioInput(' 0.875 '), 0.875);
+  assert.equal(parseRatioInput('1.25'), 1.25);
+  for (const invalid of ['0', '0.0', '-1', 'abc', 'Infinity', 'NaN']) {
+    assert.equal(parseRatioInput(invalid), null, invalid);
+  }
 });
 
 test('resetting channel types keeps billing tag discounts', () => {
@@ -140,6 +180,28 @@ test('tag rows list channel tags first, then saved tags no channel uses', () => 
     { tag: 'retired', status: 'unknown', channelCount: 0, ratio: 0.6 },
     { tag: 'vertex-claude', status: 'unknown', channelCount: 0, ratio: 0.85 }
   ]);
+  // 标签可以叫 constructor、__proto__ 这类普通对象上本来就有的名字
+  assert.deepEqual(
+    billingTagRows({ 'tag:constructor': 0.5, 'tag:tostring': 0.4 }, [
+      { tag: 'constructor', channel_count: 1 },
+      { tag: '__proto__', channel_count: 2 }
+    ]),
+    [
+      { tag: 'constructor', status: 'active', channelCount: 1, ratio: 0.5 },
+      { tag: '__proto__', status: 'active', channelCount: 2, ratio: undefined },
+      { tag: 'tostring', status: 'unused', channelCount: 0, ratio: 0.4 }
+    ]
+  );
+  assert.deepEqual(
+    billingTagRows(
+      parseChannelRatios('{"tag:constructor":0.5,"tag:__proto__":0.4}'),
+      []
+    ),
+    [
+      { tag: '__proto__', status: 'unused', channelCount: 0, ratio: 0.4 },
+      { tag: 'constructor', status: 'unused', channelCount: 0, ratio: 0.5 }
+    ]
+  );
 });
 
 test('editing through the whole record keeps the user form submittable', async () => {

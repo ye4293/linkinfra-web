@@ -1328,7 +1328,9 @@ export default function ChannelForm() {
         ) {
           config.beta_filter_mode = values.beta_filter_mode;
         }
-        return Object.keys(config).length > 0 ? JSON.stringify(config) : '';
+        // 没有任何配置项时返回 "{}" 而不是空串：后端更新渠道时会忽略空的 config，
+        // 那样清空计费标签等配置项会保存成功却不生效。
+        return JSON.stringify(config);
       };
 
       const baseParams: Omit<ParamsOption, 'key' | 'name'> = {
