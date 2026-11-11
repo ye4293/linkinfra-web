@@ -5,11 +5,19 @@ import { GettingStartedCard } from '@/components/getting-started-guide';
 import { SiteNotice } from '@/components/site-notice';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Wallet, Zap, CalendarDays, Users, ArrowRight } from 'lucide-react';
+import {
+  Wallet,
+  Zap,
+  CalendarDays,
+  Users,
+  Layers,
+  ArrowRight
+} from 'lucide-react';
 import { BarGraph } from '../bar-graph';
 import { AnalyticsContent } from '../analytics-content';
 import PageContainer from '@/components/layout/page-container';
 import { RecentSales } from '../recent-sales';
+import { SourceUsage } from '../source-usage';
 import {
   Card,
   CardContent,
@@ -102,6 +110,7 @@ export default function OverViewPage() {
             hourly: statsRes?.data?.hourly || [],
             model_stats: statsRes?.data?.model_stats || [],
             user_stats: statsRes?.data?.user_stats || [],
+            source_stats: statsRes?.data?.source_stats || [],
             recharge_amount: statsRes?.data?.recharge_amount || 0,
             cached_until: statsRes?.data?.cached_until
           });
@@ -363,6 +372,38 @@ export default function OverViewPage() {
                     <p className="py-6 text-center text-sm text-muted-foreground">
                       No customer usage in the last 24 hours
                     </p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+            {isAdmin(userRole) && (
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div className="space-y-1">
+                    <CardTitle>Usage by source</CardTitle>
+                    <CardDescription>
+                      Consumption in the last 24 hours, grouped by billing tag
+                      or channel type
+                    </CardDescription>
+                  </div>
+                  <Layers className="h-5 w-5 shrink-0 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  {loading ? (
+                    <div className="grid gap-x-8 gap-y-4 md:grid-cols-2">
+                      {[1, 2].map((i) => (
+                        <div className="flex items-center gap-3" key={i}>
+                          <Skeleton className="h-7 w-7 rounded-full" />
+                          <div className="flex-1 space-y-1">
+                            <Skeleton className="h-4 w-32" />
+                            <Skeleton className="h-3 w-20" />
+                          </div>
+                          <Skeleton className="h-4 w-16" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <SourceUsage dataList={dashboardData.source_stats || []} />
                   )}
                 </CardContent>
               </Card>

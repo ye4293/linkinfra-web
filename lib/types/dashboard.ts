@@ -12,6 +12,7 @@ export interface Dashboard {
   used_pd: number;
   model_stats?: ModelStat[];
   user_stats?: UserStat[];
+  source_stats?: SourceStat[];
   recharge_amount?: number;
   hourly?: DashboardHourlyStat[];
   cached_until?: number;
@@ -25,6 +26,19 @@ export interface ModelStat {
 export interface UserStat {
   user_id: number;
   username: string;
+  quota_sum: number;
+}
+
+/**
+ * 一个来源在统计窗口内的消耗（仅管理员）。
+ * tag：打了计费标签的渠道，按标签归组；channel_type：没有标签的渠道，按渠道类型归组；
+ * deleted：渠道已删除，合并为一项（name 为空）。
+ */
+export interface SourceStat {
+  kind: 'tag' | 'channel_type' | 'deleted';
+  tag?: string;
+  channel_type?: number;
+  name: string;
   quota_sum: number;
 }
 
@@ -44,6 +58,7 @@ export interface DashboardStatsResult extends Result {
     hourly: DashboardHourlyStat[];
     model_stats: ModelStat[];
     user_stats?: UserStat[];
+    source_stats?: SourceStat[];
     recharge_amount?: number;
   };
 }
