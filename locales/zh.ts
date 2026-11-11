@@ -177,6 +177,7 @@ const zh = {
     tierRatio: 'Tier discount',
     channelDiscount: 'Channel discount',
     userChannelDiscount: 'User channel discount',
+    billingTag: 'Billing tag',
     keyIndex: 'Key index'
   },
   // pricing / model ratio settings
@@ -240,15 +241,26 @@ const zh = {
   // channel form (billing)
   channelForm: {
     discountLabel: 'Channel discount multiplier',
-    discountPlaceholder: '1.0 = no discount, 0.7 = 30% off'
+    discountPlaceholder: '1.0 = no discount, 0.7 = 30% off',
+    billingTagLabel: 'Billing tag',
+    billingTagPlaceholder: 'e.g. vertex-claude (optional)',
+    billingTagHint:
+      "Groups channels for per-user discounts and usage stats. It does not affect routing or retries. Letters, digits, '.', '_' and '-' only."
   },
-  // user × channel type discount editor
+  // user discount editor: by billing tag and by channel type
   channelRatios: {
     title: 'Channel type discounts',
     descriptionPrefix:
       'Multiplied with channel and tier discounts after being set. Example: set to 0.8, final charge is',
     formulaCode: 'model list price × channel discount × tier discount × 0.8',
-    descriptionSuffix: 'Leave blank to default to 1.0.'
+    descriptionSuffix: 'Leave blank to default to 1.0.',
+    tagTitle: 'Billing tag discounts',
+    tagDescription:
+      'Applies to channels that carry the tag and replaces the channel type discount for them. The two are never multiplied. Leave blank to use the channel type discount.',
+    tagEmpty:
+      'No billing tags yet. Set a billing tag on a channel to configure its discount here.',
+    tagLoadFailed:
+      'Unable to load billing tags. Saved tag discounts are listed below and stay unchanged unless you remove them.'
   },
   // v3 Landing page
   landing: {
