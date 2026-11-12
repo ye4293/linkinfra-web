@@ -134,9 +134,45 @@ test('ratio input writes, clears or rejects one key without touching the others'
   assert.equal(parseRatioInput('   '), undefined);
   assert.equal(parseRatioInput(' 0.875 '), 0.875);
   assert.equal(parseRatioInput('1.25'), 1.25);
+  assert.equal(parseRatioInput('.5'), 0.5);
+  assert.equal(parseRatioInput('2.'), 2);
   for (const invalid of ['0', '0.0', '-1', 'abc', 'Infinity', 'NaN']) {
     assert.equal(parseRatioInput(invalid), null, invalid);
   }
+  // 输入框是文本框，只认普通的十进制写法：Number() 接受的其他写法、没输完的内容都无效
+  for (const invalid of [
+    '.',
+    '-',
+    '+0.5',
+    '1e3',
+    '1e-1',
+    '0x10',
+    '0b11',
+    ',',
+    '1,2,3',
+    '1,000.5',
+    '1.2.3',
+    '1 2',
+    '0.8a',
+    '9'.repeat(400)
+  ]) {
+    assert.equal(parseRatioInput(invalid), null, invalid);
+  }
+  // 输入法在全角状态下打出的数字和句点按半角处理。用码点构造，免得源码里出现全角字符。
+  const fullWidth = (text) =>
+    Array.from(text, (ch) =>
+      ch === '.'
+        ? String.fromCharCode(0xff0e)
+        : String.fromCharCode(ch.charCodeAt(0) - 0x30 + 0xff10)
+    ).join('');
+  assert.equal(parseRatioInput(fullWidth('0.85')), 0.85);
+  assert.equal(parseRatioInput('0' + String.fromCharCode(0x3002) + '85'), 0.85);
+  assert.equal(parseRatioInput(fullWidth('0')), null);
+  assert.deepEqual(withRatioInput({}, '48', fullWidth('0.7')), { 48: 0.7 });
+  // 小数点写作逗号的地区，手机的数字键盘上只有逗号：按小数点处理
+  assert.equal(parseRatioInput('0,85'), 0.85);
+  assert.equal(parseRatioInput('1,5'), 1.5);
+  assert.equal(parseRatioInput('0,0'), null);
 });
 
 test('resetting channel types keeps billing tag discounts', () => {

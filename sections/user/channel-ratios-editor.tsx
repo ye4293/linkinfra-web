@@ -16,6 +16,7 @@ import {
   billingTagKey,
   billingTagRows,
   hasChannelTypeRatios,
+  isChannelTypeKey,
   parseRatioInput,
   withRatioInput,
   withoutChannelTypeRatios
@@ -31,7 +32,22 @@ interface ChannelTypeOption {
 
 interface Props {
   control: Control<any>;
+  /** 保存被某一行的无效输入拦住时调用：这一行可能在没显示的页签里，由表单切过来让用户看到 */
+  onInvalidInput?: () => void;
 }
+
+/** 输入框里还没生效的文本 */
+interface RatioDraft {
+  text: string;
+  /** 不是可用的折扣：不是十进制数，或不大于 0 */
+  invalid: boolean;
+  /** 已经在这一行上提示过，之后一直显示到改对为止 */
+  flagged: boolean;
+}
+
+type RatioDraftUpdate = (
+  prev: RatioDraft | undefined
+) => RatioDraft | undefined;
 
 interface RatioRowProps {
   label: string;
@@ -41,18 +57,12 @@ interface RatioRowProps {
   hintClassName: string;
   placeholder: string;
   value: number | undefined;
-  /** 批量设置或重置后递增：这一行丢弃还没生效的输入，回到已生效的值 */
-  revision?: number;
+  /** 这一行还没生效的输入，由编辑器统一保存 */
+  draft: RatioDraft | undefined;
+  onDraftChange: (update: RatioDraftUpdate) => void;
   onChange: (raw: string) => void;
-}
-
-/** 输入框里还没生效的文本 */
-interface RatioDraft {
-  text: string;
-  /** 不是可用的折扣：不大于 0，或浏览器认不出的输入 */
-  invalid: boolean;
-  /** 已经在这一行上提示过，之后一直显示到改对为止 */
-  flagged: boolean;
+  /** 保存被这一行的无效输入拦住时调用 */
+  onSaveBlocked?: () => void;
 }
 
 const INVALID_RATIO_MESSAGE = 'Enter a number greater than 0';
@@ -69,18 +79,18 @@ function RatioRow({
   hintClassName,
   placeholder,
   value,
-  revision = 0,
-  onChange
+  draft,
+  onDraftChange,
+  onChange,
+  onSaveBlocked
 }: RatioRowProps) {
   const inputId = useId();
   const hintId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
-  const seenRevision = useRef(revision);
-  // 正在输入的文本。逐键输入 "0.7" 会先经过 "0" 这种还不是合法折扣的中间态，
+  // draft 是正在输入的文本。逐键输入 "0.7" 会先经过 "0" 这种还不是合法折扣的中间态，
   // 这时如果按已生效的值重绘输入框，选中旧值 0.85 再输入 0.7 会变成 0.857。
   // 所以输入期间显示用户输入的文本；离开输入框时，输入有效就回到已生效的值，
   // 无效则留在原处并提示，不悄悄丢掉。
-  const [draft, setDraft] = useState<RatioDraft | null>(null);
   const committed = value === undefined ? '' : String(value);
   const invalid = draft?.invalid ?? false;
   const showError = invalid && (draft?.flagged ?? false);
@@ -89,18 +99,6 @@ function RatioRow({
   useEffect(() => {
     inputRef.current?.setCustomValidity(invalid ? INVALID_RATIO_MESSAGE : '');
   }, [invalid]);
-
-  // 已生效的值被别处改掉时，输入框跟着变。批量设置或重置之后每一行都回到已生效的值；
-  // 其余情况（例如没有聚焦时点了步进箭头）只在没有聚焦时跟随，不打断正在进行的输入。
-  useEffect(() => {
-    const input = inputRef.current;
-    const bulkChange = seenRevision.current !== revision;
-    seenRevision.current = revision;
-    if (!bulkChange && document.activeElement === input) return;
-    setDraft(null);
-    // 浏览器认不出的输入（如 "."）留在输入框里时 value 一直是空串，React 认为没有变化、不会重绘，手动恢复
-    if (input && input.validity.badInput) input.value = committed;
-  }, [committed, revision]);
 
   return (
     <div className="group flex min-h-14 items-center justify-between gap-3 rounded-lg border bg-card px-3 py-2 transition-colors hover:border-primary/40 hover:bg-muted/20">
@@ -125,12 +123,15 @@ function RatioRow({
           {showError ? INVALID_RATIO_MESSAGE : hint}
         </span>
       </div>
+      {/* 文本框而不是 type="number"：数字框的方向键、滚轮和步进箭头会按步长改值（步长不限时一次改 1），
+          改出来的是合法折扣，会直接生效；浏览器认不出的输入（如 "-"）在数字框里读出来是空串，
+          分不清是清空还是没输完。 */}
       <Input
         ref={inputRef}
         id={inputId}
-        type="number"
-        step="any"
-        min="0"
+        type="text"
+        inputMode="decimal"
+        autoComplete="off"
         placeholder={placeholder}
         aria-invalid={showError || undefined}
         aria-describedby={hintId}
@@ -138,10 +139,8 @@ function RatioRow({
         value={draft ? draft.text : committed}
         onChange={(e) => {
           const raw = e.target.value;
-          // "." 这类浏览器认不出的输入，value 是空串，但不代表用户清空了折扣
-          const isInvalid =
-            e.target.validity.badInput || parseRatioInput(raw) === null;
-          setDraft((prev) => ({
+          const isInvalid = parseRatioInput(raw) === null;
+          onDraftChange((prev) => ({
             text: raw,
             invalid: isInvalid,
             flagged: isInvalid && !!prev?.flagged
@@ -149,15 +148,16 @@ function RatioRow({
           if (!isInvalid) onChange(raw);
         }}
         onBlur={() =>
-          setDraft((prev) =>
-            prev?.invalid ? { ...prev, flagged: true } : null
+          onDraftChange((prev) =>
+            prev?.invalid ? { ...prev, flagged: true } : undefined
           )
         }
-        onInvalid={() =>
-          setDraft((prev) =>
+        onInvalid={() => {
+          onDraftChange((prev) =>
             prev?.invalid ? { ...prev, flagged: true } : prev
-          )
-        }
+          );
+          onSaveBlocked?.();
+        }}
       />
     </div>
   );
@@ -173,7 +173,10 @@ function channelCountText(count: number) {
  * 标签折扣覆盖类型折扣，两者不相乘。
  * final = model_price × channel_discount × tier_discount × user_channel_ratio。
  */
-export default function ChannelRatiosEditor({ control }: Props) {
+export default function ChannelRatiosEditor({
+  control,
+  onInvalidInput
+}: Props) {
   const { t } = useLocale();
   const [channelTypes, setChannelTypes] = useState<ChannelTypeOption[]>([]);
   // null 表示标签列表加载失败，此时无法判断已配置的标签是否还在使用
@@ -182,8 +185,9 @@ export default function ChannelRatiosEditor({ control }: Props) {
   const [query, setQuery] = useState('');
   const [onlyCustomized, setOnlyCustomized] = useState(false);
   const [bulkRatio, setBulkRatio] = useState('');
-  // 批量设置或重置渠道类型折扣后递增，让各类型行丢弃还没生效的输入
-  const [typeRevision, setTypeRevision] = useState(0);
+  // 各行还没生效的输入，key 与 channel_ratios 相同。放在编辑器而不是行里：行被筛选条件隐藏时会卸载，
+  // 输入不能跟着丢；筛选也要靠它知道哪些行不能隐藏。
+  const [drafts, setDrafts] = useState<Record<string, RatioDraft>>({});
 
   const { field } = useController({
     control,
@@ -244,13 +248,45 @@ export default function ChannelRatiosEditor({ control }: Props) {
     if (next) field.onChange(next);
   };
 
+  const updateDraft = (key: string, update: RatioDraftUpdate) => {
+    setDrafts((prev) => {
+      const next = update(prev[key]);
+      if (next === prev[key]) return prev;
+      const copy = { ...prev };
+      if (next) copy[key] = next;
+      else delete copy[key];
+      return copy;
+    });
+  };
+
+  // 丢弃渠道类型行里还没生效的输入，让这些行回到已生效的值。不给 keys 时丢弃全部。
+  const dropChannelTypeDrafts = (keys?: Set<string>) => {
+    setDrafts((prev) => {
+      const next: Record<string, RatioDraft> = {};
+      for (const [key, draft] of Object.entries(prev)) {
+        const dropped = isChannelTypeKey(key) && (!keys || keys.has(key));
+        if (!dropped) next[key] = draft;
+      }
+      return next;
+    });
+  };
+
   const tagRows = billingTagRows(ratios, channelTags);
 
-  const filteredTypes = channelTypes.filter((ct) => {
+  // 符合搜索和 Customized only 的渠道类型，也是批量设置的作用范围
+  const matchingTypes = channelTypes.filter((ct) => {
     const matchesQuery = ct.text.toLowerCase().includes(query.toLowerCase());
     const matchesCustomized =
       !onlyCustomized || ratios[String(ct.value)] !== undefined;
     return matchesQuery && matchesCustomized;
+  });
+  const matchingKeys = new Set(matchingTypes.map((ct) => String(ct.value)));
+
+  // 列表里显示的行：符合筛选的，加上有未生效输入的行（正在编辑，或留着无效的内容）。
+  // 后者不随筛选隐藏：行一旦卸载，无效输入对保存的拦截会跟着消失，Save 就按旧值提交了。
+  const visibleTypes = channelTypes.filter((ct) => {
+    const key = String(ct.value);
+    return matchingKeys.has(key) || drafts[key] !== undefined;
   });
 
   const bulkValue = parseRatioInput(bulkRatio);
@@ -258,17 +294,18 @@ export default function ChannelRatiosEditor({ control }: Props) {
   const applyBulkRatio = () => {
     if (typeof bulkValue !== 'number') return;
     const next = { ...ratios };
-    filteredTypes.forEach((ct) => {
-      next[String(ct.value)] = bulkValue;
+    matchingKeys.forEach((key) => {
+      next[key] = bulkValue;
     });
     field.onChange(next);
-    setTypeRevision((revision) => revision + 1);
+    // 只让被批量设置的行回到已生效的值。因为留着无效输入才显示出来的行不在范围内，保持原样。
+    dropChannelTypeDrafts(matchingKeys);
     setBulkRatio('');
   };
 
   const resetChannelTypes = () => {
     field.onChange(withoutChannelTypeRatios(ratios));
-    setTypeRevision((revision) => revision + 1);
+    dropChannelTypeDrafts();
   };
 
   const renderTagRow = (row: BillingTagRow) => {
@@ -288,7 +325,10 @@ export default function ChannelRatiosEditor({ control }: Props) {
           }
           placeholder="—"
           value={row.ratio}
+          draft={drafts[key]}
+          onDraftChange={(update) => updateDraft(key, update)}
           onChange={(raw) => setRatio(key, raw)}
+          onSaveBlocked={onInvalidInput}
         />
       );
     }
@@ -437,19 +477,20 @@ export default function ChannelRatiosEditor({ control }: Props) {
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium">Bulk set visible channels</p>
             <p className="text-xs text-muted-foreground">
-              Applies to {filteredTypes.length} matching channel type
-              {filteredTypes.length === 1 ? '' : 's'}.
+              Applies to {matchingTypes.length} matching channel type
+              {matchingTypes.length === 1 ? '' : 's'}.
             </p>
           </div>
           <div className="flex gap-2">
             <Input
-              type="number"
-              step="any"
+              type="text"
+              inputMode="decimal"
+              autoComplete="off"
               value={bulkRatio}
               onChange={(e) => setBulkRatio(e.target.value)}
               onKeyDown={(e) => {
-                // 回车等同于 Apply，不提交整个用户表单
-                if (e.key === 'Enter') {
+                // 回车等同于 Apply，不提交整个用户表单；输入法上屏用的回车不算
+                if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
                   e.preventDefault();
                   applyBulkRatio();
                 }
@@ -476,7 +517,7 @@ export default function ChannelRatiosEditor({ control }: Props) {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2 xl:grid-cols-3">
-            {filteredTypes.map((ct) => {
+            {visibleTypes.map((ct) => {
               const key = String(ct.value);
               const currentVal = ratios[key];
               return (
@@ -495,12 +536,14 @@ export default function ChannelRatiosEditor({ control }: Props) {
                   }
                   placeholder="1.0"
                   value={currentVal}
-                  revision={typeRevision}
+                  draft={drafts[key]}
+                  onDraftChange={(update) => updateDraft(key, update)}
                   onChange={(raw) => setRatio(key, raw)}
+                  onSaveBlocked={onInvalidInput}
                 />
               );
             })}
-            {filteredTypes.length === 0 && (
+            {visibleTypes.length === 0 && (
               <div className="col-span-full rounded-lg border border-dashed py-12 text-center text-sm text-muted-foreground">
                 No channel types match your filters.
               </div>

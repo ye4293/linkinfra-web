@@ -134,14 +134,39 @@ export function serializeChannelRatios(map: ChannelRatios | undefined): string {
   return JSON.stringify(cleaned);
 }
 
+// 折扣输入框认的写法：普通的十进制数（"0.85"、".85"、"1."）。Number() 还接受 0x10、1e3 这类写法，
+// 输错时会变成意料之外的折扣，所以先按这个格式检查。
+const RATIO_INPUT_PATTERN = /^(?:\d+\.?\d*|\.\d+)$/;
+
+// 把数字和小数点的其他写法换成半角的数字和 "."：
+//   - 输入法在全角状态下打出的数字（码点 0xFF10 到 0xFF19）和句点（0xFF0E，以及中文句号 0x3002）；
+//   - 逗号（0x2C）：小数点写作逗号的地区，手机的数字键盘上只有逗号。折扣不会用到千位分隔符，
+//     格式检查也只允许出现一个小数点。
+// 用码点而不是字符，免得源码里出现和半角长得差不多的字符。
+function normalizeRatioText(text: string): string {
+  let out = '';
+  for (let i = 0; i < text.length; i++) {
+    const code = text.charCodeAt(i);
+    if (code >= 0xff10 && code <= 0xff19) {
+      out += String.fromCharCode(code - 0xff10 + 0x30);
+    } else if (code === 0xff0e || code === 0x3002 || code === 0x2c) {
+      out += '.';
+    } else {
+      out += text[i];
+    }
+  }
+  return out;
+}
+
 /**
- * 解析输入框里的折扣：留空返回 undefined（不设置），大于 0 的数返回该数，
+ * 解析输入框里的折扣：留空返回 undefined（不设置），大于 0 的十进制数返回该数，
  * 其余输入无效，返回 null。
  */
 export function parseRatioInput(raw: string): number | undefined | null {
-  const trimmed = raw.trim();
-  if (trimmed === '') return undefined;
-  const num = Number(trimmed);
+  const text = normalizeRatioText(raw.trim());
+  if (text === '') return undefined;
+  if (!RATIO_INPUT_PATTERN.test(text)) return null;
+  const num = Number(text);
   return Number.isFinite(num) && num > 0 ? num : null;
 }
 
