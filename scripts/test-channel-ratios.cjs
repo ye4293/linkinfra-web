@@ -25,7 +25,8 @@ const {
   hasChannelTypeRatios,
   withoutChannelTypeRatios,
   billingTagRows,
-  BILLING_TAG_INPUT_PATTERN
+  BILLING_TAG_INPUT_PATTERN,
+  isPlainEnterKey
 } = ratios;
 
 test('billing tags normalize the same way as the backend', () => {
@@ -280,5 +281,26 @@ test('editing through the whole record keeps the user form submittable', async (
   assert.deepEqual(
     JSON.parse(serializeChannelRatios(submitted.channel_ratios)),
     { 48: 0.9, 'tag:vertex.gemini': 0.7 }
+  );
+});
+
+test('Enter that confirms an input method candidate is not a plain Enter', () => {
+  assert.equal(
+    isPlainEnterKey({ key: 'Enter', isComposing: false, keyCode: 13 }),
+    true
+  );
+  // Chrome、Firefox：组合输入期间的回车
+  assert.equal(
+    isPlainEnterKey({ key: 'Enter', isComposing: true, keyCode: 229 }),
+    false
+  );
+  // Safari：确认候选的回车到达时组合输入已经结束，只有 keyCode 是 229
+  assert.equal(
+    isPlainEnterKey({ key: 'Enter', isComposing: false, keyCode: 229 }),
+    false
+  );
+  assert.equal(
+    isPlainEnterKey({ key: 'a', isComposing: false, keyCode: 65 }),
+    false
   );
 });

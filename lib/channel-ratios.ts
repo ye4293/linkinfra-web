@@ -190,6 +190,19 @@ export function withRatioInput(
   return next;
 }
 
+/**
+ * 输入框里的回车是否按普通回车处理（批量设置框里是 Apply，搜索框里只筛选）。
+ * 输入法确认候选、上屏用的回车不算：Chrome、Firefox 里它的 isComposing 为 true；
+ * Safari 里它到达时组合输入已经结束，isComposing 为 false，只能靠 keyCode 229 识别。
+ */
+export function isPlainEnterKey(event: {
+  key: string;
+  isComposing: boolean;
+  keyCode: number;
+}): boolean {
+  return event.key === 'Enter' && !event.isComposing && event.keyCode !== 229;
+}
+
 export function hasChannelTypeRatios(ratios: ChannelRatios): boolean {
   return Object.keys(ratios).some(
     (key) => isChannelTypeKey(key) && ratios[key] !== undefined

@@ -17,6 +17,7 @@ import {
   billingTagRows,
   hasChannelTypeRatios,
   isChannelTypeKey,
+  isPlainEnterKey,
   parseRatioInput,
   withRatioInput,
   withoutChannelTypeRatios
@@ -434,7 +435,7 @@ export default function ChannelRatiosEditor({
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => {
                 // 回车只用于筛选，不提交整个用户表单
-                if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+                if (isPlainEnterKey(e.nativeEvent)) {
                   e.preventDefault();
                 }
               }}
@@ -490,7 +491,7 @@ export default function ChannelRatiosEditor({
               onChange={(e) => setBulkRatio(e.target.value)}
               onKeyDown={(e) => {
                 // 回车等同于 Apply，不提交整个用户表单；输入法上屏用的回车不算
-                if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+                if (isPlainEnterKey(e.nativeEvent)) {
                   e.preventDefault();
                   applyBulkRatio();
                 }
