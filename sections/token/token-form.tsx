@@ -29,7 +29,13 @@ import { cn } from '@/lib/utils';
 import { CalendarIcon } from '@radix-ui/react-icons';
 import { addDays, format, addMonths, addHours, addMinutes } from 'date-fns';
 import { renderQuotaNum } from '@/utils/render';
-import { Token } from '@/lib/types/token';
+import { Token, TokenProviderRouting, TokenSource } from '@/lib/types/token';
+import {
+  EMPTY_PROVIDER_ROUTING,
+  isProviderRoutingEmpty,
+  readProviderRouting
+} from '@/lib/provider-routing';
+import { ProviderRoutingField } from './provider-routing-field';
 import { useLocale } from '@/components/providers/locale-provider';
 import { zhCN, enUS } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -73,6 +79,32 @@ export default function TokenForm({
   const [isExpired, setIsExpired] = useState<boolean>(true);
   const [tokenData, setTokenData] = useState<Object | null>(null);
   const [displayValue, setDisplayValue] = useState<string>(''); // 用于管理显示的美元金额
+  // Provider routing lives outside the validated form fields: the backend validates it on save.
+  const [routing, setRouting] = useState<TokenProviderRouting>(
+    EMPTY_PROVIDER_ROUTING
+  );
+  const [sources, setSources] = useState<TokenSource[]>([]);
+  const [sourcesFailed, setSourcesFailed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/token/sources', { credentials: 'include' })
+      .then((res) => res.json())
+      .then(({ success, data }) => {
+        if (cancelled) return;
+        if (success && Array.isArray(data)) setSources(data);
+        else setSourcesFailed(true);
+      })
+      .catch(() => {
+        if (!cancelled) setSourcesFailed(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  // Without the provider list the section is only shown for keys that already have routing,
+  // so it can still be reviewed and cleared. A backend that predates routing has no list.
+  const showRouting = !sourcesFailed || !isProviderRoutingEmpty(routing);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -103,6 +135,7 @@ export default function TokenForm({
       });
       const { data } = await res.json();
       setTokenData(data);
+      setRouting(readProviderRouting(data.provider_routing));
       setIsExpired(data.expired_time === -1 ? true : false);
       setIsLoading(false);
 
@@ -178,6 +211,9 @@ export default function TokenForm({
     //   params.expired_time = isExpired ? -1 : params.expired_time;
     // }
     if (isExpired) params.expired_time = -1;
+    // Send the routing only while its section is on screen; otherwise leave it as saved.
+    if (showRouting) params.provider_routing = routing;
+    else delete params.provider_routing;
     // params.type = Number(params.type);
     try {
       const res = await fetch(`/api/token`, {
@@ -408,6 +444,14 @@ export default function TokenForm({
                 </Button>
               </div>
             </div>
+            {showRouting && (
+              <ProviderRoutingField
+                value={routing}
+                onChange={setRouting}
+                sources={sources}
+                loadFailed={sourcesFailed}
+              />
+            )}
             <div className="flex gap-4">
               <Button
                 type="button"
