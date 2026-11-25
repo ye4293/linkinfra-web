@@ -14,6 +14,8 @@ export interface LogStat {
   end_timestamp: number;
   /** Channel ID */
   channel?: number;
+  /** Provider that handled the request; absent when unknown */
+  source?: string;
   /** Created at */
   created_at: number;
   /** Content */

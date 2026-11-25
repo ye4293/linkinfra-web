@@ -558,6 +558,28 @@ export const columns: ColumnDef<LogStat>[] = [
     },
     enableHiding: true
   },
+  // The provider that handled the request, so users can check their key's provider routing.
+  {
+    id: 'source',
+    accessorKey: 'source',
+    size: 140,
+    minSize: 110,
+    header: () => <div className="text-center">Source</div>,
+    cell: ({ row }) => {
+      const source = row.original.source;
+      if (!source) {
+        return <div className="text-center text-muted-foreground">-</div>;
+      }
+      return (
+        <div className="text-center">
+          <CopyableCell value={source} label="Source">
+            <Badge variant="outline">{truncateStr(source, 24)}</Badge>
+          </CopyableCell>
+        </div>
+      );
+    },
+    enableHiding: true
+  },
   {
     accessorKey: 'prompt_tokens',
     header: () => <div className="text-center">Prompt</div>,

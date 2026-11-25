@@ -637,6 +637,13 @@ const MobileLogCard = ({ row }: { row: LogStat }) => {
           })()}
         </div>
 
+        {log.source && (
+          <div className="flex flex-col">
+            <span className="text-xs text-muted-foreground">Source</span>
+            <span className="break-all font-medium">{log.source}</span>
+          </div>
+        )}
+
         <div className="grid grid-cols-2 gap-2 rounded bg-muted/30 p-2">
           <div className="flex flex-col items-center">
             <span className="text-xs text-muted-foreground">Prompt</span>
