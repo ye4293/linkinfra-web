@@ -18,6 +18,7 @@ import {
 import { toast } from 'sonner';
 import { Save, RefreshCcw } from 'lucide-react';
 import AffinitySection from '@/sections/channel/affinity-modal';
+import ProviderInteropRulesSection from '@/sections/setting/provider-interop-rules';
 
 const breadcrumbItems = [
   { title: 'Dashboard', link: '/dashboard' },
@@ -367,6 +368,20 @@ export default function ModelSettingPage() {
           </CardHeader>
           <CardContent>
             <AffinitySection />
+          </CardContent>
+        </Card>
+
+        {/* provider interop rules */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Provider interop rules</CardTitle>
+            <CardDescription>
+              Let failed requests retry across providers that serve the same
+              models interchangeably.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ProviderInteropRulesSection />
           </CardContent>
         </Card>
       </div>
