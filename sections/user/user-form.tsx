@@ -44,6 +44,10 @@ import {
   Save,
   UserRound
 } from 'lucide-react';
+import {
+  parseChannelRatios,
+  serializeChannelRatios
+} from '@/lib/channel-ratios';
 import ChannelRatiosEditor from './channel-ratios-editor';
 
 function getQuotaPerUnit(): number {
@@ -85,36 +89,6 @@ interface ParamsOption extends Partial<UserSelf> {
   channel_ratios?: string;
 }
 
-function parseChannelRatios(raw: unknown): Record<string, number> {
-  if (!raw || typeof raw !== 'string') return {};
-  try {
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object') return {};
-    const out: Record<string, number> = {};
-    for (const [k, v] of Object.entries(parsed)) {
-      const num = Number(v);
-      if (Number.isFinite(num) && num > 0) out[k] = num;
-    }
-    return out;
-  } catch {
-    return {};
-  }
-}
-
-function serializeChannelRatios(
-  map: Record<string, number> | undefined
-): string {
-  if (!map) return '';
-  const cleaned: Record<string, number> = {};
-  for (const [k, v] of Object.entries(map)) {
-    if (typeof v === 'number' && Number.isFinite(v) && v > 0) {
-      cleaned[k] = v;
-    }
-  }
-  if (Object.keys(cleaned).length === 0) return '';
-  return JSON.stringify(cleaned);
-}
-
 export default function UserForm() {
   const router = useRouter();
   const { userId } = useParams();
@@ -126,6 +100,7 @@ export default function UserForm() {
 
   const [dollarDisplay, setDollarDisplay] = useState('0');
   const [adjustAmount, setAdjustAmount] = useState('');
+  const [activeTab, setActiveTab] = useState('basic');
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -289,7 +264,11 @@ export default function UserForm() {
       <CardContent className="p-0">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
-            <Tabs defaultValue="basic" className="w-full">
+            <Tabs
+              value={activeTab}
+              onValueChange={setActiveTab}
+              className="w-full"
+            >
               <TabsList
                 className={
                   isCreate
@@ -581,11 +560,18 @@ export default function UserForm() {
               </TabsContent>
 
               {!isCreate && (
+                // 折扣页签一直挂载，没选中时只是隐藏。切走就卸载的话，输入框里还没改对的内容
+                // 和它对保存的拦截会一起消失，Save 会按旧值提交且没有任何提示。
                 <TabsContent
                   value="discount"
-                  className="m-0 px-4 pb-7 pt-2 sm:px-6 lg:px-8"
+                  forceMount
+                  className="m-0 px-4 pb-7 pt-2 data-[state=inactive]:hidden sm:px-6 lg:px-8"
                 >
-                  <ChannelRatiosEditor control={form.control} />
+                  <ChannelRatiosEditor
+                    control={form.control}
+                    // 保存被这里的无效输入拦住时切到这个页签，让用户看到是哪一行
+                    onInvalidInput={() => setActiveTab('discount')}
+                  />
                 </TabsContent>
               )}
             </Tabs>

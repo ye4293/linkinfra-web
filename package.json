@@ -15,6 +15,7 @@
     "test:docs": "node --test scripts/test-api-docs.cjs",
     "test:playground": "node --test scripts/test-playground.cjs",
     "test:provider-routing": "node --test scripts/test-provider-routing.cjs",
+    "test:channel-ratios": "node --test scripts/test-channel-ratios.cjs",
     "format": "prettier . --write",
     "prepare": "husky"
   },

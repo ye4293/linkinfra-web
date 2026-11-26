@@ -513,13 +513,25 @@ const ExpandedRowContent = ({ row }: { row: Row<LogStat> }) => {
                     {(billingDetails.channel_discount ?? 1).toFixed(4)}
                   </p>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-muted-foreground">
                     {ld.userChannelDiscount}
                   </p>
                   <p className="font-mono font-medium">
                     {(billingDetails.user_channel_ratio ?? 1).toFixed(4)}
                   </p>
+                  {/* 用户渠道折扣来自计费标签时显示命中的标签（仅管理员日志带此字段） */}
+                  {billingDetails.billing_tag && (
+                    <p
+                      className="truncate text-muted-foreground"
+                      title={billingDetails.billing_tag}
+                    >
+                      {ld.billingTag}:{' '}
+                      <span className="font-mono">
+                        {billingDetails.billing_tag}
+                      </span>
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

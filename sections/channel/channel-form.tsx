@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -29,6 +30,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { FileUploader } from '@/components/file-uploader';
 import { Channel } from '@/lib/types/channel';
 import { useLocale } from '@/components/providers/locale-provider';
+import {
+  BILLING_TAG_INPUT_PATTERN,
+  BILLING_TAG_MAX_LENGTH
+} from '@/lib/channel-ratios';
 import request from '@/app/lib/clientFetch';
 import JSONEditor from '@/components/json-editor';
 import { ModelSelectModal } from './model-select-modal';
@@ -66,6 +71,17 @@ const formSchema = z.object({
   other: z.string().optional(),
   region: z.string().optional(),
   provider: z.string().trim().max(128).optional(),
+  // 计费标签：只用于用户折扣和消耗统计，不参与选渠与重试
+  billing_tag: z
+    .string()
+    .trim()
+    .max(BILLING_TAG_MAX_LENGTH, {
+      message: `Billing tag cannot exceed ${BILLING_TAG_MAX_LENGTH} characters.`
+    })
+    .regex(BILLING_TAG_INPUT_PATTERN, {
+      message: "Billing tag may only contain letters, digits, '.', '_' and '-'."
+    })
+    .optional(),
   ak: z.string().optional(),
   sk: z.string().optional(),
   vertex_ai_project_id: z.string().optional(),
@@ -167,6 +183,8 @@ export default function ChannelForm() {
     {}
   );
   const [channelData, setChannelData] = useState<Object | null>(null);
+  // 其他渠道上已有的计费标签，供 Billing tag 输入框联想
+  const [billingTagOptions, setBillingTagOptions] = useState<string[]>([]);
   const [vertexAiFiles, setVertexAiFiles] = useState<File[]>([]);
 
   // Vertex AI 配置相关状态
@@ -599,6 +617,7 @@ export default function ChannelForm() {
             other: channelData.other,
             region: config.region || '',
             provider: config.provider || '',
+            billing_tag: config.billing_tag || '',
             ak: config.ak || '',
             sk: config.sk || '',
             vertex_ai_project_id: config.vertex_ai_project_id || '',
@@ -692,6 +711,24 @@ export default function ChannelForm() {
     initializeData();
   }, [channelId]);
 
+  // 加载已有的计费标签；只用于输入联想，失败不影响表单
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/channel/billing_tags', { credentials: 'include' })
+      .then((res) => res.json())
+      .then(({ data }) => {
+        if (!cancelled && Array.isArray(data)) {
+          setBillingTagOptions(
+            data.map((item: { tag: string }) => item.tag).filter(Boolean)
+          );
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -728,6 +765,7 @@ export default function ChannelForm() {
       test_model: '',
       support_count_tokens: false,
       provider: '',
+      billing_tag: '',
       beta_filter_mode: 'none'
     }
   });
@@ -1248,6 +1286,9 @@ export default function ChannelForm() {
       const buildConfig = () => {
         const config: any = {};
         if (values.provider?.trim()) config.provider = values.provider.trim();
+        // 计费标签统一存小写，与后端的匹配规则一致
+        if (values.billing_tag?.trim())
+          config.billing_tag = values.billing_tag.trim().toLowerCase();
         if (values.region) config.region = values.region;
         if (values.ak) config.ak = values.ak;
         if (values.sk) config.sk = values.sk;
@@ -1287,7 +1328,9 @@ export default function ChannelForm() {
         ) {
           config.beta_filter_mode = values.beta_filter_mode;
         }
-        return Object.keys(config).length > 0 ? JSON.stringify(config) : '';
+        // 没有任何配置项时返回 "{}" 而不是空串：后端更新渠道时会忽略空的 config，
+        // 那样清空计费标签等配置项会保存成功却不生效。
+        return JSON.stringify(config);
       };
 
       const baseParams: Omit<ParamsOption, 'key' | 'name'> = {
@@ -3490,6 +3533,34 @@ ${type2secretPrompt(form.watch('type'))}`}
                         }}
                       />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="billing_tag"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t.channelForm.billingTagLabel}</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder={t.channelForm.billingTagPlaceholder}
+                        list="channel-billing-tag-options"
+                        autoComplete="off"
+                        {...field}
+                        value={field.value || ''}
+                      />
+                    </FormControl>
+                    <datalist id="channel-billing-tag-options">
+                      {billingTagOptions.map((tag) => (
+                        <option key={tag} value={tag} />
+                      ))}
+                    </datalist>
+                    <FormDescription>
+                      {t.channelForm.billingTagHint}
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
